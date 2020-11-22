@@ -25,8 +25,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import io.github.f2bb.amalgamation.merge.Side;
-
 /**
  * Tells the Java compiler that the annotated member should be stripped if all of its platforms are not available
  * in the current build.
