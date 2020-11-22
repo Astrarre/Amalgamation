@@ -20,3 +20,6 @@
 plugins {
     `java-library`
 }
+
+repositories {
+}

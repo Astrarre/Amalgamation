@@ -20,9 +20,12 @@
 package io.github.f2bb.amalgamation;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import io.github.f2bb.amalgamation.merge.Side;
 
 /**
  * Tells the Java compiler that the annotated member should be stripped if all of its platforms are not available
@@ -30,12 +33,22 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
+@Repeatable(Platform.Platforms.class)
 public @interface Platform {
 
     /**
-     * The platforms which must be present in the build for this member to be realised by the compiler
-     *
-     * @return The platforms which are required
+     * @return The platform on which the element is present
      */
-    String[] value();
+    String value();
+
+    /**
+     * @return the side on which this platform exposes this method, for example if forge makes a client method a normal method, this would be ("forge", ALL)
+     */
+    Side side() default Side.ALL;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
+    @interface Platforms {
+        Platform[] value();
+    }
 }
