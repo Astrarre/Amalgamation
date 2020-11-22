@@ -20,4 +20,13 @@
 allprojects {
     group = "io.github.f2bb.amalgamation"
     version = "1.0.0-SNAPSHOT"
+
+    tasks.withType<JavaCompile> {
+        if (JavaVersion.current().isJava9Compatible) {
+            options.release.set(8)
+        } else {
+            sourceCompatibility = "8"
+            targetCompatibility = "8"
+        }
+    }
 }
