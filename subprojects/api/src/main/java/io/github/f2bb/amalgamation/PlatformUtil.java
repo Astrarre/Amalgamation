@@ -2,12 +2,14 @@ package io.github.f2bb.amalgamation;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Properties;
 
 import io.github.f2bb.amalgamation.forge.ForgeInstalls;
+import io.github.f2bb.amalgamation.util.ProcThread;
 import net.minecraftforge.installer.DownloadUtils;
 import net.minecraftforge.installer.actions.ProgressCallback;
 import net.minecraftforge.installer.json.Install;
@@ -44,17 +46,17 @@ public class PlatformUtil {
 		File buildtools = new File(cache, "buildtools.jar");
 		if (!buildtools.exists()) {
 			DownloadUtils.downloadFile(buildtools,
-					"https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools" + ".jar");
+					"https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools" +
+					".jar");
 		}
 
 		try {
-			URLClassLoader classLoader = new URLClassLoader(new URL[] {buildtools.toURI().toURL()});
-			classLoader.loadClass("org.spigotmc.builder.Builder").getMethod("main", String[].class)
-			           .invoke(null, (Object) new String[] {
-					           "--rev",
-					           MINECRAFT_VERSION
-			           });
-			classLoader.close();
+			ProcessBuilder builder = new ProcessBuilder("java", "-jar", buildtools.getAbsolutePath(), "--rev", MINECRAFT_VERSION);
+			builder.directory(cache);
+			Process proc = builder.start();
+			Thread thread = new Thread(new ProcThread(proc));
+			thread.start();
+			proc.waitFor();
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}

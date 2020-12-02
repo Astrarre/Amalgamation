@@ -47,6 +47,6 @@ public @interface Platform {
     @Retention(RetentionPolicy.SOURCE)
     @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
     @interface Platforms {
-        Platform[] value();
+        Platform[] value() default {};
     }
 }
