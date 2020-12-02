@@ -44,6 +44,11 @@ public @interface Platform {
      */
     Side side() default Side.ALL;
 
+    /**
+     * @return the access flags for this platform, if -1 then it's the default platform's access
+     */
+    int access() default -1;
+
     @Retention(RetentionPolicy.SOURCE)
     @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
     @interface Platforms {

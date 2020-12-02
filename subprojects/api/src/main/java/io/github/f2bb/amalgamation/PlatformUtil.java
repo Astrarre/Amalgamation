@@ -2,9 +2,6 @@ package io.github.f2bb.amalgamation;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -32,13 +29,15 @@ public class PlatformUtil {
 	}
 
 	public static void main(String[] args) {
-		getBukkitServer(new File("ohno"));
+		getSpigotServerJar(new File("ohno"));
 	}
 
+	// todo paper
 	/**
-	 * @return the unmapped bukkit server jar
+	 * todo craftbukkit
+	 * @return the unmapped spigot server jar
 	 */
-	public static File getBukkitServer(File cache) {
+	public static File getSpigotServerJar(File cache) {
 		if (!cache.exists()) {
 			cache.mkdirs();
 		}
@@ -51,16 +50,19 @@ public class PlatformUtil {
 		}
 
 		try {
-			ProcessBuilder builder = new ProcessBuilder("java", "-jar", buildtools.getAbsolutePath(), "--rev", MINECRAFT_VERSION);
+			ProcessBuilder builder = new ProcessBuilder("java", "-jar", buildtools.getAbsolutePath(), "--rev", MINECRAFT_VERSION, "--output-dir", "out");
 			builder.directory(cache);
 			Process proc = builder.start();
 			Thread thread = new Thread(new ProcThread(proc));
+			thread.setDaemon(true);
 			thread.start();
 			proc.waitFor();
+			proc.destroyForcibly();
+			thread.stop();
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
-		return new File(cache, "spigot-" + MINECRAFT_VERSION + ".jar");
+		return new File(cache, "out/spigot-" + MINECRAFT_VERSION + ".jar");
 	}
 
 	/**
