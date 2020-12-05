@@ -32,10 +32,10 @@ import java.lang.reflect.Modifier;
 
 public class AmalgamationTreeVisitor extends TreeScanner<Object, Object> {
 
-    private final AmalgamationPlatformChecker epic;
+    private final AmalgamationPlatformChecker checker;
 
-    public AmalgamationTreeVisitor(AmalgamationPlatformChecker epic) {
-        this.epic = epic;
+    public AmalgamationTreeVisitor(AmalgamationPlatformChecker checker) {
+        this.checker = checker;
     }
 
     @Override
@@ -64,13 +64,13 @@ public class AmalgamationTreeVisitor extends TreeScanner<Object, Object> {
 
     private boolean isInvalid(JCTree tree) {
         if (tree instanceof JCTree.JCClassDecl) {
-            return epic.isInvalid(((JCTree.JCClassDecl) tree).mods.getAnnotations());
+            return checker.isInvalid(((JCTree.JCClassDecl) tree).mods.getAnnotations());
         } else if (tree instanceof JCTree.JCMethodDecl) {
-            return epic.isInvalid(((JCTree.JCMethodDecl) tree).mods.getAnnotations());
+            return checker.isInvalid(((JCTree.JCMethodDecl) tree).mods.getAnnotations());
         } else if (tree instanceof JCTree.JCVariableDecl) {
-            return epic.isInvalid(((JCTree.JCVariableDecl) tree).mods.getAnnotations());
+            return checker.isInvalid(((JCTree.JCVariableDecl) tree).mods.getAnnotations());
         } else if (tree instanceof JCTree.JCAnnotatedType) {
-            return epic.isInvalid(((JCTree.JCAnnotatedType) tree).getAnnotations());
+            return checker.isInvalid(((JCTree.JCAnnotatedType) tree).getAnnotations());
         } else {
             return false;
         }

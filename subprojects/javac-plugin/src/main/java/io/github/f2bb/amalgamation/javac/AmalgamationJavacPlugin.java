@@ -22,7 +22,12 @@ package io.github.f2bb.amalgamation.javac;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class AmalgamationJavacPlugin implements Plugin, TaskListener {
+
+    private AmalgamationPlatformChecker checker;
 
     @Override
     public String getName() {
@@ -31,6 +36,7 @@ public class AmalgamationJavacPlugin implements Plugin, TaskListener {
 
     @Override
     public void init(JavacTask javacTask, String... args) {
+        checker = new AmalgamationPlatformChecker(new HashSet<>(Arrays.asList(args)));
         javacTask.addTaskListener(this);
     }
 
@@ -38,7 +44,7 @@ public class AmalgamationJavacPlugin implements Plugin, TaskListener {
     public void started(TaskEvent taskEvent) {
         if (taskEvent.getKind() == TaskEvent.Kind.ENTER) {
             CompilationUnitTree compilationUnit = taskEvent.getCompilationUnit();
-            new AmalgamationTreeVisitor(new AmalgamationPlatformChecker()).scan(new TreePath(compilationUnit), null);
+            new AmalgamationTreeVisitor(checker).scan(new TreePath(compilationUnit), null);
         }
     }
 

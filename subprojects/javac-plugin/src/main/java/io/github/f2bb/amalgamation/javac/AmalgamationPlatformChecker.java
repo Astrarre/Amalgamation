@@ -27,8 +27,8 @@ public class AmalgamationPlatformChecker {
 
     private final Set<String> availablePlatforms;
 
-    public AmalgamationPlatformChecker() {
-        availablePlatforms = new HashSet<>(Arrays.asList("server", "spigot"));
+    public AmalgamationPlatformChecker(Set<String> availablePlatforms) {
+        this.availablePlatforms = availablePlatforms;
     }
 
     public boolean isInvalid(List<JCTree.JCAnnotation> annotations) {
