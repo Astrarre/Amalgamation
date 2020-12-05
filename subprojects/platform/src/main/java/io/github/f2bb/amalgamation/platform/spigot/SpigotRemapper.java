@@ -1,4 +1,4 @@
-package io.github.f2bb.amalgamation.spigot;
+package io.github.f2bb.amalgamation.platform.spigot;
 
 import java.io.BufferedReader;
 import java.io.File;

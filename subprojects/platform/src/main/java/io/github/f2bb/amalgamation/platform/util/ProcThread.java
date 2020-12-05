@@ -1,4 +1,4 @@
-package io.github.f2bb.amalgamation.util;
+package io.github.f2bb.amalgamation.platform.util;
 
 import java.io.IOException;
 import java.io.InputStream;

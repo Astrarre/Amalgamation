@@ -1,4 +1,4 @@
-package io.github.f2bb.amalgamation.forge;
+package io.github.f2bb.amalgamation.platform.forge;
 
 import java.io.File;
 import java.nio.file.Path;

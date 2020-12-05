@@ -1,4 +1,4 @@
-package io.github.f2bb.amalgamation.spigot;
+package io.github.f2bb.amalgamation.platform.spigot;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,7 +10,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import io.github.f2bb.amalgamation.PlatformUtil;
+import io.github.f2bb.amalgamation.platform.PlatformUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
