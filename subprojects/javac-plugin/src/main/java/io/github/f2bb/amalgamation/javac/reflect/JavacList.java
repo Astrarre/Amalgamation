@@ -17,32 +17,24 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.javac;
+package io.github.f2bb.amalgamation.javac.reflect;
 
-import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.util.*;
+import com.sun.tools.javac.util.List;
 
-public class AmalgamationJavacPlugin implements Plugin, TaskListener {
+import java.util.ArrayList;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
-    @Override
-    public String getName() {
-        return "Amalgamation";
+public class JavacList {
+
+    public static <T> void transform(LiveFieldReference<List<T>> reference, UnaryOperator<java.util.List<T>> transformer) {
+        reference.set(List.from(transformer.apply(new ArrayList<>(reference.get()))));
     }
 
-    @Override
-    public void init(JavacTask javacTask, String... args) {
-        javacTask.addTaskListener(this);
-    }
-
-    @Override
-    public void started(TaskEvent taskEvent) {
-        if (taskEvent.getKind() == TaskEvent.Kind.ENTER) {
-            CompilationUnitTree compilationUnit = taskEvent.getCompilationUnit();
-            new AmalgamationTreeVisitor(new AmalgamationPlatformChecker()).scan(new TreePath(compilationUnit), null);
-        }
-    }
-
-    @Override
-    public void finished(TaskEvent taskEvent) {
+    public static <T> void removeIf(LiveFieldReference<List<T>> reference, Predicate<T> predicate) {
+        transform(reference, l -> {
+            l.removeIf(predicate);
+            return l;
+        });
     }
 }

@@ -17,32 +17,33 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.javac;
+package io.github.f2bb.amalgamation.javac.reflect;
 
-import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.util.*;
+import java.lang.reflect.Field;
 
-public class AmalgamationJavacPlugin implements Plugin, TaskListener {
+public class LiveFieldReference<T> {
 
-    @Override
-    public String getName() {
-        return "Amalgamation";
+    private final Object bound;
+    private final Field field;
+
+    public LiveFieldReference(Object bound, Field field) {
+        this.bound = bound;
+        this.field = field;
     }
 
-    @Override
-    public void init(JavacTask javacTask, String... args) {
-        javacTask.addTaskListener(this);
-    }
-
-    @Override
-    public void started(TaskEvent taskEvent) {
-        if (taskEvent.getKind() == TaskEvent.Kind.ENTER) {
-            CompilationUnitTree compilationUnit = taskEvent.getCompilationUnit();
-            new AmalgamationTreeVisitor(new AmalgamationPlatformChecker()).scan(new TreePath(compilationUnit), null);
+    public T get() {
+        try {
+            return (T) field.get(bound);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public void finished(TaskEvent taskEvent) {
+    public void set(T t) {
+        try {
+            field.set(bound, t);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
