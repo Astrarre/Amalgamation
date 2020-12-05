@@ -21,6 +21,7 @@ rootProject.name = "amalgamation"
 
 include("api")
 include("gradle-plugin")
+include("platform")
 include("javac-plugin")
 
 for (project in rootProject.children) {

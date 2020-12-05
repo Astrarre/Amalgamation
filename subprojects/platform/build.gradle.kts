@@ -20,3 +20,27 @@
 plugins {
     `java-library`
 }
+
+val minecraft_version : String by project
+val forge_version : String by project
+
+tasks.processResources {
+    inputs.properties("forge_version" to forge_version, "minecraft_version" to minecraft_version)
+
+    filesMatching("gradle_data.properties") {
+        expand("forge_version" to forge_version, "minecraft_version" to minecraft_version)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://files.minecraftforge.net/maven")
+    }
+}
+
+dependencies {
+    implementation("org.ow2.asm:asm:9.0")
+    implementation("org.ow2.asm:asm-commons:9.0")
+    implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
+}
