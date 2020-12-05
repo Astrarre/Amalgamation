@@ -21,8 +21,8 @@ plugins {
     `java-library`
 }
 
-val minecraft_version : String by project
-val forge_version : String by project
+val minecraft_version: String by project
+val forge_version: String by project
 
 tasks.processResources {
     inputs.properties("forge_version" to forge_version, "minecraft_version" to minecraft_version)

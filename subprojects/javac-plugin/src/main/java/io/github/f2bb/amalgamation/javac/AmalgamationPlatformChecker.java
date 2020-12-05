@@ -21,7 +21,9 @@ package io.github.f2bb.amalgamation.javac;
 
 import com.sun.tools.javac.tree.JCTree;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class AmalgamationPlatformChecker {
 
