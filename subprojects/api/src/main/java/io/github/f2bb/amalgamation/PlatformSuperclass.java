@@ -22,16 +22,15 @@ package io.github.f2bb.amalgamation;
 import java.lang.annotation.*;
 
 /**
- * Tells the Java compiler that the annotated member should be stripped if all of its platforms are not available
- * in the current build. This also serves as a marker so developers know on which platforms a member is present
+ * Tells the Java compiler that the specified superclass should be use when the platform constraints are met.
+ * Also serves as a marker so developers know on which platforms a superclass is used instead of another
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
-@Repeatable(Platforms.class)
-public @interface Platform {
+@Target(ElementType.TYPE)
+@Repeatable(PlatformSuperclasses.class)
+public @interface PlatformSuperclass {
 
-    /**
-     * @return The platforms on which the element is present
-     */
-    String[] value();
+    Class<?> value();
+
+    Platform platform();
 }

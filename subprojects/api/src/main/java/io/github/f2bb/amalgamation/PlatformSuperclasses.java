@@ -19,19 +19,17 @@
 
 package io.github.f2bb.amalgamation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Tells the Java compiler that the annotated member should be stripped if all of its platforms are not available
- * in the current build. This also serves as a marker so developers know on which platforms a member is present
+ * Repeatable container of {@link PlatformSuperclass}
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
-@Repeatable(Platforms.class)
-public @interface Platform {
+@Target(ElementType.TYPE)
+public @interface PlatformSuperclasses {
 
-    /**
-     * @return The platforms on which the element is present
-     */
-    String[] value();
+    PlatformSuperclass[] value();
 }
