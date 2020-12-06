@@ -31,5 +31,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface PlatformSuperclasses {
 
+    /**
+     * @return Superclasses to try. The superclass will be used if its entire platform entry is enabled
+     */
     PlatformSuperclass[] value();
 }

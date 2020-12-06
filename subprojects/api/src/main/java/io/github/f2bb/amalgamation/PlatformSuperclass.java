@@ -30,7 +30,13 @@ import java.lang.annotation.*;
 @Repeatable(PlatformSuperclasses.class)
 public @interface PlatformSuperclass {
 
+    /**
+     * @return The superclass to use
+     */
     Class<?> value();
 
+    /**
+     * @return The platform predicate
+     */
     Platform platform();
 }

@@ -31,5 +31,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE_USE})
 public @interface Platforms {
 
+    /**
+     * @return Platforms to check. The element will be enabled if one entire platform entry is enabled
+     */
     Platform[] value();
 }
