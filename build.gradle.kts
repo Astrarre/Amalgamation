@@ -1,6 +1,6 @@
 /*
  * Amalgamation
- * Copyright (C) 2020 IridisMC
+ * Copyright (C) 2020 Astrarre
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,9 @@ allprojects {
     group = "io.github.f2bb.amalgamation"
     version = "1.0.0-SNAPSHOT"
 }
+
+// Projects to configure standard publishing
+val publish = listOf("api", "gradle-plugin", "javac-plugin", "platform")
 
 subprojects {
     apply(plugin = "java")
@@ -54,31 +57,33 @@ subprojects {
         }
     }
 
-    tasks.withType<Javadoc> {
-        if (JavaVersion.current().isJava9Compatible) {
-            (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-        }
-    }
-
-    extensions.getByType<PublishingExtension>().apply {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                from(components["java"])
-
-                extensions.getByType<SigningExtension>().apply {
-                    if (signatory != null) {
-                        sign(this@create)
-                    }
-                }
+    if (publish.contains(name)) {
+        tasks.withType<Javadoc> {
+            if (JavaVersion.current().isJava9Compatible) {
+                (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
             }
         }
 
-        repositories {
-            maven {
-                val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
-                val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
-                name = "Project"
-                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+        extensions.getByType<PublishingExtension>().apply {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    from(components["java"])
+
+                    extensions.getByType<SigningExtension>().apply {
+                        if (signatory != null) {
+                            sign(this@create)
+                        }
+                    }
+                }
+            }
+
+            repositories {
+                maven {
+                    val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
+                    val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
+                    name = "Project"
+                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+                }
             }
         }
     }

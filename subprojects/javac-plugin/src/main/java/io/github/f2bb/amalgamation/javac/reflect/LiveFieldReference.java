@@ -1,6 +1,6 @@
 /*
  * Amalgamation
- * Copyright (C) 2020 IridisMC
+ * Copyright (C) 2020 Astrarre
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
