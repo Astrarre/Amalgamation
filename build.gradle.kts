@@ -39,6 +39,10 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    tasks.withType<AbstractArchiveTask> {
+        from(rootProject.file("LICENSE"))
+    }
+
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
 
