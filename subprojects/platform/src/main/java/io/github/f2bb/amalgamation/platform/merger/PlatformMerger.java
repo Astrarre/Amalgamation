@@ -19,74 +19,94 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import io.github.f2bb.amalgamation.platform.merger.nway.ClassMerger;
+import io.github.f2bb.amalgamation.platform.util.asm.desc.Desc;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
-
 public class PlatformMerger {
 
-    private static final String PLATFORM_DESCRIPTOR = "Lio/github/f2bb/amalgamation/Platform;";
+	private static final String PLATFORM_DESCRIPTOR = "Lio/github/f2bb/amalgamation/Platform;";
 
-    public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
-        Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
+	public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
+		Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
 
-        for (PlatformData platform : platforms) {
-            platform.files.forEach((name, bytes) -> {
-                if (name.endsWith(".class") && mergeContext.shouldAttemptMerge(platform, name)) {
-                    mergeClasses.computeIfAbsent(name, $ -> new HashSet<>()).add(platform);
-                } else {
-                    mergeContext.acceptResource(platform, name, bytes);
-                }
-            });
-        }
+		for (PlatformData platform : platforms) {
+			platform.files.forEach((name, bytes) -> {
+				if (name.endsWith(".class") && mergeContext.shouldAttemptMerge(platform, name)) {
+					mergeClasses.computeIfAbsent(name, $ -> new HashSet<>()).add(platform);
+				} else {
+					mergeContext.acceptResource(platform, name, bytes);
+				}
+			});
+		}
 
-        mergeClasses(mergeContext, mergeClasses, platforms);
-    }
+		mergeClasses(mergeContext, mergeClasses, platforms);
+	}
 
-    private static void mergeClasses(MergeContext mergeContext, Map<String, Set<PlatformData>> classes, Set<PlatformData> availablePlatforms) {
-        // TODO: I'm going to say the n-way
+	private static void mergeClasses(MergeContext mergeContext,
+			Map<String, Set<PlatformData>> classes,
+			Set<PlatformData> availablePlatforms) {
+		// TODO: I'm going to say the n-way
 
-        classes.forEach((file, platforms) -> {
-            if (platforms.size() == 1) {
-                // This class is only present on one platform
-                // This is really a specialisation and optimisation of what would be the n-way algorithm
+		classes.forEach((file, platforms) -> {
+			if (platforms.size() == 1) {
+				// This class is only present on one platform
+				// This is really a specialisation and optimisation of what would be the n-way algorithm
 
-                PlatformData platform = platforms.iterator().next();
-                ClassNode node = read(platform.files.get(file));
+				PlatformData platform = platforms.iterator().next();
+				ClassNode node = read(platform.files.get(file));
 
-                if (availablePlatforms.size() > 1) {
-                    // There are multiple platforms
-                    AnnotationNode annotation = new AnnotationNode(PLATFORM_DESCRIPTOR);
-                    mark(annotation.visitArray("value"), platform);
+				if (availablePlatforms.size() > 1) {
+					// There are multiple platforms
+					AnnotationNode annotation = new AnnotationNode(PLATFORM_DESCRIPTOR);
+					mark(annotation.visitArray("value"), platform);
 
-                    if (node.invisibleAnnotations == null) {
-                        node.invisibleAnnotations = new ArrayList<>();
-                    }
+					if (node.invisibleAnnotations == null) {
+						node.invisibleAnnotations = new ArrayList<>();
+					}
 
-                    node.invisibleAnnotations.add(annotation);
-                } else {
-                    // This is the only platform, just copy
-                }
+					node.invisibleAnnotations.add(annotation);
+				} else {
+					// This is the only platform, just copy
+				}
 
-                mergeContext.accept(node);
-            } else {
-                // TODO: I'm going to do the n-way (where 1 < n)
-            }
-        });
-    }
+				mergeContext.accept(node);
+			} else {
+				ClassNode empty = new ClassNode();
+				Map<PlatformData, ClassNode> data = new HashMap<>();
+				for (PlatformData platform : platforms) {
+					data.put(platform, read(platform.files.get(file)));
+				}
 
-    private static ClassNode read(byte[] bytes) {
-        ClassNode node = new ClassNode();
-        new ClassReader(bytes).accept(node, 0);
-        return node;
-    }
+				ClassMerger searcher = new ClassMerger(data);
 
-    private static void mark(AnnotationVisitor value, PlatformData platform) {
-        for (String s : platform.name) {
-            value.visit(null, s);
-        }
-    }
+				Map<Desc, List<PlatformData>> map = searcher.findMethods();
+				map.forEach((d, p) -> searcher.mergeMethods(empty, p, d));
+
+				// TODO: I'm going to do the n-way (where 1 < n)
+			}
+		});
+	}
+
+	private static ClassNode read(byte[] bytes) {
+		ClassNode node = new ClassNode();
+		new ClassReader(bytes).accept(node, 0);
+		return node;
+	}
+
+	private static void mark(AnnotationVisitor value, PlatformData platform) {
+		for (String s : platform.name) {
+			value.visit(null, s);
+		}
+	}
 }

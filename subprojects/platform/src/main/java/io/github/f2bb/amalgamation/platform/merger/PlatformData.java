@@ -24,11 +24,17 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import io.github.f2bb.amalgamation.Platform;
+import io.github.f2bb.amalgamation.platform.util.asm.desc.Desc;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
+
 /**
  * Information about the platform, such as its name(s) and files
  */
 public class PlatformData {
-
+    public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
     final Set<String> name;
     final Map<String, byte[]> files;
 
@@ -42,6 +48,19 @@ public class PlatformData {
         return "PlatformData{" +
                 "name=" + name +
                 '}';
+    }
+
+    public String postfix() {
+        return String.join("_", this.name);
+    }
+
+    public AnnotationNode createNode() {
+        AnnotationNode node = new AnnotationNode(PLATFORM_DESC);
+        AnnotationVisitor visitor = node.visitArray("value");
+        for (String s : this.name) {
+            visitor.visit("value", s);
+        }
+        return node;
     }
 
     public static PlatformData createFromArchive(Path archive, String... name) throws IOException {
@@ -63,4 +82,5 @@ public class PlatformData {
 
         return new PlatformData(new HashSet<>(Arrays.asList(name)), files);
     }
+
 }
