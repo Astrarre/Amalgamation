@@ -24,16 +24,13 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PlatformMerger {
 
     private static final String PLATFORM_DESCRIPTOR = "Lio/github/f2bb/amalgamation/Platform;";
 
-    private static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
+    public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
         Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
 
         for (PlatformData platform : platforms) {
@@ -64,6 +61,11 @@ public class PlatformMerger {
                     // There are multiple platforms
                     AnnotationNode annotation = new AnnotationNode(PLATFORM_DESCRIPTOR);
                     mark(annotation.visitArray("value"), platform);
+
+                    if (node.invisibleAnnotations == null) {
+                        node.invisibleAnnotations = new ArrayList<>();
+                    }
+
                     node.invisibleAnnotations.add(annotation);
                 } else {
                     // This is the only platform, just copy
