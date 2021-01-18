@@ -57,7 +57,7 @@ public class AmalgamationGradleExtension {
         platforms.add(platform);
     }
 
-    public File createMergedJar() throws IOException {
+    public FileCollection createMergedJar() throws IOException {
         Map<PlatformSpec, Set<File>> inputs = platforms.stream()
                 .collect(Collectors.toMap(Function.identity(), platform -> project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getFiles()));
         File outputFile;
@@ -79,7 +79,7 @@ public class AmalgamationGradleExtension {
             outputFile = project.file(".gradle/amalgamation/" + hash + ".jar");
 
             if (outputFile.exists()) {
-                return outputFile;
+                return project.files(outputFile);
             }
         }
 
@@ -102,9 +102,12 @@ public class AmalgamationGradleExtension {
             put("create", "true");
         }})) {
             PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
+        } catch (Throwable throwable) {
+            Files.deleteIfExists(outputFile.toPath());
+            throw throwable;
         }
 
-        return outputFile;
+        return project.files(outputFile);
     }
 
     public FileCollection getClasspath(Collection<String> platforms) {
