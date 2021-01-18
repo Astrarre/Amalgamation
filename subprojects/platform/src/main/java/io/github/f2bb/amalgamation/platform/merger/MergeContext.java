@@ -21,7 +21,17 @@ package io.github.f2bb.amalgamation.platform.merger;
 
 import org.objectweb.asm.tree.ClassNode;
 
+import java.util.concurrent.Executor;
+
+/**
+ * All methods in this class must be thread safe
+ */
 public interface MergeContext {
+
+    /**
+     * @return The executor to use for merging. Can dramatically increase speed
+     */
+    Executor getExecutor();
 
     /**
      * Accepts a merged class

@@ -25,13 +25,26 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class SimpleMergeContext implements MergeContext {
 
     private final Path root;
+    private final Executor executor;
 
     public SimpleMergeContext(Path root) {
+        this(root, Executors.newWorkStealingPool());
+    }
+
+    public SimpleMergeContext(Path root, Executor executor) {
         this.root = root;
+        this.executor = executor;
+    }
+
+    @Override
+    public Executor getExecutor() {
+        return executor;
     }
 
     @Override
