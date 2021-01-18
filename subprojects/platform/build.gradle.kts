@@ -34,13 +34,16 @@ tasks.processResources {
 
 repositories {
     mavenCentral()
+
     maven {
+        name = "MinecraftForge"
         url = uri("https://files.minecraftforge.net/maven")
     }
 }
 
 dependencies {
-    implementation("org.ow2.asm:asm:9.0")
+    api("org.ow2.asm:asm:9.0")
+    api("org.ow2.asm:asm-tree:9.0")
     implementation("org.ow2.asm:asm-commons:9.0")
     implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
     implementation(project(":api"))

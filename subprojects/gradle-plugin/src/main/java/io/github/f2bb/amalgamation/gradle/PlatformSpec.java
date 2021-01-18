@@ -24,14 +24,14 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import java.util.*;
 
-public class Platform {
+public class PlatformSpec {
 
     private final DependencyHandler handler;
 
     final Set<String> names = new HashSet<>();
     final List<Dependency> dependencies = new ArrayList<>();
 
-    public Platform(DependencyHandler handler) {
+    public PlatformSpec(DependencyHandler handler) {
         this.handler = handler;
     }
 

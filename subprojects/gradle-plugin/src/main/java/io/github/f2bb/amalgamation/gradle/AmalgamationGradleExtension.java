@@ -19,6 +19,11 @@
 
 package io.github.f2bb.amalgamation.gradle;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
+import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
+import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -27,32 +32,86 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class AmalgamationGradleExtension {
 
     private final Project project;
-    private final List<Platform> platforms;
+    private final List<PlatformSpec> platforms;
 
     public AmalgamationGradleExtension(Project project) {
         this.project = project;
         this.platforms = new ArrayList<>();
     }
 
-    public void generic(Action<Platform> action) {
-        Platform platform = new Platform(project.getDependencies());
+    public void generic(Action<PlatformSpec> action) {
+        PlatformSpec platform = new PlatformSpec(project.getDependencies());
         action.execute(platform);
         platforms.add(platform);
+    }
+
+    public File createMergedJar() throws IOException {
+        Map<PlatformSpec, Set<File>> inputs = platforms.stream()
+                .collect(Collectors.toMap(Function.identity(), platform -> project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getFiles()));
+        File outputFile;
+
+        {
+            Hasher hasher = Hashing.sha512().newHasher();
+
+            for (Map.Entry<PlatformSpec, Set<File>> entry : inputs.entrySet()) {
+                for (String name : entry.getKey().names) {
+                    hasher.putUnencodedChars(name);
+                }
+
+                for (File file : entry.getValue()) {
+                    hasher.putBytes(Files.readAllBytes(file.toPath()));
+                }
+            }
+
+            String hash = hasher.hash().toString();
+            outputFile = project.file(".gradle/amalgamation/" + hash + ".jar");
+
+            if (outputFile.exists()) {
+                return outputFile;
+            }
+        }
+
+        Set<PlatformData> platforms = new HashSet<>();
+
+        for (PlatformSpec platform : this.platforms) {
+            Map<String, byte[]> files = new HashMap<>();
+
+            for (File file : inputs.get(platform)) {
+                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), null)) {
+                    files.putAll(PlatformData.readFiles(fileSystem.getPath("/")));
+                }
+            }
+
+            platforms.add(new PlatformData(platform.names, files));
+        }
+
+        Files.createDirectories(outputFile.toPath().getParent());
+        try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toURI()), new HashMap<String, Object>() {{
+            put("create", "true");
+        }})) {
+            PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
+        }
+
+        return outputFile;
     }
 
     public FileCollection getClasspath(Collection<String> platforms) {
         return project.files(project.provider(() -> {
             ConfigurableFileCollection files = project.files();
 
-            for (Platform platform : this.platforms) {
+            for (PlatformSpec platform : this.platforms) {
                 if (platforms.containsAll(platform.names)) {
                     files.from(project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getAsFileTree());
                 }

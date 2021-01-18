@@ -19,16 +19,15 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
+import io.github.f2bb.amalgamation.Platform;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-
-import io.github.f2bb.amalgamation.Platform;
-import io.github.f2bb.amalgamation.platform.util.asm.desc.Desc;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
 
 /**
  * Information about the platform, such as its name(s) and files
@@ -70,6 +69,10 @@ public class PlatformData {
     }
 
     public static PlatformData create(Path root, String... name) throws IOException {
+        return new PlatformData(new HashSet<>(Arrays.asList(name)), readFiles(root));
+    }
+
+    public static Map<String, byte[]> readFiles(Path root) throws IOException {
         Map<String, byte[]> files = new HashMap<>();
 
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -80,7 +83,6 @@ public class PlatformData {
             }
         });
 
-        return new PlatformData(new HashSet<>(Arrays.asList(name)), files);
+        return files;
     }
-
 }
