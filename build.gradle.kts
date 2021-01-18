@@ -27,8 +27,6 @@ allprojects {
 }
 
 // Projects to configure standard publishing
-val publish = listOf("api", "gradle-plugin", "javac-plugin", "platform")
-
 subprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
@@ -57,33 +55,31 @@ subprojects {
         }
     }
 
-    if (publish.contains(name)) {
-        tasks.withType<Javadoc> {
-            if (JavaVersion.current().isJava9Compatible) {
-                (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-            }
+    tasks.withType<Javadoc> {
+        if (JavaVersion.current().isJava9Compatible) {
+            (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
         }
+    }
 
-        extensions.getByType<PublishingExtension>().apply {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    from(components["java"])
+    extensions.getByType<PublishingExtension>().apply {
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
 
-                    extensions.getByType<SigningExtension>().apply {
-                        if (signatory != null) {
-                            sign(this@create)
-                        }
+                extensions.getByType<SigningExtension>().apply {
+                    if (signatory != null) {
+                        sign(this@create)
                     }
                 }
             }
+        }
 
-            repositories {
-                maven {
-                    val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
-                    val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
-                    name = "Project"
-                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                }
+        repositories {
+            maven {
+                val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
+                val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
+                name = "Project"
+                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
             }
         }
     }

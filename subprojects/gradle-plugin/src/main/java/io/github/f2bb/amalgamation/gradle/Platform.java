@@ -17,12 +17,33 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.f2bb.amalgamation.gradle;
 
-include("api")
-include("gradle-plugin")
-include("platform")
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+import java.util.*;
+
+public class Platform {
+
+    private final DependencyHandler handler;
+
+    final Set<String> names = new HashSet<>();
+    final List<Dependency> dependencies = new ArrayList<>();
+
+    public Platform(DependencyHandler handler) {
+        this.handler = handler;
+    }
+
+    public boolean matches(Collection<String> platforms) {
+        return platforms.containsAll(names);
+    }
+
+    public void name(String name) {
+        names.add(name);
+    }
+
+    public void add(Object dependencyNotation) {
+        dependencies.add(handler.create(dependencyNotation));
+    }
 }
