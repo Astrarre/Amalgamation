@@ -66,7 +66,7 @@ public class AmalgamationGradleExtension {
             Hasher hasher = Hashing.sha512().newHasher();
 
             for (Map.Entry<PlatformSpec, Set<File>> entry : inputs.entrySet()) {
-                for (String name : entry.getKey().names) {
+                for (String name : entry.getKey().name) {
                     hasher.putUnencodedChars(name);
                 }
 
@@ -94,7 +94,7 @@ public class AmalgamationGradleExtension {
                 }
             }
 
-            platforms.add(new PlatformData(platform.names, files));
+            platforms.add(new PlatformData(platform.name, files));
         }
 
         Files.createDirectories(outputFile.toPath().getParent());
@@ -112,7 +112,7 @@ public class AmalgamationGradleExtension {
             ConfigurableFileCollection files = project.files();
 
             for (PlatformSpec platform : this.platforms) {
-                if (platforms.containsAll(platform.names)) {
+                if (platforms.containsAll(platform.name)) {
                     files.from(project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getAsFileTree());
                 }
             }

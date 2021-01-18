@@ -28,7 +28,7 @@ public class PlatformSpec {
 
     private final DependencyHandler handler;
 
-    final Set<String> names = new HashSet<>();
+    final Set<String> name = new HashSet<>();
     final List<Dependency> dependencies = new ArrayList<>();
 
     public PlatformSpec(DependencyHandler handler) {
@@ -36,11 +36,11 @@ public class PlatformSpec {
     }
 
     public boolean matches(Collection<String> platforms) {
-        return platforms.containsAll(names);
+        return platforms.containsAll(name);
     }
 
     public void name(String name) {
-        names.add(name);
+        this.name.add(name);
     }
 
     public void add(Object dependencyNotation) {
