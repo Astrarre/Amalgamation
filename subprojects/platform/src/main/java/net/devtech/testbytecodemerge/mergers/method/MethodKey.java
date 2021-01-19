@@ -143,7 +143,6 @@ public class MethodKey {
 			TableSwitchInsnNode at = (TableSwitchInsnNode) a, bt = (TableSwitchInsnNode) b;
 			return compareLabels(at.dflt, bt.dflt) && at.labels.size() == bt.labels.size() && at.max == bt.max && at.min == bt.min;
 		}
-		System.out.println("awdwdbyhuawdhbuyawbyuwabuydawbuydawbuyawdbuydwaubydb");
 		throw new UnsupportedOperationException(a.getClass() + " " + a.getType());
 	}
 

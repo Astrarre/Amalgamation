@@ -88,5 +88,7 @@ public class SpigotObfuscator {
         public String getName() {
             return this.remapper.mapType(this.className);
         }
+
+        // todo lambda remapping
     }
 }

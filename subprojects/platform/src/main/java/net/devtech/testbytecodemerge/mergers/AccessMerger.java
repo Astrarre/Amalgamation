@@ -44,7 +44,7 @@ public class AccessMerger implements @Platform ({"fabric"}) Merger {
 			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
 		}
 
-		int widest = getAccess(accessFlags);
+		int widest = getWidest(accessFlags);
 		accessFlags.remove(widest);
 		node.access = widest;
 
@@ -118,7 +118,7 @@ public class AccessMerger implements @Platform ({"fabric"}) Merger {
 		return node;
 	}
 
-	public static int getAccess(Map<Integer, List<ClassInfo>> accessFlags) {
+	public static int getWidest(Map<Integer, List<ClassInfo>> accessFlags) {
 		int widest = 0;
 		for (int access : accessFlags.keySet()) {
 			if (Modifier.isPublic(access)) {
