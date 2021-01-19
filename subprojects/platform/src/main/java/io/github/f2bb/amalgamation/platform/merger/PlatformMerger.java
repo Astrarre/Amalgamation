@@ -19,8 +19,8 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
-import io.github.f2bb.amalgamation.platform.merger.nway.ClassMerger;
-import io.github.f2bb.amalgamation.platform.util.asm.desc.Desc;
+import net.devtech.testbytecodemerge.BytecodeMerger;
+import net.devtech.testbytecodemerge.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -80,18 +80,15 @@ public class PlatformMerger {
 
                 mergeContext.accept(node);
             } else {
-                ClassNode empty = new ClassNode();
-                Map<PlatformData, ClassNode> data = new HashMap<>();
+                List<ClassInfo> infos = new ArrayList<>();
+
                 for (PlatformData platform : platforms) {
-                    data.put(platform, read(platform.files.get(file)));
+                    infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
                 }
 
-                ClassMerger searcher = new ClassMerger(data);
-
-                Map<Desc, List<PlatformData>> map = searcher.findMethods();
-                map.forEach((d, p) -> searcher.mergeMethods(empty, p, d));
-
-                // TODO: I'm going to do the n-way (where 1 < n)
+                ClassNode merged = new ClassNode();
+                BytecodeMerger.MERGER.merge(merged, infos);
+                mergeContext.accept(merged);
             }
         }, mergeContext.getExecutor())));
 
