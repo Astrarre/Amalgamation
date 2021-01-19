@@ -26,6 +26,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface Merger extends Opcodes {
+	// decompile or source-level merging
+	//
 	void merge(ClassNode node, List<ClassInfo> infos);
 
 	default Merger andThen(Merger merger) {

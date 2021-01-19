@@ -49,8 +49,8 @@ public class SuperclassMerger implements Merger {
 			}
 		}
 
-		if (mostCommon == null) {
-			throw new IllegalStateException("no classes!");
+		if (mostCommon == null && count == 0) {
+			throw new IllegalStateException("no classes! " + supers);
 		}
 
 		node.superName = mostCommon;
