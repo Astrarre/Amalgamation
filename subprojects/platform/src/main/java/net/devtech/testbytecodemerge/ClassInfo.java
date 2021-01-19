@@ -1,6 +1,6 @@
 package net.devtech.testbytecodemerge;
 
-import net.devtech.testbytecodemerge.annotation.Platform;
+import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;

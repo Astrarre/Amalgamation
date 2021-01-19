@@ -1,9 +1,9 @@
-package net.devtech.testbytecodemerge.annotation;
+package io.github.f2bb.amalgamation;
 
 /**
- * a platform specific interface
+ * a platform-specific super class
  */
-public @interface Interface {
+public @interface Parent {
 	/**
 	 * @return this class's super class on the specified platform
 	 */

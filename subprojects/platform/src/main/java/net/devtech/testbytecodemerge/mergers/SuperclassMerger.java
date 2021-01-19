@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.devtech.testbytecodemerge.ClassInfo;
-import net.devtech.testbytecodemerge.annotation.Parent;
+import io.github.f2bb.amalgamation.Parent;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;

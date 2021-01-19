@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import net.devtech.testbytecodemerge.ClassInfo;
-import net.devtech.testbytecodemerge.annotation.Access;
-import net.devtech.testbytecodemerge.annotation.Platform;
+import io.github.f2bb.amalgamation.Access;
+import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;

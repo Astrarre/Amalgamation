@@ -1,4 +1,4 @@
-package net.devtech.testbytecodemerge.annotation;
+package io.github.f2bb.amalgamation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
