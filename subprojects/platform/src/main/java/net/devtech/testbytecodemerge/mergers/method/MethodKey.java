@@ -104,7 +104,7 @@ public class MethodKey {
 			if (aN.labels.size() != bN.labels.size()) {
 				return false;
 			}
-			
+
 			// todo proper label comparison
 
 			return compareLabels(aN.dflt, bN.dflt) && aN.keys.equals(bN.keys);

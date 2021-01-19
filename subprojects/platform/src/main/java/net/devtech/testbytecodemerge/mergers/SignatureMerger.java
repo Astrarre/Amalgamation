@@ -48,11 +48,15 @@ public class SignatureMerger extends SignatureWriter implements Merger {
 			special = true;
 		}
 
-		if (writer.superClassSign.contains("<")) {
-			special = true;
+		if (writer.superClassSign != null) {
+			if (writer.superClassSign.contains("<")) {
+				special = true;
+			}
+			typeParams.append(writer.superClassSign);
+		} else {
+			typeParams.append("Ljava/lang/Object;");
 		}
 
-		typeParams.append(writer.superClassSign);
 
 		for (String s : writer.interfaceSign) {
 			if (s.contains("<")) {
@@ -64,6 +68,21 @@ public class SignatureMerger extends SignatureWriter implements Merger {
 		if (special) {
 			node.signature = typeParams.toString();
 		}
+	}
+
+	@Override
+	public SignatureVisitor visitSuperclass() {
+		return new SignatureWriter() {
+			@Override
+			public void visitEnd() {
+				super.visitEnd();
+				String str = this.toString();
+				if (str.startsWith("L" + SignatureMerger.this.root.superName)) {
+					// this'll get overriden multiple times if there are type parameters, that's ok
+					SignatureMerger.this.superClassSign = str;
+				}
+			}
+		};
 	}
 
 	@Override
@@ -79,21 +98,6 @@ public class SignatureMerger extends SignatureWriter implements Merger {
 			public void visitEnd() {
 				super.visitEnd();
 				SignatureMerger.this.interfaceStack = this.toString();
-			}
-		};
-	}
-
-	@Override
-	public SignatureVisitor visitSuperclass() {
-		return new SignatureWriter() {
-			@Override
-			public void visitEnd() {
-				super.visitEnd();
-				String str = this.toString();
-				if (str.startsWith("L" + SignatureMerger.this.root.superName)) {
-					// this'll get overriden multiple times if there are type parameters, that's ok
-					SignatureMerger.this.superClassSign = str;
-				}
 			}
 		};
 	}
