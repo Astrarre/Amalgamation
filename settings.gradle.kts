@@ -22,7 +22,6 @@ rootProject.name = "amalgamation"
 include("api")
 include("gradle-plugin")
 include("platform")
-include("source-tools")
 
 for (project in rootProject.children) {
     project.projectDir = file("subprojects/${project.name}")
