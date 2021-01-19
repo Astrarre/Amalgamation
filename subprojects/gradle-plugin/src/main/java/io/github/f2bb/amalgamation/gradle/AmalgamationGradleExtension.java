@@ -78,7 +78,7 @@ public class AmalgamationGradleExtension {
             String hash = hasher.hash().toString();
             outputFile = project.file(".gradle/amalgamation/" + hash + ".jar");
 
-            if (outputFile.exists()) {
+            if (!project.getGradle().getStartParameter().isRefreshDependencies() && outputFile.exists()) {
                 return project.files(outputFile);
             }
         }
