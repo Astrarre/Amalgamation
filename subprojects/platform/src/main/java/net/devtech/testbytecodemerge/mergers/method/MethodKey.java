@@ -113,7 +113,7 @@ public class MethodKey {
 			return aN.dims == bN.dims && aN.desc.equals(bN.desc);
 		} else if (a instanceof FrameNode) {
 			FrameNode aN = (FrameNode) a, bN = (FrameNode) b;
-			return aN.type == bN.type && Objects.equals(aN.local, bN.local) && aN.stack.equals(bN.stack);
+			return aN.type == bN.type && Objects.equals(aN.local, bN.local) && Objects.equals(aN.stack, bN.stack);
 		} else if (a instanceof LineNumberNode) {
 			// kindof irrelavent
 			return true;
