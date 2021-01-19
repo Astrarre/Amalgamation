@@ -19,10 +19,12 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
+import io.github.f2bb.amalgamation.Platform;
 import net.devtech.testbytecodemerge.BytecodeMerger;
 import net.devtech.testbytecodemerge.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -32,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 
 public class PlatformMerger {
 
-    private static final String PLATFORM_DESCRIPTOR = "Lio/github/f2bb/amalgamation/Platform;";
+    private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
     public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
         Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
