@@ -17,13 +17,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+plugins {
+    `java-library`
+}
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("source-tools")
+repositories {
+    mavenCentral()
+}
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+dependencies {
+    api("com.github.javaparser", "javaparser-core", "3.18.0")
+
+    implementation(project(":api"))
 }

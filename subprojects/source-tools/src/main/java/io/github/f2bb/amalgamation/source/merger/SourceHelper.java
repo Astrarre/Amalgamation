@@ -1,6 +1,6 @@
 /*
  * Amalgamation
- * Copyright (C) 2021 Astrarre
+ * Copyright (C) 2020 Astrarre
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,13 +17,20 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.f2bb.amalgamation.source.merger;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("source-tools")
+import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.expr.Name;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+public interface SourceHelper {
+
+    Name addImport(TypeDeclaration<?> typeDeclaration, Class<?> type);
+
+    default Bound bind(TypeDeclaration<?> typeDeclaration) {
+        return type -> SourceHelper.this.addImport(typeDeclaration, type);
+    }
+
+    interface Bound {
+        Name addImport(Class<?> type);
+    }
 }

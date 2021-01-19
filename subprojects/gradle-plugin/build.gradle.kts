@@ -32,6 +32,7 @@ repositories {
 
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
+
     implementation(project(":platform"))
     implementation("com.google.guava", "guava", "30.1-jre")
 }
