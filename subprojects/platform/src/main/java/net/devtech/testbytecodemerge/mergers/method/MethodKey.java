@@ -41,6 +41,7 @@ import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
@@ -138,7 +139,11 @@ public class MethodKey {
 		} else if (a instanceof LineNumberNode) {
 			// kindof irrelavent
 			return true;
+		} else if(a instanceof TableSwitchInsnNode) {
+			TableSwitchInsnNode at = (TableSwitchInsnNode) a, bt = (TableSwitchInsnNode) b;
+			return compareLabels(at.dflt, bt.dflt) && at.labels.size() == bt.labels.size() && at.max == bt.max && at.min == bt.min;
 		}
+		System.out.println("awdwdbyhuawdhbuyawbyuwabuydawbuydawbuyawdbuydwaubydb");
 		throw new UnsupportedOperationException(a.getClass() + " " + a.getType());
 	}
 
