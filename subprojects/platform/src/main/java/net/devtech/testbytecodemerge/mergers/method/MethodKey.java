@@ -101,18 +101,11 @@ public class MethodKey {
 			return aN.incr == bN.incr && aN.var == bN.var;
 		} else if (a instanceof LookupSwitchInsnNode) {
 			LookupSwitchInsnNode aN = (LookupSwitchInsnNode) a, bN = (LookupSwitchInsnNode) b;
-			Comparator<Label> labelComp = Comparator.comparingInt(Label::getOffset);
 			if (aN.labels.size() != bN.labels.size()) {
 				return false;
 			}
-
-			List<Label> als = aN.labels.stream().map(LabelNode::getLabel).sorted(labelComp).collect(Collectors.toList());
-			List<Label> bls = bN.labels.stream().map(LabelNode::getLabel).sorted(labelComp).collect(Collectors.toList());
-			for (int i = 0; i < als.size(); i++) {
-				if (als.get(i).getOffset() != bls.get(i).getOffset()) {
-					return false;
-				}
-			}
+			
+			// todo proper label comparison
 
 			return compareLabels(aN.dflt, bN.dflt) && aN.keys.equals(bN.keys);
 		} else if (a instanceof MultiANewArrayInsnNode) {
@@ -120,7 +113,7 @@ public class MethodKey {
 			return aN.dims == bN.dims && aN.desc.equals(bN.desc);
 		} else if (a instanceof FrameNode) {
 			FrameNode aN = (FrameNode) a, bN = (FrameNode) b;
-			return aN.type == bN.type && aN.local.equals(bN.local) && aN.stack.equals(bN.stack);
+			return aN.type == bN.type && Objects.equals(aN.local, bN.local) && aN.stack.equals(bN.stack);
 		} else if (a instanceof LineNumberNode) {
 			// kindof irrelavent
 			return true;
