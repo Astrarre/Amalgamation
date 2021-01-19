@@ -1,6 +1,6 @@
 /*
  * Amalgamation
- * Copyright (C) 2020 Astrarre
+ * Copyright (C) 2021 Astrarre
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
