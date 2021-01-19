@@ -91,6 +91,8 @@ public class MethodKey {
 	public static boolean isEqual(AbstractInsnNode a, AbstractInsnNode b) {
 		if (a.getOpcode() != b.getOpcode()) {
 			return false;
+		} else if(a.getClass() != b.getClass()) {
+			return false;
 		} else if (a instanceof InsnNode) {
 			return true;
 		} else if (a instanceof IntInsnNode) {
