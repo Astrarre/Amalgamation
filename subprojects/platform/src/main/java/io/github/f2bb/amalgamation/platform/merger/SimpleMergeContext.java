@@ -54,8 +54,13 @@ public class SimpleMergeContext implements MergeContext {
 
         try {
             Path path = root.resolve(node.name + ".class");
-            Files.createDirectories(path.getParent());
-            Files.write(path, writer.toByteArray());
+
+            if (!Files.exists(path)) {
+                Files.createDirectories(path.getParent());
+                Files.write(path, writer.toByteArray());
+            } else {
+                // TODO: Warn about dupe files
+            }
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
@@ -65,8 +70,13 @@ public class SimpleMergeContext implements MergeContext {
     public void acceptResource(PlatformData platform, String name, byte[] bytes) {
         try {
             Path path = root.resolve(name);
-            Files.createDirectories(path.getParent());
-            Files.write(path, bytes);
+
+            if (!Files.exists(path)) {
+                Files.createDirectories(path.getParent());
+                Files.write(path, bytes);
+            } else {
+                // TODO: Warn about dupe files
+            }
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
