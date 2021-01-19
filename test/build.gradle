@@ -1,0 +1,81 @@
+/*
+ * Amalgamation
+ * Copyright (C) 2020 Astrarre
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+
+        maven {
+            name = "MinecraftForge"
+            url = uri("https://files.minecraftforge.net/maven")
+        }
+    }
+
+    dependencies {
+        classpath 'io.github.f2bb.amalgamation:gradle-plugin'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'io.github.f2bb.amalgamation'
+
+repositories {
+    mavenCentral()
+}
+
+amalgamation {
+    generic {
+        name 'gson-2.8.5'
+        add 'com.google.code.gson:gson:2.8.5'
+    }
+
+    generic {
+        name 'gson-2.8.6'
+        add 'com.google.code.gson:gson:2.8.6'
+    }
+}
+
+dependencies {
+    implementation(amalgamation.createMergedJar())
+}
+
+task runGson286(type: JavaExec) {
+    classpath = amalgamation.getClasspath(['gson-2.8.6']) + amalgamation.transform(compileJava, ['gson-2.8.5'])
+    main = 'me.ramidzkh.app.Main'
+}
+
+task runGson287(type: JavaExec) {
+    classpath = amalgamation.getClasspath(['gson-2.8.6']) + amalgamation.transform(compileJava, ['gson-2.8.6'])
+    main = 'me.ramidzkh.app.Main'
+}
+
+task jar_Gson286(type: Jar) {
+    archiveFileName.set('test-gson-2.8.5.jar')
+    from(amalgamation.transform(compileJava, ['gson-2.8.5']))
+}
+
+task jar_Gson287(type: Jar) {
+    archiveFileName.set('test-gson-2.8.6.jar')
+    from(amalgamation.transform(compileJava, ['gson-2.8.6']))
+}
+
+build {
+    dependsOn(jar_Gson286)
+    dependsOn(jar_Gson287)
+}
