@@ -23,6 +23,7 @@ import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.util.ConfigureUtil;
 
 public class MinecraftAmalgamationGradleExtension {
@@ -34,46 +35,100 @@ public class MinecraftAmalgamationGradleExtension {
         this.project = project;
     }
 
+    /**
+     * @return The mapping dependency
+     */
     public Dependency getMappings() {
         return mappings;
     }
 
+    /**
+     * Sets the mappings dependency to use
+     *
+     * @param mappings The mappings to use
+     */
     public void setMappings(Dependency mappings) {
         this.mappings = mappings;
     }
 
+    /**
+     * Sets the mappings dependency to use
+     *
+     * @param dependencyNotation The mappings to use. See {@link DependencyHandler#create(Object)}
+     */
     public void mappings(Object dependencyNotation) {
         setMappings(project.getDependencies().create(dependencyNotation));
     }
 
+    /**
+     * Adds a Forge based platform
+     *
+     * @param minecraftVersion The Minecraft version
+     * @param dependency       The Forge dependency
+     * @param configureClosure Closure to configure this platform
+     */
     public void forge(String minecraftVersion, Object dependency, Closure configureClosure) {
         forgeAction(minecraftVersion, dependency, spec -> {
             ConfigureUtil.configure(configureClosure, spec);
         });
     }
 
+    /**
+     * Adds a Forge based platform
+     *
+     * @param minecraftVersion The Minecraft version
+     * @param dependency       The Forge dependency
+     * @param configureAction  Action to configure this platform
+     */
     public void forgeAction(String minecraftVersion, Object dependency, Action<MinecraftPlatformSpec> configureAction) {
     }
 
+    /**
+     * Adds a Fabric based platform
+     *
+     * @param minecraftVersion The Minecraft version
+     * @param configureClosure Closure to configure this platform
+     */
     public void fabric(String minecraftVersion, Closure configureClosure) {
         fabricAction(minecraftVersion, spec -> {
             ConfigureUtil.configure(configureClosure, spec);
         });
     }
 
+    /**
+     * Adds a Fabric based platform
+     *
+     * @param minecraftVersion The Minecraft version
+     * @param configureAction  Action to configure this platform
+     */
     public void fabricAction(String minecraftVersion, Action<MinecraftPlatformSpec> configureAction) {
     }
 
+    /**
+     * Adds a generic platform
+     *
+     * @param configureClosure Closure to configure this platform
+     */
     public void generic(Closure configureClosure) {
         genericAction(spec -> {
             ConfigureUtil.configure(configureClosure, spec);
         });
     }
 
+    /**
+     * Adds a generic platform
+     *
+     * @param configureAction Action to configure this platform
+     */
     public void genericAction(Action<GenericPlatformSpec> configureAction) {
-
     }
 
-    public void install() {
+    /**
+     * Freezes this extension and creates the merged dependency
+     *
+     * @return A dependency which can be added to a configuration
+     */
+    public Dependency create() {
+        return null;
     }
 }

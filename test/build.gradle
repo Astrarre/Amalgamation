@@ -64,6 +64,8 @@ amalgamation {
         name 'paper'
         add("netdwadadparmc:1.16awdawda.5-R0.1-SNAPSHOT")
     }
+}
 
-    install()
+dependencies {
+    compileOnly(amalgamation.create())
 }

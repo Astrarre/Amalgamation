@@ -40,7 +40,7 @@ dependencies {
 gradlePlugin {
     plugins {
         create("base") {
-            id = "io.github.f2bb.amalgamation"
+            id = "io.github.f2bb.amalgamation.base"
             implementationClass = "io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin"
         }
 
