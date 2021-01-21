@@ -20,16 +20,27 @@
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
 import groovy.lang.Closure;
+import io.github.f2bb.amalgamation.gradle.minecraft.impl.AmalgamationImpl;
+import io.github.f2bb.amalgamation.gradle.minecraft.impl.Fabric;
+import io.github.f2bb.amalgamation.gradle.minecraft.impl.Forge;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.util.ConfigureUtil;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class MinecraftAmalgamationGradleExtension {
 
     private final Project project;
     private Dependency mappings;
+
+    private final Set<Forge> forgeSpecs = new HashSet<>();
+    private final Set<Fabric> fabricSpecs = new HashSet<>();
+    private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
+    private Dependency myDependency;
 
     public MinecraftAmalgamationGradleExtension(Project project) {
         this.project = project;
@@ -81,6 +92,14 @@ public class MinecraftAmalgamationGradleExtension {
      * @param configureAction  Action to configure this platform
      */
     public void forgeAction(String minecraftVersion, Object dependency, Action<MinecraftPlatformSpec> configureAction) {
+        assertMutable();
+
+        MinecraftPlatformSpec forge = new MinecraftPlatformSpec(project);
+        forge.name("forge");
+        forge.name(minecraftVersion);
+        configureAction.execute(forge);
+
+        forgeSpecs.add(new Forge(minecraftVersion, project.getDependencies().create(dependency), forge));
     }
 
     /**
@@ -102,6 +121,14 @@ public class MinecraftAmalgamationGradleExtension {
      * @param configureAction  Action to configure this platform
      */
     public void fabricAction(String minecraftVersion, Action<MinecraftPlatformSpec> configureAction) {
+        assertMutable();
+
+        MinecraftPlatformSpec fabric = new MinecraftPlatformSpec(project);
+        fabric.name("fabric");
+        fabric.name(minecraftVersion);
+        configureAction.execute(fabric);
+
+        fabricSpecs.add(new Fabric(minecraftVersion, fabric));
     }
 
     /**
@@ -121,6 +148,20 @@ public class MinecraftAmalgamationGradleExtension {
      * @param configureAction Action to configure this platform
      */
     public void genericAction(Action<GenericPlatformSpec> configureAction) {
+        assertMutable();
+
+        GenericPlatformSpec spec = new GenericPlatformSpec(project);
+        configureAction.execute(spec);
+
+        if (spec.getNames().isEmpty()) {
+            throw new IllegalStateException("No names were given to this platform");
+        }
+
+        if (spec.getDependencies().isEmpty()) {
+            throw new IllegalStateException("No dependencies were given to this platform");
+        }
+
+        genericSpecs.add(spec);
     }
 
     /**
@@ -129,6 +170,17 @@ public class MinecraftAmalgamationGradleExtension {
      * @return A dependency which can be added to a configuration
      */
     public Dependency create() {
-        return null;
+        if (myDependency != null) {
+            return myDependency;
+        }
+
+        return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
     }
+
+    private void assertMutable() {
+        if (myDependency != null) {
+            throw new IllegalStateException("Dependency matrix is frozen");
+        }
+    }
+
 }
