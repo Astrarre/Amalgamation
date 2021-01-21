@@ -29,6 +29,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.util.ConfigureUtil;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -168,8 +169,9 @@ public class MinecraftAmalgamationGradleExtension {
      * Freezes this extension and creates the merged dependency
      *
      * @return A dependency which can be added to a configuration
+     * @throws IOException If an I/O exception occurs
      */
-    public Dependency create() {
+    public Dependency create() throws IOException {
         if (myDependency != null) {
             return myDependency;
         }

@@ -35,6 +35,7 @@ dependencies {
 
     implementation(project(":platform"))
     implementation("com.google.guava", "guava", "30.1-jre")
+    implementation("net.minecraftforge", "artifactural", "2.0.3")
 }
 
 gradlePlugin {

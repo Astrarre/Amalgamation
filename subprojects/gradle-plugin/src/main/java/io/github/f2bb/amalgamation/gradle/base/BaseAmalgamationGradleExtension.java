@@ -27,6 +27,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.util.ConfigureUtil;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -79,12 +80,13 @@ public class BaseAmalgamationGradleExtension {
      * Freezes this extension and creates the merged dependency
      *
      * @return A dependency which can be added to a configuration
+     * @throws IOException If an I/O exception occurs
      */
-    public Dependency create() {
+    public Dependency create() throws IOException {
         if (myDependency != null) {
             return myDependency;
         }
 
-        return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, genericSpecs);
+        return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, null, new HashSet<>(), new HashSet<>(), genericSpecs);
     }
 }
