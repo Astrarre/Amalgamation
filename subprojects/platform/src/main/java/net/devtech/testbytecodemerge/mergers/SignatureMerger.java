@@ -46,34 +46,36 @@ public class SignatureMerger extends SignatureWriter implements Merger {
 
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {
-		// todo actually implement
 		SignatureMerger writer = new SignatureMerger(node);
 		for (ClassInfo info : infos) {
 			String sign = info.node.signature;
 			if (sign != null) {
+				// todo implement formal type parameters
 				SignatureReader reader = new SignatureReader(sign);
 				reader.accept(writer);
+				break;
 			}
 		}
 
-		// todo implement formal type parameters
+
 		// basically you map from identifier::signature -> list<classinfo>
 		// and then take the 'gcd' of the bounds
 		// if a type parameter is added, include it, we need to find out how to strip them though...
 		boolean special = false;
-		StringBuilder typeParams = new StringBuilder(writer.toString());
+		StringBuilder sign = new StringBuilder(writer.toString());
 
-		if (typeParams.length() != 0) {
+		if (sign.length() != 0) {
 			special = true;
+			sign.append('>');
 		}
 
 		if (writer.superClassSign != null) {
 			if (writer.superClassSign.contains("<")) {
 				special = true;
 			}
-			typeParams.append(writer.superClassSign);
+			sign.append(writer.superClassSign);
 		} else {
-			typeParams.append("Ljava/lang/Object;");
+			sign.append("Ljava/lang/Object;");
 		}
 
 
@@ -81,11 +83,11 @@ public class SignatureMerger extends SignatureWriter implements Merger {
 			if (s.contains("<")) {
 				special = true;
 			}
-			typeParams.append(s);
+			sign.append(s);
 		}
 
 		if (special) {
-			node.signature = typeParams.toString();
+			node.signature = sign.toString();
 		}
 	}
 
