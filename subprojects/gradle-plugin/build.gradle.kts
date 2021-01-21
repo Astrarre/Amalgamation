@@ -39,9 +39,14 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        create("amalgamation") {
+        create("base") {
             id = "io.github.f2bb.amalgamation"
-            implementationClass = "io.github.f2bb.amalgamation.gradle.AmalgamationGradlePlugin"
+            implementationClass = "io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin"
+        }
+
+        create("minecraft") {
+            id = "io.github.f2bb.amalgamation.minecraft"
+            implementationClass = "io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamationGradlePlugin"
         }
     }
 }

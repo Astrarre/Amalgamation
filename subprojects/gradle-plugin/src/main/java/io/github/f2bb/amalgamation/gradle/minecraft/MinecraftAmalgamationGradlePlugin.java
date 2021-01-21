@@ -17,16 +17,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle;
+package io.github.f2bb.amalgamation.gradle.minecraft;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class AmalgamationGradlePlugin implements Plugin<Project> {
+public class MinecraftAmalgamationGradlePlugin implements Plugin<Project> {
 
     @Override
     public void apply(@NotNull Project target) {
-        target.getExtensions().create("amalgamation", AmalgamationGradleExtension.class, target);
+        target.getExtensions().create("amalgamation", MinecraftAmalgamationGradleExtension.class, target);
     }
 }

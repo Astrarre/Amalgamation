@@ -17,20 +17,33 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.source.merger;
+package io.github.f2bb.amalgamation.gradle.base;
 
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.expr.Name;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 
-public interface SourceHelper {
+import java.util.*;
 
-    Name addImport(TypeDeclaration<?> typeDeclaration, Class<?> type);
+public class PlatformSpec {
 
-    default Bound bind(TypeDeclaration<?> typeDeclaration) {
-        return type -> SourceHelper.this.addImport(typeDeclaration, type);
+    private final DependencyHandler handler;
+
+    final Set<String> name = new HashSet<>();
+    final List<Dependency> dependencies = new ArrayList<>();
+
+    public PlatformSpec(DependencyHandler handler) {
+        this.handler = handler;
     }
 
-    interface Bound {
-        Name addImport(Class<?> type);
+    public boolean matches(Collection<String> platforms) {
+        return platforms.containsAll(name);
+    }
+
+    public void name(String name) {
+        this.name.add(name);
+    }
+
+    public void add(Object dependencyNotation) {
+        dependencies.add(handler.create(dependencyNotation));
     }
 }

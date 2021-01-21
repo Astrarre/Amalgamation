@@ -17,20 +17,27 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.source.merger;
+package io.github.f2bb.amalgamation.gradle.minecraft;
 
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.expr.Name;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
 
-public interface SourceHelper {
+import java.util.HashSet;
+import java.util.Set;
 
-    Name addImport(TypeDeclaration<?> typeDeclaration, Class<?> type);
+public class MinecraftPlatformSpec extends GenericPlatformSpec {
 
-    default Bound bind(TypeDeclaration<?> typeDeclaration) {
-        return type -> SourceHelper.this.addImport(typeDeclaration, type);
+    private final Set<Dependency> remap = new HashSet<>();
+
+    public MinecraftPlatformSpec(Project project) {
+        super(project);
     }
 
-    interface Bound {
-        Name addImport(Class<?> type);
+    public void remap(Object dependencyNotation) {
+        remap.add(project.getDependencies().create(dependencyNotation));
+    }
+
+    public Set<Dependency> getRemap() {
+        return remap;
     }
 }

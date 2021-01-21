@@ -33,49 +33,37 @@ buildscript {
 }
 
 apply plugin: 'java'
-apply plugin: 'io.github.f2bb.amalgamation'
-
-repositories {
-    mavenCentral()
-}
+apply plugin: 'io.github.f2bb.amalgamation.minecraft'
 
 amalgamation {
-    generic {
-        name 'gson-2.8.5'
-        add 'com.google.code.gson:gson:2.8.5'
+    mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
+
+    // Assuming this is 1.16.4 forge
+    forge("1.16.4", "net.minecraftforge:forge:1.145432543.43") {
+        // names = ['forge', '1.16.4']
+    }
+
+    fabric("1.16.4") {
+        // names = ['fabric', '1.16.4']
+        remap("net.fabricmc:fabric-loader:0.11.0")
+        remap("net.fabricmc.fabric-api:fabric-api:0.26.3+build.idk this")
+    }
+
+    fabric("1.16.5") {
+        // names = ['fabric', '1.16.5']
+        remap("net.fabricmc:fabric-loader:0.11.0")
+        remap("net.fabricmc.fabric-api:fabric-api:0.27.3+build.idk this")
     }
 
     generic {
-        name 'gson-2.8.6'
-        add 'com.google.code.gson:gson:2.8.6'
+        name 'spigot'
+        add("net.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
     }
-}
 
-dependencies {
-    implementation(amalgamation.createMergedJar())
-}
+    generic {
+        name 'paper'
+        add("netdwadadparmc:1.16awdawda.5-R0.1-SNAPSHOT")
+    }
 
-task runGson286(type: JavaExec) {
-    classpath = amalgamation.getClasspath(['gson-2.8.6']) + amalgamation.transform(compileJava, ['gson-2.8.5'])
-    main = 'me.ramidzkh.app.Main'
-}
-
-task runGson287(type: JavaExec) {
-    classpath = amalgamation.getClasspath(['gson-2.8.6']) + amalgamation.transform(compileJava, ['gson-2.8.6'])
-    main = 'me.ramidzkh.app.Main'
-}
-
-task jar_Gson286(type: Jar) {
-    archiveFileName.set('test-gson-2.8.5.jar')
-    from(amalgamation.transform(compileJava, ['gson-2.8.5']))
-}
-
-task jar_Gson287(type: Jar) {
-    archiveFileName.set('test-gson-2.8.6.jar')
-    from(amalgamation.transform(compileJava, ['gson-2.8.6']))
-}
-
-build {
-    dependsOn(jar_Gson286)
-    dependsOn(jar_Gson287)
+    install()
 }

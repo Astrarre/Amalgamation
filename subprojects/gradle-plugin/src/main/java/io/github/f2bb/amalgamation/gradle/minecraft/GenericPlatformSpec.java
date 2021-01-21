@@ -17,33 +17,37 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle;
+package io.github.f2bb.amalgamation.gradle.minecraft;
 
+import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-public class PlatformSpec {
+public class GenericPlatformSpec {
 
-    private final DependencyHandler handler;
+    protected final Project project;
+    private final Set<String> names = new HashSet<>();
+    private final Set<Dependency> dependencies = new HashSet<>();
 
-    final Set<String> name = new HashSet<>();
-    final List<Dependency> dependencies = new ArrayList<>();
-
-    public PlatformSpec(DependencyHandler handler) {
-        this.handler = handler;
-    }
-
-    public boolean matches(Collection<String> platforms) {
-        return platforms.containsAll(name);
+    public GenericPlatformSpec(Project project) {
+        this.project = project;
     }
 
     public void name(String name) {
-        this.name.add(name);
+        names.add(name);
     }
 
     public void add(Object dependencyNotation) {
-        dependencies.add(handler.create(dependencyNotation));
+        dependencies.add(project.getDependencies().create(dependencyNotation));
+    }
+
+    public Set<String> getNames() {
+        return names;
+    }
+
+    public Set<Dependency> getDependencies() {
+        return dependencies;
     }
 }

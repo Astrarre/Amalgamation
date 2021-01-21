@@ -17,20 +17,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.source.merger;
+package io.github.f2bb.amalgamation.gradle.base;
 
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.expr.Name;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.jetbrains.annotations.NotNull;
 
-public interface SourceHelper {
+public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 
-    Name addImport(TypeDeclaration<?> typeDeclaration, Class<?> type);
-
-    default Bound bind(TypeDeclaration<?> typeDeclaration) {
-        return type -> SourceHelper.this.addImport(typeDeclaration, type);
-    }
-
-    interface Bound {
-        Name addImport(Class<?> type);
+    @Override
+    public void apply(@NotNull Project target) {
+        target.getExtensions().create("amalgamation", BaseAmalgamationGradleExtension.class, target);
     }
 }

@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle;
+package io.github.f2bb.amalgamation.gradle.base;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -41,12 +41,12 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class AmalgamationGradleExtension {
+public class BaseAmalgamationGradleExtension {
 
     private final Project project;
     private final List<PlatformSpec> platforms;
 
-    public AmalgamationGradleExtension(Project project) {
+    public BaseAmalgamationGradleExtension(Project project) {
         this.project = project;
         this.platforms = new ArrayList<>();
     }
