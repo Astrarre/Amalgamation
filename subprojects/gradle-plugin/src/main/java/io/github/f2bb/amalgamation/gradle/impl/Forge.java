@@ -17,28 +17,20 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft.impl;
+package io.github.f2bb.amalgamation.gradle.impl;
 
-import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
-import org.gradle.api.Project;
+import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.gradle.api.artifacts.Dependency;
 
-import java.io.File;
-import java.util.Set;
+public class Forge {
 
-public class AmalgamationImpl {
+    final String minecraftVersion;
+    final Dependency dependency;
+    final MinecraftPlatformSpec forge;
 
-    public static Dependency createDependencyFromMatrix(Project project, Dependency mappings, Set<Forge> forgeSpecs,
-                                                        Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) {
-        if (forgeSpecs.isEmpty() && fabricSpecs.isEmpty()) {
-            // TODO: Do the same as BaseAmalgamationGradleExtension#createMergedJar
-        }
-
-        // TODO: Work
-        return null;
-    }
-
-    private static Set<File> resolve(Project project, Dependency dependency) {
-        return project.getConfigurations().detachedConfiguration(dependency).resolve();
+    public Forge(String minecraftVersion, Dependency dependency, MinecraftPlatformSpec forge) {
+        this.minecraftVersion = minecraftVersion;
+        this.dependency = dependency;
+        this.forge = forge;
     }
 }

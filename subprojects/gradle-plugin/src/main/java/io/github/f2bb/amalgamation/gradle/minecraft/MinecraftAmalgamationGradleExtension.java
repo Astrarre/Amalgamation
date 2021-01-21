@@ -20,9 +20,9 @@
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
 import groovy.lang.Closure;
-import io.github.f2bb.amalgamation.gradle.minecraft.impl.AmalgamationImpl;
-import io.github.f2bb.amalgamation.gradle.minecraft.impl.Fabric;
-import io.github.f2bb.amalgamation.gradle.minecraft.impl.Forge;
+import io.github.f2bb.amalgamation.gradle.impl.AmalgamationImpl;
+import io.github.f2bb.amalgamation.gradle.impl.Fabric;
+import io.github.f2bb.amalgamation.gradle.impl.Forge;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -182,5 +182,4 @@ public class MinecraftAmalgamationGradleExtension {
             throw new IllegalStateException("Dependency matrix is frozen");
         }
     }
-
 }

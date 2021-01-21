@@ -19,131 +19,72 @@
 
 package io.github.f2bb.amalgamation.gradle.base;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
-import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
-import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
+import groovy.lang.Closure;
+import io.github.f2bb.amalgamation.gradle.impl.AmalgamationImpl;
+import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.FileTree;
+import org.gradle.util.ConfigureUtil;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 public class BaseAmalgamationGradleExtension {
 
     private final Project project;
-    private final List<PlatformSpec> platforms;
+    private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
+    private Dependency myDependency;
 
     public BaseAmalgamationGradleExtension(Project project) {
         this.project = project;
-        this.platforms = new ArrayList<>();
     }
 
-    public void generic(Action<PlatformSpec> action) {
-        PlatformSpec platform = new PlatformSpec(project.getDependencies());
-        action.execute(platform);
-        platforms.add(platform);
+    /**
+     * Adds a generic platform
+     *
+     * @param configureClosure Closure to configure this platform
+     */
+    public void generic(Closure configureClosure) {
+        genericAction(spec -> {
+            ConfigureUtil.configure(configureClosure, spec);
+        });
     }
 
-    public FileCollection createMergedJar() throws IOException {
-        Map<PlatformSpec, Set<File>> inputs = platforms.stream()
-                .collect(Collectors.toMap(Function.identity(), platform -> project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getFiles()));
-        File outputFile;
-
-        {
-            Hasher hasher = Hashing.sha512().newHasher();
-
-            for (Map.Entry<PlatformSpec, Set<File>> entry : inputs.entrySet()) {
-                for (String name : entry.getKey().name) {
-                    hasher.putUnencodedChars(name);
-                }
-
-                for (File file : entry.getValue()) {
-                    hasher.putBytes(Files.readAllBytes(file.toPath()));
-                }
-            }
-
-            String hash = hasher.hash().toString();
-            outputFile = project.file(".gradle/amalgamation/" + hash + ".jar");
-
-            if (!project.getGradle().getStartParameter().isRefreshDependencies() && outputFile.exists()) {
-                return project.files(outputFile);
-            }
+    /**
+     * Adds a generic platform
+     *
+     * @param configureAction Action to configure this platform
+     */
+    public void genericAction(Action<GenericPlatformSpec> configureAction) {
+        if (myDependency != null) {
+            throw new IllegalStateException("Dependency matrix is frozen");
         }
 
-        Set<PlatformData> platforms = new HashSet<>();
+        GenericPlatformSpec spec = new GenericPlatformSpec(project);
+        configureAction.execute(spec);
 
-        for (PlatformSpec platform : this.platforms) {
-            Map<String, byte[]> files = new HashMap<>();
-
-            for (File file : inputs.get(platform)) {
-                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), null)) {
-                    files.putAll(PlatformData.readFiles(fileSystem.getPath("/")));
-                }
-            }
-
-            platforms.add(new PlatformData(platform.name, files));
+        if (spec.getNames().isEmpty()) {
+            throw new IllegalStateException("No names were given to this platform");
         }
 
-        Files.createDirectories(outputFile.toPath().getParent());
-        try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toURI()), new HashMap<String, Object>() {{
-            put("create", "true");
-        }})) {
-            PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
-        } catch (Throwable throwable) {
-            Files.deleteIfExists(outputFile.toPath());
-            throw throwable;
+        if (spec.getDependencies().isEmpty()) {
+            throw new IllegalStateException("No dependencies were given to this platform");
         }
 
-        return project.files(outputFile);
+        genericSpecs.add(spec);
     }
 
-    public FileCollection getClasspath(Collection<String> platforms) {
-        return project.files(project.provider(() -> {
-            ConfigurableFileCollection files = project.files();
+    /**
+     * Freezes this extension and creates the merged dependency
+     *
+     * @return A dependency which can be added to a configuration
+     */
+    public Dependency create() {
+        if (myDependency != null) {
+            return myDependency;
+        }
 
-            for (PlatformSpec platform : this.platforms) {
-                if (platforms.containsAll(platform.name)) {
-                    files.from(project.getConfigurations().detachedConfiguration(platform.dependencies.toArray(new Dependency[0])).getAsFileTree());
-                }
-            }
-
-            return files;
-        }));
-    }
-
-    public FileCollection transform(Object input, Collection<String> platforms) {
-        return project.files(project.provider(() -> {
-            File root = project.getBuildDir().toPath().resolve("tmp").resolve("amalgamation").resolve(UUID.randomUUID().toString()).toFile();
-            ConfigurableFileCollection files = project.files();
-
-            FileTree tree = project.files(input).getAsFileTree();
-
-            tree.visit(details -> {
-                File target = details.getRelativePath().getFile(root);
-
-                if (details.getName().endsWith(".class")) {
-                    // TODO: Transform
-                    details.copyTo(target);
-                    System.out.println("Transform " + details.getRelativePath());
-                } else {
-                    details.copyTo(target);
-                }
-            });
-
-            return files;
-        }));
+        return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, genericSpecs);
     }
 }

@@ -17,20 +17,17 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft.impl;
+package io.github.f2bb.amalgamation.gradle.impl;
 
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
-import org.gradle.api.artifacts.Dependency;
 
-public class Forge {
+public class Fabric {
 
     final String minecraftVersion;
-    final Dependency dependency;
-    final MinecraftPlatformSpec forge;
+    final MinecraftPlatformSpec fabric;
 
-    public Forge(String minecraftVersion, Dependency dependency, MinecraftPlatformSpec forge) {
+    public Fabric(String minecraftVersion, MinecraftPlatformSpec fabric) {
         this.minecraftVersion = minecraftVersion;
-        this.dependency = dependency;
-        this.forge = forge;
+        this.fabric = fabric;
     }
 }
