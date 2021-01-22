@@ -20,11 +20,8 @@
 package io.github.f2bb.amalgamation.gradle.tasks;
 
 import io.github.f2bb.amalgamation.platform.splitter.Splitter;
-import org.gradle.api.Action;
-import org.gradle.api.file.FileCopyDetails;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
-import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -43,21 +40,7 @@ public class StripJar extends Jar {
     private final Set<String> platforms = new HashSet<>();
 
     public StripJar() {
-        getMainSpec().appendCachingSafeCopyAction(new MyAction());
-    }
-
-    public Set<String> getPlatforms() {
-        return platforms;
-    }
-
-    public void platform(Object platform) {
-        platforms.add(String.valueOf(platform));
-    }
-
-    private class MyAction implements Action<FileCopyDetails> {
-
-        @Override
-        public void execute(@NotNull FileCopyDetails fileCopyDetails) {
+        getMainSpec().appendCachingSafeCopyAction(fileCopyDetails -> {
             ClassNode node = new ClassNode();
 
             try {
@@ -76,6 +59,14 @@ public class StripJar extends Jar {
                 properties.put("data", new InputStreamReader(new ByteArrayInputStream(writer.toByteArray())));
                 fileCopyDetails.filter(properties, ByteReading.class);
             }
-        }
+        });
+    }
+
+    public Set<String> getPlatforms() {
+        return platforms;
+    }
+
+    public void platform(Object platform) {
+        platforms.add(String.valueOf(platform));
     }
 }

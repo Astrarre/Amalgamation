@@ -158,7 +158,9 @@ public class AmalgamationImpl {
 
     private static Path getJarCoordinates(Project project, String hash) throws IOException {
         Path root = project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation");
-        Path folder = root.resolve(GROUP).resolve(hash).resolve(VERSION);
+        Path folder = Files.createDirectories(root.resolve(GROUP).resolve(hash).resolve(VERSION));
+        Path jar = folder.resolve(hash + "-" + VERSION + ".jar");
+        Path pom = folder.resolve(hash + "-" + VERSION + ".pom");
 
         blessed:
         {
@@ -175,16 +177,10 @@ public class AmalgamationImpl {
         }
 
 
-        Files.createDirectories(folder);
-
-        {
-            Path pom = folder.resolve(hash + "-" + VERSION + ".pom");
-
-            if (!Files.exists(pom)) {
-                Files.write(pom, MERGED_POM.replace("{hash}", hash).getBytes(StandardCharsets.UTF_8));
-            }
+        if (!Files.exists(pom)) {
+            Files.write(pom, MERGED_POM.replace("{hash}", hash).getBytes(StandardCharsets.UTF_8));
         }
 
-        return folder.resolve(hash + "-" + VERSION + ".jar");
+        return jar;
     }
 }

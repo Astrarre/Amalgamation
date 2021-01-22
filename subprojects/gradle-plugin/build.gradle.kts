@@ -25,6 +25,11 @@ repositories {
     mavenCentral()
 
     maven {
+        name = "FabricMC"
+        url = uri("https://maven.fabricmc.net/")
+    }
+
+    maven {
         name = "MinecraftForge"
         url = uri("https://files.minecraftforge.net/maven")
     }
@@ -35,6 +40,8 @@ dependencies {
 
     implementation(project(":platform"))
     implementation("com.google.guava", "guava", "30.1-jre")
+    implementation("org.cadixdev", "lorenz", "0.5.6")
+    implementation("net.fabricmc", "tiny-remapper", "0.3.2")
 }
 
 gradlePlugin {
