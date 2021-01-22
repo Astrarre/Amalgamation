@@ -52,6 +52,11 @@ public class FieldMerger implements Merger {
 			});
 
 			if (this.hasField(node, key)) {
+				if (clone.visibleAnnotations == null) {
+					clone.visibleAnnotations = new ArrayList<>();
+				}
+
+				clone.visibleAnnotations.add(ClassInfo.displace(clone.name));
 				clone.name += "_" + counter[0]++;
 			}
 

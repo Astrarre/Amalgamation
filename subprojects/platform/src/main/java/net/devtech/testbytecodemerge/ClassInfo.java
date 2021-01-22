@@ -19,6 +19,7 @@
 
 package net.devtech.testbytecodemerge;
 
+import io.github.f2bb.amalgamation.Displace;
 import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
@@ -49,5 +50,13 @@ public class ClassInfo {
 
 	public String[] getNames() {
 		return this.names;
+	}
+
+	private static final String DISPLACE = Type.getDescriptor(Displace.class);
+	public static AnnotationNode displace(String name) {
+		AnnotationNode node = new AnnotationNode(DISPLACE);
+		node.visit("value", name);
+		node.visitEnd();
+		return node;
 	}
 }

@@ -44,12 +44,16 @@ public class MethodMerger implements Merger {
 				0,
 				0
 		};
-		
+
 		toMerge.forEach((key, info) -> {
 			MethodNode clone = new MethodNode(key.node.access, key.node.name, key.node.desc, key.node.signature, null);
 			key.node.accept(clone);
 			if (this.hasMethod(node, key)) {
 				String name = clone.name;
+				if (clone.visibleAnnotations == null) {
+					clone.visibleAnnotations = new ArrayList<>();
+				}
+				clone.visibleAnnotations.add(ClassInfo.displace(clone.name));
 				if (name.equals("<init>")) {
 					clone.name = "newInstance_" + counter[1]++;
 				} else if (name.equals("<clinit>")) {
@@ -57,6 +61,7 @@ public class MethodMerger implements Merger {
 				} else {
 					clone.name += "_" + counter[0]++;
 				}
+
 			}
 
 			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && infos.size() != info.size()) {
