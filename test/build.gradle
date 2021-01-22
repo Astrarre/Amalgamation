@@ -17,6 +17,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import io.github.f2bb.amalgamation.gradle.tasks.StripJar
+
 buildscript {
     repositories {
         mavenCentral()
@@ -35,37 +37,49 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'io.github.f2bb.amalgamation.minecraft'
 
+repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { url 'https://files.minecraftforge.net/maven/' }
+}
+
 amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
 
     // Assuming this is 1.16.4 forge
-    forge("1.16.4", "net.minecraftforge:forge:1.145432543.43") {
+    forge("1.16.4", "net.minecraftforge:forge:1.16.4-35.1.37") {
         // names = ['forge', '1.16.4']
     }
 
     fabric("1.16.4") {
         // names = ['fabric', '1.16.4']
         remap("net.fabricmc:fabric-loader:0.11.0")
-        remap("net.fabricmc.fabric-api:fabric-api:0.26.3+build.idk this")
+        remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
     }
 
     fabric("1.16.5") {
         // names = ['fabric', '1.16.5']
         remap("net.fabricmc:fabric-loader:0.11.0")
-        remap("net.fabricmc.fabric-api:fabric-api:0.27.3+build.idk this")
+        remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
     }
 
-    generic {
-        name 'spigot'
-        add("net.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
-    }
+    // generic {
+    //     name 'spigot'
+    //     add("net.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
+    // }
 
-    generic {
-        name 'paper'
-        add("netdwadadparmc:1.16awdawda.5-R0.1-SNAPSHOT")
-    }
+    // generic {
+    //     name 'paper'
+    //     add("netdwadadparmc:1.16awdawda.5-R0.1-SNAPSHOT")
+    // }
 }
 
 dependencies {
     compileOnly(amalgamation.create())
+}
+
+task epic(type: StripJar) {
+    from jar
+    platform 'forge'
+    platform '1.16.4'
+    platform 'guava-27'
 }

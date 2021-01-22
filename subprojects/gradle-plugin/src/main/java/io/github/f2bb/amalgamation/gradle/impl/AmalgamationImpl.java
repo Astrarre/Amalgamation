@@ -32,6 +32,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,8 +43,7 @@ import java.util.Set;
 
 public class AmalgamationImpl {
 
-    public static Dependency createDependencyFromMatrix(Project project, Dependency mappings, Set<Forge> forgeSpecs,
-                                                        Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+    public static Dependency createDependencyFromMatrix(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         String hash = hash(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
         SimpleArtifactIdentifier identifier = new SimpleArtifactIdentifier("merged.amalgamation", hash, "1.0.0", null, null);
         getAdapter(project).put(identifier, StreamableArtifact.ofStreamable(identifier, ArtifactType.BINARY, () -> processInternal(project, mappings, forgeSpecs, fabricSpecs, genericSpecs)));
@@ -53,7 +53,7 @@ public class AmalgamationImpl {
 
     private static InputStream processInternal(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) {
         // todo: hahayes actually work
-        return null;
+        return new ByteArrayInputStream(new byte[0]);
     }
 
     private static String hash(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {

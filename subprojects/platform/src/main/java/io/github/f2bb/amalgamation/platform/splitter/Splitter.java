@@ -26,7 +26,7 @@ import java.util.Set;
 
 public interface Splitter {
 
-    Splitter DEFAULT = null;
+    Splitter DEFAULT = (in, available) -> false;
 
     /**
      * Strips the class by filtering out unavailable platforms
@@ -54,7 +54,7 @@ public interface Splitter {
      *
      * @param in        The class which will be stripped. This will be mutated
      * @param available The platforms which are available
-     * @return The stripped class
+     * @return Was the class entirely stripped
      */
-    ClassNode strip(ClassNode in, Set<String> available);
+    boolean strip(ClassNode in, Set<String> available);
 }
