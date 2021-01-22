@@ -23,7 +23,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
 import net.minecraftforge.artifactural.api.artifact.Artifact;
-import net.minecraftforge.artifactural.api.artifact.ArtifactIdentifier;
 import net.minecraftforge.artifactural.api.artifact.ArtifactType;
 import net.minecraftforge.artifactural.base.artifact.SimpleArtifactIdentifier;
 import net.minecraftforge.artifactural.base.artifact.StreamableArtifact;
@@ -32,32 +31,46 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.Set;
 
 public class AmalgamationImpl {
 
+    private static final String MERGED_POM =
+            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
+            "    <modelVersion>4.0.0</modelVersion>\n" +
+            "    <groupId>amalgamation-merged</groupId>\n" +
+            "    <artifactId>{hash}</artifactId>\n" +
+            "    <version>1.0.0</version>\n" +
+            "</project>\n";
+
     public static Dependency createDependencyFromMatrix(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         String hash = hash(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
-        SimpleArtifactIdentifier identifier = new SimpleArtifactIdentifier("merged.amalgamation", hash, "1.0.0", null, null);
-        getAdapter(project).put(identifier, StreamableArtifact.ofStreamable(identifier, ArtifactType.BINARY, () -> processInternal(project, mappings, forgeSpecs, fabricSpecs, genericSpecs)));
+        SimpleArtifactIdentifier jarIdentifier = new SimpleArtifactIdentifier("amalgamation-merged", hash, "1.0.0", null, "jar");
+        SimpleArtifactIdentifier pomIdentifier = new SimpleArtifactIdentifier("amalgamation-merged", hash, "1.0.0", null, "pom");
 
-        return project.getDependencies().create(identifier.toString());
+        Map<String, Artifact> adapter = getAdapter(project);
+        adapter.put(jarIdentifier.toString(), StreamableArtifact.ofStreamable(jarIdentifier, ArtifactType.BINARY, () -> processInternal(project, mappings, forgeSpecs, fabricSpecs, genericSpecs)));
+        adapter.put(pomIdentifier.toString(), StreamableArtifact.ofBytes(pomIdentifier, ArtifactType.OTHER, MERGED_POM.replace("{hash}", hash).getBytes(StandardCharsets.UTF_8)));
+
+        return project.getDependencies().create(jarIdentifier.toString());
     }
 
     private static InputStream processInternal(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) {
-        // todo: hahayes actually work
-        return new ByteArrayInputStream(new byte[0]);
+        // TODO: Make it actually work
+        return null;
     }
 
     private static String hash(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
-        Hasher hasher = Hashing.sha512().newHasher();
+        Hasher hasher = Hashing.sha256().newHasher();
 
         if (mappings != null) {
             put(hasher, resolve(project, mappings));
@@ -108,7 +121,7 @@ public class AmalgamationImpl {
         return project.getConfigurations().detachedConfiguration(dependency).resolve();
     }
 
-    private static Map<ArtifactIdentifier, Artifact> getAdapter(Project project) {
+    private static Map<String, Artifact> getAdapter(Project project) {
         for (ArtifactRepository repository : project.getRepositories()) {
             if (repository instanceof GradleRepositoryAdapter) {
                 try {

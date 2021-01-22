@@ -23,21 +23,15 @@ import net.minecraftforge.artifactural.api.artifact.Artifact;
 import net.minecraftforge.artifactural.api.artifact.ArtifactIdentifier;
 import net.minecraftforge.artifactural.api.repository.Repository;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 class MapRepository implements Repository {
 
-    final Map<ArtifactIdentifier, Artifact> map = new HashMap<>();
+    final Map<String, Artifact> map = new HashMap<>();
 
     @Override
     public Artifact getArtifact(ArtifactIdentifier identifier) {
-        return map.getOrDefault(identifier, Artifact.none());
-    }
-
-    @Override
-    public File getMavenMetadata(String group, String name) {
-        return null;
+        return map.getOrDefault(identifier.toString(), Artifact.none());
     }
 }
