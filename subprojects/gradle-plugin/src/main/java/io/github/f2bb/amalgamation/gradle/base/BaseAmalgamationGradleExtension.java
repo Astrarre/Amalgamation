@@ -33,9 +33,9 @@ import java.util.*;
 
 public class BaseAmalgamationGradleExtension {
 
-    private final Project project;
-    private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
-    private Dependency myDependency;
+    protected final Project project;
+    protected final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
+    protected Dependency myDependency;
 
     public BaseAmalgamationGradleExtension(Project project) {
         this.project = project;
@@ -58,9 +58,7 @@ public class BaseAmalgamationGradleExtension {
      * @param configureAction Action to configure this platform
      */
     public void genericAction(Action<GenericPlatformSpec> configureAction) {
-        if (myDependency != null) {
-            throw new IllegalStateException("Dependency matrix is frozen");
-        }
+        assertMutable();
 
         GenericPlatformSpec spec = new GenericPlatformSpec(project);
         configureAction.execute(spec);
@@ -106,5 +104,11 @@ public class BaseAmalgamationGradleExtension {
         }
 
         return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
+    }
+
+    protected void assertMutable() {
+        if (myDependency != null) {
+            throw new IllegalStateException("Dependency matrix is frozen");
+        }
     }
 }

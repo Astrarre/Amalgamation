@@ -20,6 +20,7 @@
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
 import groovy.lang.Closure;
+import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradleExtension;
 import io.github.f2bb.amalgamation.gradle.impl.AmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.impl.Fabric;
 import io.github.f2bb.amalgamation.gradle.impl.Forge;
@@ -33,18 +34,15 @@ import org.gradle.util.ConfigureUtil;
 import java.io.IOException;
 import java.util.*;
 
-public class MinecraftAmalgamationGradleExtension {
+public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradleExtension {
 
-    private final Project project;
     private Dependency mappings;
 
     private final Set<Forge> forgeSpecs = new HashSet<>();
     private final Set<Fabric> fabricSpecs = new HashSet<>();
-    private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
-    private Dependency myDependency;
 
     public MinecraftAmalgamationGradleExtension(Project project) {
-        this.project = project;
+        super(project);
     }
 
     /**
@@ -133,39 +131,6 @@ public class MinecraftAmalgamationGradleExtension {
     }
 
     /**
-     * Adds a generic platform
-     *
-     * @param configureClosure Closure to configure this platform
-     */
-    public void generic(Closure configureClosure) {
-        genericAction(spec -> {
-            ConfigureUtil.configure(configureClosure, spec);
-        });
-    }
-
-    /**
-     * Adds a generic platform
-     *
-     * @param configureAction Action to configure this platform
-     */
-    public void genericAction(Action<GenericPlatformSpec> configureAction) {
-        assertMutable();
-
-        GenericPlatformSpec spec = new GenericPlatformSpec(project);
-        configureAction.execute(spec);
-
-        if (spec.getNames().isEmpty()) {
-            throw new IllegalStateException("No names were given to this platform");
-        }
-
-        if (spec.getDependencies().isEmpty()) {
-            throw new IllegalStateException("No dependencies were given to this platform");
-        }
-
-        genericSpecs.add(spec);
-    }
-
-    /**
      * Freezes this extension and creates the merged dependency
      *
      * @return A dependency which can be added to a configuration
@@ -209,11 +174,5 @@ public class MinecraftAmalgamationGradleExtension {
         }
 
         return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
-    }
-
-    private void assertMutable() {
-        if (myDependency != null) {
-            throw new IllegalStateException("Dependency matrix is frozen");
-        }
     }
 }
