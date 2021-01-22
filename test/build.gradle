@@ -35,6 +35,13 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'io.github.f2bb.amalgamation.minecraft'
 
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+}
+
 amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
 

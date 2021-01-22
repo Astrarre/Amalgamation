@@ -42,4 +42,12 @@ public class ClassInfo {
 		}
 		return node;
 	}
+
+	public ClassNode getNode() {
+		return this.node;
+	}
+
+	public String[] getNames() {
+		return this.names;
+	}
 }
