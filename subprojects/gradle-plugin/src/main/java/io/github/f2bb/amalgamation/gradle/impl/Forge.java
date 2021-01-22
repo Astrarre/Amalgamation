@@ -26,7 +26,7 @@ public class Forge {
 
     final String minecraftVersion;
     final Dependency dependency;
-    final MinecraftPlatformSpec forge;
+    public final MinecraftPlatformSpec forge;
 
     public Forge(String minecraftVersion, Dependency dependency, MinecraftPlatformSpec forge) {
         this.minecraftVersion = minecraftVersion;

@@ -27,11 +27,11 @@ import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.file.FileCollection;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class MinecraftAmalgamationGradleExtension {
 
@@ -177,6 +177,38 @@ public class MinecraftAmalgamationGradleExtension {
         }
 
         return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
+    }
+
+    /**
+     * Collects the dependencies which are available for the provided platforms
+     *
+     * @param platforms The platforms to filter by
+     * @return A collection of dependencies which crab
+     */
+    public FileCollection getClasspath(Collection<String> platforms) {
+        List<Dependency> dependencies = new ArrayList<>();
+
+        for (Forge spec : forgeSpecs) {
+            if (spec.forge.getNames().containsAll(platforms)) {
+                dependencies.addAll(spec.forge.getDependencies());
+                dependencies.addAll(spec.forge.getRemap());
+            }
+        }
+
+        for (Fabric spec : fabricSpecs) {
+            if (spec.fabric.getNames().containsAll(platforms)) {
+                dependencies.addAll(spec.fabric.getDependencies());
+                dependencies.addAll(spec.fabric.getRemap());
+            }
+        }
+
+        for (GenericPlatformSpec spec : genericSpecs) {
+            if (spec.getNames().containsAll(platforms)) {
+                dependencies.addAll(spec.getDependencies());
+            }
+        }
+
+        return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
     }
 
     private void assertMutable() {

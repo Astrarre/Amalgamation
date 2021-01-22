@@ -24,7 +24,7 @@ import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 public class Fabric {
 
     final String minecraftVersion;
-    final MinecraftPlatformSpec fabric;
+    public final MinecraftPlatformSpec fabric;
 
     public Fabric(String minecraftVersion, MinecraftPlatformSpec fabric) {
         this.minecraftVersion = minecraftVersion;

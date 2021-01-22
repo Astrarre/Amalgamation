@@ -25,11 +25,11 @@ import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.file.FileCollection;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class BaseAmalgamationGradleExtension {
 
@@ -88,5 +88,23 @@ public class BaseAmalgamationGradleExtension {
         }
 
         return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, null, new HashSet<>(), new HashSet<>(), genericSpecs);
+    }
+
+    /**
+     * Collects the dependencies which are available for the provided platforms
+     *
+     * @param platforms The platforms to filter by
+     * @return A collection of dependencies which crab
+     */
+    public FileCollection getClasspath(Collection<String> platforms) {
+        List<Dependency> dependencies = new ArrayList<>();
+
+        for (GenericPlatformSpec spec : genericSpecs) {
+            if (spec.getNames().containsAll(platforms)) {
+                dependencies.addAll(spec.getDependencies());
+            }
+        }
+
+        return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
     }
 }
