@@ -38,6 +38,7 @@ apply plugin: 'java'
 apply plugin: 'io.github.f2bb.amalgamation.minecraft'
 
 repositories {
+    jcenter()
     maven { url 'https://maven.fabricmc.net/' }
     maven { url 'https://files.minecraftforge.net/maven/' }
 }
@@ -46,31 +47,31 @@ amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
 
     // Assuming this is 1.16.4 forge
-    forge("1.16.4", "net.minecraftforge:forge:1.16.4-35.1.37") {
-        // names = ['forge', '1.16.4']
-    }
-
-    fabric("1.16.4") {
-        // names = ['fabric', '1.16.4']
-        remap("net.fabricmc:fabric-loader:0.11.0")
-        remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
-    }
-
-    fabric("1.16.5") {
-        // names = ['fabric', '1.16.5']
-        remap("net.fabricmc:fabric-loader:0.11.0")
-        remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
-    }
-
-    // generic {
-    //     name 'spigot'
-    //     add("net.spigotmc:spigot:1.16.5-R0.1-SNAPSHOT")
+    // forge("1.16.4", "net.minecraftforge:forge:1.16.4-35.1.37") {
+    //     // names = ['forge', '1.16.4']
     // }
 
-    // generic {
-    //     name 'paper'
-    //     add("netdwadadparmc:1.16awdawda.5-R0.1-SNAPSHOT")
+    // fabric("1.16.4") {
+    //     // names = ['fabric', '1.16.4']
+    //     remap("net.fabricmc:fabric-loader:0.11.0")
+    //     remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
     // }
+
+    // fabric("1.16.5") {
+    //     // names = ['fabric', '1.16.5']
+    //     remap("net.fabricmc:fabric-loader:0.11.0")
+    //     remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
+    // }
+
+    generic {
+        name 'guava-25.0'
+        add(group: 'com.google.guava', name: 'guava', version: '25.0-jre')
+    }
+
+    generic {
+        name 'guava-30.0'
+        add(group: 'com.google.guava', name: 'guava', version: '30.0-jre')
+    }
 }
 
 dependencies {

@@ -48,9 +48,7 @@ public class PlatformData {
                 '}';
     }
 
-    public static Map<String, byte[]> readFiles(Path root) throws IOException {
-        Map<String, byte[]> files = new HashMap<>();
-
+    public static void readFiles(Map<String, byte[]> files, Path root) throws IOException {
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -58,7 +56,5 @@ public class PlatformData {
                 return FileVisitResult.CONTINUE;
             }
         });
-
-        return files;
     }
 }

@@ -22,51 +22,86 @@ package io.github.f2bb.amalgamation.gradle.impl;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
-import net.minecraftforge.artifactural.api.artifact.Artifact;
-import net.minecraftforge.artifactural.api.artifact.ArtifactType;
-import net.minecraftforge.artifactural.base.artifact.SimpleArtifactIdentifier;
-import net.minecraftforge.artifactural.base.artifact.StreamableArtifact;
-import net.minecraftforge.artifactural.gradle.GradleRepositoryAdapter;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
+import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
+import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class AmalgamationImpl {
 
-    private static final String MERGED_POM =
+    private static final String GROUP = "amalgamation-merged";
+    private static final String VERSION = "1.0.0";
+    private static final String MERGED_POM = "" +
             "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
             "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">\n" +
             "    <modelVersion>4.0.0</modelVersion>\n" +
-            "    <groupId>amalgamation-merged</groupId>\n" +
+            "    <groupId>" + GROUP + "</groupId>\n" +
             "    <artifactId>{hash}</artifactId>\n" +
-            "    <version>1.0.0</version>\n" +
+            "    <version>" + VERSION + "</version>\n" +
             "</project>\n";
 
     public static Dependency createDependencyFromMatrix(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+        if (forgeSpecs.isEmpty() && fabricSpecs.isEmpty() && genericSpecs.isEmpty()) {
+            throw new IllegalStateException("No dependencies are present");
+        }
+
         String hash = hash(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
-        SimpleArtifactIdentifier jarIdentifier = new SimpleArtifactIdentifier("amalgamation-merged", hash, "1.0.0", null, "jar");
-        SimpleArtifactIdentifier pomIdentifier = new SimpleArtifactIdentifier("amalgamation-merged", hash, "1.0.0", null, "pom");
+        Path file = getJarCoordinates(project, hash);
 
-        Map<String, Artifact> adapter = getAdapter(project);
-        adapter.put(jarIdentifier.toString(), StreamableArtifact.ofStreamable(jarIdentifier, ArtifactType.BINARY, () -> processInternal(project, mappings, forgeSpecs, fabricSpecs, genericSpecs)));
-        adapter.put(pomIdentifier.toString(), StreamableArtifact.ofBytes(pomIdentifier, ArtifactType.OTHER, MERGED_POM.replace("{hash}", hash).getBytes(StandardCharsets.UTF_8)));
+        if (!Files.exists(file)) {
+            processInternal(file, project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
+        }
 
-        return project.getDependencies().create(jarIdentifier.toString());
+        return project.getDependencies().create(GROUP + ":" + hash + ":" + VERSION);
     }
 
-    private static InputStream processInternal(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) {
-        // TODO: Make it actually work
-        return null;
+    private static void processInternal(Path outputFile, Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+        if (fabricSpecs.isEmpty() && forgeSpecs.isEmpty()) {
+            Set<PlatformData> platforms = new HashSet<>();
+
+            for (GenericPlatformSpec spec : genericSpecs) {
+                Map<String, byte[]> files = new HashMap<>();
+
+                for (Dependency dependency : spec.getDependencies()) {
+                    for (File file : resolve(project, dependency)) {
+                        try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+                            PlatformData.readFiles(files, fileSystem.getPath("/"));
+                        }
+                    }
+                }
+
+                platforms.add(new PlatformData(spec.getNames(), files));
+            }
+
+            Files.createDirectories(outputFile.getParent());
+            try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toUri()), new HashMap<String, Object>() {{
+                put("create", "true");
+            }})) {
+                PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
+            } catch (Throwable throwable) {
+                Files.deleteIfExists(outputFile);
+                throw throwable;
+            }
+        } else {
+            // TODO: Make it actually work
+        }
     }
 
     private static String hash(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
@@ -121,24 +156,35 @@ public class AmalgamationImpl {
         return project.getConfigurations().detachedConfiguration(dependency).resolve();
     }
 
-    private static Map<String, Artifact> getAdapter(Project project) {
-        for (ArtifactRepository repository : project.getRepositories()) {
-            if (repository instanceof GradleRepositoryAdapter) {
-                try {
-                    Field field = GradleRepositoryAdapter.class.getDeclaredField("repository");
-                    field.setAccessible(true);
-                    Object o = field.get(repository);
+    private static Path getJarCoordinates(Project project, String hash) throws IOException {
+        Path root = project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation");
+        Path folder = root.resolve(GROUP).resolve(hash).resolve(VERSION);
 
-                    if (o instanceof MapRepository) {
-                        return ((MapRepository) o).map;
-                    }
-                } catch (ReflectiveOperationException ignored) {
+        blessed:
+        {
+            for (ArtifactRepository repository : project.getRepositories()) {
+                if (repository instanceof MavenArtifactRepository && ((MavenArtifactRepository) repository).getUrl().equals(root.toUri())) {
+                    break blessed;
                 }
+            }
+
+            project.getRepositories().maven(repository -> {
+                repository.setName("Amalgamation");
+                repository.setUrl(root.toUri());
+            });
+        }
+
+
+        Files.createDirectories(folder);
+
+        {
+            Path pom = folder.resolve(hash + "-" + VERSION + ".pom");
+
+            if (!Files.exists(pom)) {
+                Files.write(pom, MERGED_POM.replace("{hash}", hash).getBytes(StandardCharsets.UTF_8));
             }
         }
 
-        MapRepository repository = new MapRepository();
-        GradleRepositoryAdapter.add(project.getRepositories(), "amalgamation", new File(project.getRootDir(), ".gradle/amalgamation"), repository);
-        return repository.map;
+        return folder.resolve(hash + "-" + VERSION + ".jar");
     }
 }
