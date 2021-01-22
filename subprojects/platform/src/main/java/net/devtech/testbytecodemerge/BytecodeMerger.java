@@ -23,8 +23,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Logger;
 
 import net.devtech.testbytecodemerge.mergers.AccessMerger;
+import net.devtech.testbytecodemerge.mergers.InnerClassAttributeMerger;
 import net.devtech.testbytecodemerge.mergers.InterfaceMerger;
 import net.devtech.testbytecodemerge.mergers.Merger;
 import net.devtech.testbytecodemerge.mergers.SignatureMerger;
@@ -36,6 +40,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 public class BytecodeMerger {
+	public static final Logger LOGGER = Logger.getLogger("Merger");
 	public static final Merger MERGER;
 	static {
 		Merger merger = (node, infos) -> {
@@ -49,6 +54,7 @@ public class BytecodeMerger {
 		merger = merger.andThen(new SignatureMerger());
 		merger = merger.andThen(new MethodMerger());
 		merger = merger.andThen(new FieldMerger());
+		merger = merger.andThen(new InnerClassAttributeMerger());
 		MERGER = merger;
 	}
 
