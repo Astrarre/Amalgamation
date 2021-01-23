@@ -19,72 +19,76 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.field;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
+import java.util.*;
+
 public class FieldMerger implements Merger {
-	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
-		Map<FieldKey, List<ClassInfo>> toMerge = new HashMap<>();
-		for (ClassInfo info : infos) {
-			for (FieldNode method : info.node.fields) {
-				toMerge.computeIfAbsent(new FieldKey(method), c -> new ArrayList<>()).add(info);
-			}
-		}
 
-		int[] counter = {0};
-		toMerge.forEach((key, info) -> {
-			FieldNode clone = new FieldNode(key.node.access, key.node.name, key.node.desc, key.node.signature, null);
-			key.node.accept(new ClassVisitor(ASM9) {
-				@Override
-				public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-					return clone;
-				}
-			});
+    @Override
+    public void merge(ClassNode node, List<ClassInfo> infos) {
+        Map<FieldKey, List<ClassInfo>> toMerge = new HashMap<>();
+        for (ClassInfo info : infos) {
+            for (FieldNode method : info.node.fields) {
+                toMerge.computeIfAbsent(new FieldKey(method), c -> new ArrayList<>()).add(info);
+            }
+        }
 
-			if (this.hasField(node, key)) {
-				if (clone.visibleAnnotations == null) {
-					clone.visibleAnnotations = new ArrayList<>();
-				}
+        int[] counter = {0};
+        toMerge.forEach((key, info) -> {
+            FieldNode clone = new FieldNode(key.node.access, key.node.name, key.node.desc, key.node.signature, null);
+            key.node.accept(new ClassVisitor(ASM9) {
+                @Override
+                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                    return clone;
+                }
+            });
 
-				clone.visibleAnnotations.add(ClassInfo.displace(clone.name));
-				clone.name += "_" + counter[0]++;
-			}
+            if (this.hasField(node, key)) {
+                if (clone.visibleAnnotations == null) {
+                    clone.visibleAnnotations = new ArrayList<>();
+                }
 
-			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && infos.size() != info.size()) {
-				if (clone.visibleAnnotations == null) {
-					clone.visibleAnnotations = new ArrayList<>();
-				}
+                clone.visibleAnnotations.add(ClassInfo.displace(clone.name));
+                clone.name += "_" + counter[0]++;
+            }
 
-				for (ClassInfo classInfo : info) {
-					clone.visibleAnnotations.add(classInfo.createPlatformAnnotation());
-				}
-			}
+            if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && infos.size() != info.size()) {
+                if (clone.visibleAnnotations == null) {
+                    clone.visibleAnnotations = new ArrayList<>();
+                }
 
-			node.fields.add(clone);
-		});
-	}
+                for (ClassInfo classInfo : info) {
+                    clone.visibleAnnotations.add(classInfo.createPlatformAnnotation());
+                }
+            }
 
-	private boolean hasField(ClassNode node, FieldKey key) {
-		for (FieldNode method : node.fields) {
-			try {
-				if (method.name.equals(key.node.name) && method.desc.equals(key.node.desc)) {
-					return true;
-				}
-			} catch (NullPointerException e) {
-				System.out.println(method + " " + method.name + " " + method.desc);
-				System.out.println(key.node + " " + key.node.name + " " + key.node.desc);
-			}
-		}
-		return false;
-	}
+            node.fields.add(clone);
+        });
+    }
+
+    @Override
+    public boolean strip(ClassNode in, Set<String> available) {
+        return false;
+    }
+
+    private boolean hasField(ClassNode node, FieldKey key) {
+        for (FieldNode method : node.fields) {
+            try {
+                if (method.name.equals(key.node.name) && method.desc.equals(key.node.desc)) {
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                System.out.println(method + " " + method.name + " " + method.desc);
+                System.out.println(key.node + " " + key.node.name + " " + key.node.desc);
+            }
+        }
+
+        return false;
+    }
 }

@@ -20,7 +20,6 @@
 package io.github.f2bb.amalgamation.gradle.tasks;
 
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
-import io.github.f2bb.amalgamation.platform.splitter.Splitter;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
 import org.objectweb.asm.ClassReader;

@@ -19,40 +19,43 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.Interface;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.util.*;
+
 public class InterfaceMerger implements Merger {
-	public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
-	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
-		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
-		for (ClassInfo info : infos) {
-			for (String anInterface : info.node.interfaces) {
-				interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
-			}
-		}
+    public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
-		interfaces.forEach((s, i) -> {
-			node.interfaces.add(s);
-			if(i.size() == infos.size()) return;
+    @Override
+    public void merge(ClassNode node, List<ClassInfo> infos) {
+        Map<String, List<ClassInfo>> interfaces = new HashMap<>();
+        for (ClassInfo info : infos) {
+            for (String anInterface : info.node.interfaces) {
+                interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
+            }
+        }
 
-			AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
-			AnnotationVisitor visitor = n.visitArray("platform");
-			for (ClassInfo info : i) {
-				visitor.visit("platform", info.createPlatformAnnotation());
-			}
+        interfaces.forEach((s, i) -> {
+            node.interfaces.add(s);
+            if (i.size() == infos.size()) return;
 
-			n.visit("parent", Type.getObjectType(s));
-		});
-	}
+            AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
+            AnnotationVisitor visitor = n.visitArray("platform");
+            for (ClassInfo info : i) {
+                visitor.visit("platform", info.createPlatformAnnotation());
+            }
+
+            n.visit("parent", Type.getObjectType(s));
+        });
+    }
+
+    @Override
+    public boolean strip(ClassNode in, Set<String> available) {
+        return false;
+    }
 }

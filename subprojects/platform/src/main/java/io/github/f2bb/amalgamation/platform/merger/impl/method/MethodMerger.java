@@ -19,10 +19,7 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
@@ -30,6 +27,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class MethodMerger implements Merger {
+
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {
 		Map<MethodKey, List<ClassInfo>> toMerge = new HashMap<>();
@@ -76,6 +74,11 @@ public class MethodMerger implements Merger {
 
 			node.methods.add(clone);
 		});
+	}
+
+	@Override
+	public boolean strip(ClassNode in, Set<String> available) {
+		return false;
 	}
 
 	private boolean hasMethod(ClassNode node, MethodKey key) {
