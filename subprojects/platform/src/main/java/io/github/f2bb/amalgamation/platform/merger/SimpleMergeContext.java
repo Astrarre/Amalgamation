@@ -30,60 +30,60 @@ import java.util.concurrent.Executors;
 
 public class SimpleMergeContext implements MergeContext {
 
-    private final Path root;
-    private final Executor executor;
+	private final Path root;
+	private final Executor executor;
 
-    public SimpleMergeContext(Path root) {
-        this(root, Executors.newWorkStealingPool());
-    }
+	public SimpleMergeContext(Path root) {
+		this(root, Executors.newWorkStealingPool());
+	}
 
-    public SimpleMergeContext(Path root, Executor executor) {
-        this.root = root;
-        this.executor = executor;
-    }
+	public SimpleMergeContext(Path root, Executor executor) {
+		this.root = root;
+		this.executor = executor;
+	}
 
-    @Override
-    public Executor getExecutor() {
-        return executor;
-    }
+	@Override
+	public Executor getExecutor() {
+		return executor;
+	}
 
-    @Override
-    public void accept(ClassNode node) {
-        ClassWriter writer = new ClassWriter(0);
-        node.accept(writer);
+	@Override
+	public void accept(ClassNode node) {
+		ClassWriter writer = new ClassWriter(0);
+		node.accept(writer);
 
-        try {
-            Path path = root.resolve(node.name + ".class");
+		try {
+			Path path = root.resolve(node.name + ".class");
 
-            if (!Files.exists(path)) {
-                Files.createDirectories(path.getParent());
-                Files.write(path, writer.toByteArray());
-            } else {
-                // TODO: Warn about dupe files
-            }
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
-    }
+			if (!Files.exists(path)) {
+				Files.createDirectories(path.getParent());
+				Files.write(path, writer.toByteArray());
+			} else {
+				// TODO: Warn about dupe files
+			}
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
+		}
+	}
 
-    @Override
-    public void acceptResource(PlatformData platform, String name, byte[] bytes) {
-        try {
-            Path path = root.resolve(name);
+	@Override
+	public void acceptResource(PlatformData platform, String name, byte[] bytes) {
+		try {
+			Path path = root.resolve(name);
 
-            if (!Files.exists(path)) {
-                Files.createDirectories(path.getParent());
-                Files.write(path, bytes);
-            } else {
-                // TODO: Warn about dupe files
-            }
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
-    }
+			if (!Files.exists(path)) {
+				Files.createDirectories(path.getParent());
+				Files.write(path, bytes);
+			} else {
+				// TODO: Warn about dupe files
+			}
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
+		}
+	}
 
-    @Override
-    public boolean shouldAttemptMerge(PlatformData platform, String name) {
-        return true;
-    }
+	@Override
+	public boolean shouldAttemptMerge(PlatformData platform, String name) {
+		return true;
+	}
 }

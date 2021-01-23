@@ -34,82 +34,82 @@ import java.util.concurrent.ExecutionException;
 
 public class PlatformMerger {
 
-    private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
+	private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
-    public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
-        Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
+	public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
+		Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
 
-        for (PlatformData platform : platforms) {
-            platform.files.forEach((name, bytes) -> {
-                if (name.endsWith(".class") && mergeContext.shouldAttemptMerge(platform, name)) {
-                    mergeClasses.computeIfAbsent(name, $ -> new HashSet<>()).add(platform);
-                } else {
-                    mergeContext.acceptResource(platform, name, bytes);
-                }
-            });
-        }
+		for (PlatformData platform : platforms) {
+			platform.files.forEach((name, bytes) -> {
+				if (name.endsWith(".class") && mergeContext.shouldAttemptMerge(platform, name)) {
+					mergeClasses.computeIfAbsent(name, $ -> new HashSet<>()).add(platform);
+				} else {
+					mergeContext.acceptResource(platform, name, bytes);
+				}
+			});
+		}
 
-        mergeClasses(mergeContext, mergeClasses, platforms);
-    }
+		mergeClasses(mergeContext, mergeClasses, platforms);
+	}
 
-    private static void mergeClasses(MergeContext mergeContext,
-                                     Map<String, Set<PlatformData>> classes,
-                                     Set<PlatformData> availablePlatforms) {
-        // TODO: I'm going to say the n-way
-        Set<CompletableFuture<?>> futures = new HashSet<>();
+	private static void mergeClasses(MergeContext mergeContext,
+									 Map<String, Set<PlatformData>> classes,
+									 Set<PlatformData> availablePlatforms) {
+		// TODO: I'm going to say the n-way
+		Set<CompletableFuture<?>> futures = new HashSet<>();
 
-        classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
-            if (platforms.size() == 1) {
-                // This class is only present on one platform
-                // This is really a specialisation and optimisation of what would be the n-way algorithm
+		classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
+			if (platforms.size() == 1) {
+				// This class is only present on one platform
+				// This is really a specialisation and optimisation of what would be the n-way algorithm
 
-                PlatformData platform = platforms.iterator().next();
-                ClassNode node = read(platform.files.get(file));
+				PlatformData platform = platforms.iterator().next();
+				ClassNode node = read(platform.files.get(file));
 
-                if (availablePlatforms.size() > 1) {
-                    // There are multiple platforms
-                    AnnotationNode annotation = new AnnotationNode(PLATFORM_DESCRIPTOR);
-                    mark(annotation.visitArray("value"), platform);
+				if (availablePlatforms.size() > 1) {
+					// There are multiple platforms
+					AnnotationNode annotation = new AnnotationNode(PLATFORM_DESCRIPTOR);
+					mark(annotation.visitArray("value"), platform);
 
-                    if (node.invisibleAnnotations == null) {
-                        node.invisibleAnnotations = new ArrayList<>();
-                    }
+					if (node.invisibleAnnotations == null) {
+						node.invisibleAnnotations = new ArrayList<>();
+					}
 
-                    node.invisibleAnnotations.add(annotation);
-                } else {
-                    // This is the only platform, just copy
-                }
+					node.invisibleAnnotations.add(annotation);
+				} else {
+					// This is the only platform, just copy
+				}
 
-                mergeContext.accept(node);
-            } else {
-                List<ClassInfo> infos = new ArrayList<>();
+				mergeContext.accept(node);
+			} else {
+				List<ClassInfo> infos = new ArrayList<>();
 
-                for (PlatformData platform : platforms) {
-                    infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
-                }
+				for (PlatformData platform : platforms) {
+					infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
+				}
 
-                ClassNode merged = new ClassNode();
-                Merger.MERGER.merge(merged, infos);
-                mergeContext.accept(merged);
-            }
-        }, mergeContext.getExecutor())));
+				ClassNode merged = new ClassNode();
+				Merger.MERGER.merge(merged, infos);
+				mergeContext.accept(merged);
+			}
+		}, mergeContext.getExecutor())));
 
-        try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
-        } catch (InterruptedException | ExecutionException exception) {
-            throw new RuntimeException(exception);
-        }
-    }
+		try {
+			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
+		} catch (InterruptedException | ExecutionException exception) {
+			throw new RuntimeException(exception);
+		}
+	}
 
-    private static ClassNode read(byte[] bytes) {
-        ClassNode node = new ClassNode();
-        new ClassReader(bytes).accept(node, 0);
-        return node;
-    }
+	private static ClassNode read(byte[] bytes) {
+		ClassNode node = new ClassNode();
+		new ClassReader(bytes).accept(node, 0);
+		return node;
+	}
 
-    private static void mark(AnnotationVisitor value, PlatformData platform) {
-        for (String s : platform.name) {
-            value.visit(null, s);
-        }
-    }
+	private static void mark(AnnotationVisitor value, PlatformData platform) {
+		for (String s : platform.name) {
+			value.visit(null, s);
+		}
+	}
 }

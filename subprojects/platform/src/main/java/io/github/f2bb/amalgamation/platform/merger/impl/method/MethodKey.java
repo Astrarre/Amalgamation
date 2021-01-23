@@ -19,52 +19,16 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
-import java.util.Objects;
-
 import org.objectweb.asm.Label;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.FrameNode;
-import org.objectweb.asm.tree.IincInsnNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
-import org.objectweb.asm.tree.InvokeDynamicInsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LineNumberNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
+
+import java.util.Objects;
 
 public class MethodKey {
 	public final MethodNode node;
 
-	public MethodKey(MethodNode node) {this.node = node;}
-
-	@Override
-	public int hashCode() {
-		return 0;
-	}
-
-	@Override
-	public boolean equals(Object object) {
-		if (this == object) {
-			return true;
-		}
-		if (!(object instanceof MethodKey)) {
-			return false;
-		}
-
-		MethodKey key = (MethodKey) object;
-		MethodNode a = this.node, b = key.node;
-
-		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature) && areInstructionsEqual(a, b);
+	public MethodKey(MethodNode node) {
+		this.node = node;
 	}
 
 	public static boolean areInstructionsEqual(MethodNode a, MethodNode b) {
@@ -89,7 +53,7 @@ public class MethodKey {
 	public static boolean isEqual(AbstractInsnNode a, AbstractInsnNode b) {
 		if (a.getOpcode() != b.getOpcode()) {
 			return false;
-		} else if(a.getClass() != b.getClass()) {
+		} else if (a.getClass() != b.getClass()) {
 			return false;
 		} else if (a instanceof InsnNode) {
 			return true;
@@ -136,7 +100,7 @@ public class MethodKey {
 		} else if (a instanceof LineNumberNode) {
 			// kindof irrelavent
 			return true;
-		} else if(a instanceof TableSwitchInsnNode) {
+		} else if (a instanceof TableSwitchInsnNode) {
 			TableSwitchInsnNode at = (TableSwitchInsnNode) a, bt = (TableSwitchInsnNode) b;
 			return compareLabels(at.dflt, bt.dflt) && at.labels.size() == bt.labels.size() && at.max == bt.max && at.min == bt.min;
 		}
@@ -148,5 +112,25 @@ public class MethodKey {
 		// todo
 		return true;
 		//return al.getOffset() == bl.getOffset();
+	}
+
+	@Override
+	public int hashCode() {
+		return 0;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+		if (!(object instanceof MethodKey)) {
+			return false;
+		}
+
+		MethodKey key = (MethodKey) object;
+		MethodNode a = this.node, b = key.node;
+
+		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature) && areInstructionsEqual(a, b);
 	}
 }

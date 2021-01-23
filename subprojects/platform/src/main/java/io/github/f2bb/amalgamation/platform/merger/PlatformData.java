@@ -25,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,28 +32,28 @@ import java.util.Set;
  * Information about the platform, such as its name(s) and files
  */
 public class PlatformData {
-    final Set<String> name;
-    final Map<String, byte[]> files;
+	final Set<String> name;
+	final Map<String, byte[]> files;
 
-    public PlatformData(Set<String> name, Map<String, byte[]> files) {
-        this.name = name;
-        this.files = files;
-    }
+	public PlatformData(Set<String> name, Map<String, byte[]> files) {
+		this.name = name;
+		this.files = files;
+	}
 
-    @Override
-    public String toString() {
-        return "PlatformData{" +
-                "name=" + name +
-                '}';
-    }
+	public static void readFiles(Map<String, byte[]> files, Path root) throws IOException {
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				files.put(root.relativize(file).toString(), Files.readAllBytes(file));
+				return FileVisitResult.CONTINUE;
+			}
+		});
+	}
 
-    public static void readFiles(Map<String, byte[]> files, Path root) throws IOException {
-        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                files.put(root.relativize(file).toString(), Files.readAllBytes(file));
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
+	@Override
+	public String toString() {
+		return "PlatformData{" +
+				"name=" + name +
+				'}';
+	}
 }

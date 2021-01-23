@@ -19,12 +19,12 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
-import java.util.*;
-
-import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.*;
 
 public class MethodMerger implements Merger {
 

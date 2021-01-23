@@ -29,46 +29,46 @@ import java.util.*;
 
 public class SuperclassMerger implements Merger {
 
-    @Override
-    public void merge(ClassNode node, List<ClassInfo> infos) {
-        Map<String, List<ClassInfo>> supers = new HashMap<>();
-        for (ClassInfo info : infos) {
-            supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);
-        }
+	@Override
+	public void merge(ClassNode node, List<ClassInfo> infos) {
+		Map<String, List<ClassInfo>> supers = new HashMap<>();
+		for (ClassInfo info : infos) {
+			supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);
+		}
 
-        // most common super class, this gets priority and is what is shown in the source
-        String mostCommon = null;
-        int count = 0;
-        for (String s : supers.keySet()) {
-            int size = supers.get(s).size();
-            if (size > count) {
-                mostCommon = s;
-                count = size;
-            }
-        }
+		// most common super class, this gets priority and is what is shown in the source
+		String mostCommon = null;
+		int count = 0;
+		for (String s : supers.keySet()) {
+			int size = supers.get(s).size();
+			if (size > count) {
+				mostCommon = s;
+				count = size;
+			}
+		}
 
-        if (mostCommon == null && count == 0) {
-            throw new IllegalStateException("no classes! " + supers);
-        }
+		if (mostCommon == null && count == 0) {
+			throw new IllegalStateException("no classes! " + supers);
+		}
 
-        node.superName = mostCommon;
+		node.superName = mostCommon;
 
-        supers.remove(mostCommon);
-        if (!supers.isEmpty()) {
-            supers.forEach((s, i) -> {
-                AnnotationVisitor n = node.visitAnnotation(Type.getDescriptor(Parent.class), true);
-                AnnotationVisitor visitor = n.visitArray("platform");
-                for (ClassInfo info : i) {
-                    visitor.visit("platform", info.createPlatformAnnotation());
-                }
+		supers.remove(mostCommon);
+		if (!supers.isEmpty()) {
+			supers.forEach((s, i) -> {
+				AnnotationVisitor n = node.visitAnnotation(Type.getDescriptor(Parent.class), true);
+				AnnotationVisitor visitor = n.visitArray("platform");
+				for (ClassInfo info : i) {
+					visitor.visit("platform", info.createPlatformAnnotation());
+				}
 
-                n.visit("parent", Type.getObjectType(s));
-            });
-        }
-    }
+				n.visit("parent", Type.getObjectType(s));
+			});
+		}
+	}
 
-    @Override
-    public boolean strip(ClassNode in, Set<String> available) {
-        return false;
-    }
+	@Override
+	public boolean strip(ClassNode in, Set<String> available) {
+		return false;
+	}
 }

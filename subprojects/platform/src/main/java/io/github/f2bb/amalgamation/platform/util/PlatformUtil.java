@@ -19,6 +19,12 @@
 
 package io.github.f2bb.amalgamation.platform.util;
 
+import net.minecraftforge.installer.DownloadUtils;
+import net.minecraftforge.installer.actions.ProgressCallback;
+import net.minecraftforge.installer.json.Install;
+import net.minecraftforge.installer.json.Util;
+import net.minecraftforge.installer.json.Version;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -28,12 +34,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Properties;
-
-import net.minecraftforge.installer.DownloadUtils;
-import net.minecraftforge.installer.actions.ProgressCallback;
-import net.minecraftforge.installer.json.Install;
-import net.minecraftforge.installer.json.Util;
-import net.minecraftforge.installer.json.Version;
 
 public class PlatformUtil {
 	public static final String MINECRAFT_VERSION;
@@ -51,7 +51,7 @@ public class PlatformUtil {
 	}
 
 	public static void main(String[] args)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+			throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 		getSpigotServerJar(new File("ohno"));
 	}
 
@@ -61,7 +61,7 @@ public class PlatformUtil {
 	 * @return the unmapped spigot server jar
 	 */
 	public static File getSpigotServerJar(File cache)
-            throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+			throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 		if (!cache.exists()) {
 			cache.mkdirs();
 		}
@@ -72,21 +72,21 @@ public class PlatformUtil {
 					"https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools" + ".jar");
 		}
 
-		URLClassLoader classLoader = new URLClassLoader(new URL[] {buildtools.toURI().toURL()}, null);
+		URLClassLoader classLoader = new URLClassLoader(new URL[]{buildtools.toURI().toURL()}, null);
 		Class<?> builder = Class.forName("org.spigotmc.builder.Builder", true, classLoader);
 		Method main = builder.getMethod("main", String[].class);
 		String[] args = {
-                "--rev",
-                MINECRAFT_VERSION,
-                "--output-dir",
-                "out"
-        };
+				"--rev",
+				MINECRAFT_VERSION,
+				"--output-dir",
+				"out"
+		};
 		main.invoke(null, (Object) args);
 		return new File(cache, "out/spigot-" + MINECRAFT_VERSION + ".jar");
 	}
 
 	/**
-	 * @param libs the folder for caching libraries
+	 * @param libs   the folder for caching libraries
 	 * @param client the vanilla client jar
 	 * @return the unmapped client forge jar
 	 */

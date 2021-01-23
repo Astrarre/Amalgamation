@@ -19,14 +19,16 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.field;
 
-import java.util.Objects;
-
 import org.objectweb.asm.tree.FieldNode;
+
+import java.util.Objects;
 
 public class FieldKey {
 	public final FieldNode node;
 
-	public FieldKey(FieldNode node) {this.node = node;}
+	public FieldKey(FieldNode node) {
+		this.node = node;
+	}
 
 	@Override
 	public int hashCode() {

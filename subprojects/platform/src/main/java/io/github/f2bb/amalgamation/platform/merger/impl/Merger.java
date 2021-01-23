@@ -31,71 +31,71 @@ import java.util.Set;
 
 public interface Merger extends Opcodes {
 
-    Merger MERGER = new Merger() {
-        @Override
-        public void merge(ClassNode node, List<ClassInfo> infos) {
-            ClassNode root = infos.get(0).node;
-            node.name = root.name;
-            node.version = root.version;
-        }
+	Merger MERGER = new Merger() {
+		@Override
+		public void merge(ClassNode node, List<ClassInfo> infos) {
+			ClassNode root = infos.get(0).node;
+			node.name = root.name;
+			node.version = root.version;
+		}
 
-        @Override
-        public boolean strip(ClassNode in, Set<String> available) {
-            return false;
-        }
-    }
-            .andThen(new SuperclassMerger())
-            .andThen(new InterfaceMerger())
-            .andThen(new AccessMerger())
-            .andThen(new SignatureMerger())
-            .andThen(new MethodMerger())
-            .andThen(new FieldMerger())
-            .andThen(new InnerClassAttributeMerger());
+		@Override
+		public boolean strip(ClassNode in, Set<String> available) {
+			return false;
+		}
+	}
+			.andThen(new SuperclassMerger())
+			.andThen(new InterfaceMerger())
+			.andThen(new AccessMerger())
+			.andThen(new SignatureMerger())
+			.andThen(new MethodMerger())
+			.andThen(new FieldMerger())
+			.andThen(new InnerClassAttributeMerger());
 
-    void merge(ClassNode node, List<ClassInfo> infos);
+	void merge(ClassNode node, List<ClassInfo> infos);
 
-    /**
-     * Strips the class by filtering out unavailable platforms
-     *
-     * <blockquote><pre>
-     *     {@literal @}Platform({"a"})
-     *     {@literal @}Platform({"b"})
-     *     public void method() {}
-     * </pre></blockquote>
-     * <p>
-     * Assume the platform <code>b</code> was available in this case. The first predicate (being the
-     * {@literal @}{@link Platform} annotation) will not succeed, as <code>a</code> is not
-     * available, but the second predicate will be successful, as <code>b</code> is available
-     * <br>
-     *
-     * <blockquote><pre>
-     *     {@literal @}Platform({"a", "c"})
-     *     {@literal @}Platform({"b", "c"})
-     *     public void method() {}
-     * </pre></blockquote>
-     * <p>
-     * Assume the platform <code>b</code> was available in this case. The first predicate (being the
-     * {@literal @}{@link Platform} annotation) will not succeed, as BOTH <code>a</code> nor <code>b</code> is not
-     * available, as so will the second predicate, as <code>c</code> is not available
-     *
-     * @param in        The class which will be stripped. This will be mutated
-     * @param available The platforms which are available
-     * @return Was the class entirely stripped
-     */
-    boolean strip(ClassNode in, Set<String> available);
+	/**
+	 * Strips the class by filtering out unavailable platforms
+	 *
+	 * <blockquote><pre>
+	 *     {@literal @}Platform({"a"})
+	 *     {@literal @}Platform({"b"})
+	 *     public void method() {}
+	 * </pre></blockquote>
+	 * <p>
+	 * Assume the platform <code>b</code> was available in this case. The first predicate (being the
+	 * {@literal @}{@link Platform} annotation) will not succeed, as <code>a</code> is not
+	 * available, but the second predicate will be successful, as <code>b</code> is available
+	 * <br>
+	 *
+	 * <blockquote><pre>
+	 *     {@literal @}Platform({"a", "c"})
+	 *     {@literal @}Platform({"b", "c"})
+	 *     public void method() {}
+	 * </pre></blockquote>
+	 * <p>
+	 * Assume the platform <code>b</code> was available in this case. The first predicate (being the
+	 * {@literal @}{@link Platform} annotation) will not succeed, as BOTH <code>a</code> nor <code>b</code> is not
+	 * available, as so will the second predicate, as <code>c</code> is not available
+	 *
+	 * @param in        The class which will be stripped. This will be mutated
+	 * @param available The platforms which are available
+	 * @return Was the class entirely stripped
+	 */
+	boolean strip(ClassNode in, Set<String> available);
 
-    default Merger andThen(Merger merger) {
-        return new Merger() {
-            @Override
-            public void merge(ClassNode node, List<ClassInfo> infos) {
-                Merger.this.merge(node, infos);
-                merger.merge(node, infos);
-            }
+	default Merger andThen(Merger merger) {
+		return new Merger() {
+			@Override
+			public void merge(ClassNode node, List<ClassInfo> infos) {
+				Merger.this.merge(node, infos);
+				merger.merge(node, infos);
+			}
 
-            @Override
-            public boolean strip(ClassNode in, Set<String> available) {
-                return Merger.this.strip(in, available) || merger.strip(in, available);
-            }
-        };
-    }
+			@Override
+			public boolean strip(ClassNode in, Set<String> available) {
+				return Merger.this.strip(in, available) || merger.strip(in, available);
+			}
+		};
+	}
 }

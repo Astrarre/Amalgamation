@@ -9,60 +9,60 @@ import java.util.Set;
 
 public class InnerClassAttributeMerger implements Merger {
 
-    @Override
-    public void merge(ClassNode node, List<ClassInfo> infos) {
-        infos.stream()
-                .map(ClassInfo::getNode)
-                .map(c -> c.innerClasses)
-                .flatMap(List::stream)
-                .map(InnerClassNodeWrapper::new)
-                .distinct()
-                .map(InnerClassNodeWrapper::getNode)
-                .forEach(n -> node.innerClasses.add(n));
-    }
+	@Override
+	public void merge(ClassNode node, List<ClassInfo> infos) {
+		infos.stream()
+				.map(ClassInfo::getNode)
+				.map(c -> c.innerClasses)
+				.flatMap(List::stream)
+				.map(InnerClassNodeWrapper::new)
+				.distinct()
+				.map(InnerClassNodeWrapper::getNode)
+				.forEach(n -> node.innerClasses.add(n));
+	}
 
-    @Override
-    public boolean strip(ClassNode in, Set<String> available) {
-        return false;
-    }
+	@Override
+	public boolean strip(ClassNode in, Set<String> available) {
+		return false;
+	}
 
-    static class InnerClassNodeWrapper {
-        private final InnerClassNode node;
+	static class InnerClassNodeWrapper {
+		private final InnerClassNode node;
 
-        InnerClassNodeWrapper(InnerClassNode node) {
-            this.node = node;
-        }
+		InnerClassNodeWrapper(InnerClassNode node) {
+			this.node = node;
+		}
 
-        @Override
-        public int hashCode() {
-            return this.node != null ? this.node.hashCode() : 0;
-        }
+		private static boolean equals(InnerClassNode a, InnerClassNode b) {
+			boolean result = a.name.equals(b.name);
 
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) {
-                return true;
-            }
-            if (!(object instanceof InnerClassNodeWrapper)) {
-                return false;
-            }
+			if (a.access != b.access) {
+				// TODO: warning(a.name + " incompatible change: inner class access " + a.access + " =/= " + b.access);
+			}
 
-            InnerClassNodeWrapper wrapper = (InnerClassNodeWrapper) object;
-            return equals(this.node, wrapper.node);
-        }
+			return result;
+		}
 
-        private static boolean equals(InnerClassNode a, InnerClassNode b) {
-            boolean result = a.name.equals(b.name);
+		@Override
+		public int hashCode() {
+			return this.node != null ? this.node.hashCode() : 0;
+		}
 
-            if (a.access != b.access) {
-                // TODO: warning(a.name + " incompatible change: inner class access " + a.access + " =/= " + b.access);
-            }
+		@Override
+		public boolean equals(Object object) {
+			if (this == object) {
+				return true;
+			}
+			if (!(object instanceof InnerClassNodeWrapper)) {
+				return false;
+			}
 
-            return result;
-        }
+			InnerClassNodeWrapper wrapper = (InnerClassNodeWrapper) object;
+			return equals(this.node, wrapper.node);
+		}
 
-        public InnerClassNode getNode() {
-            return this.node;
-        }
-    }
+		public InnerClassNode getNode() {
+			return this.node;
+		}
+	}
 }

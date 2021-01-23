@@ -34,61 +34,61 @@ import java.util.zip.ZipOutputStream;
  * remaps the spigot jar back to obfuscated names
  */
 public class SpigotObfuscator {
-    private static final ThreadLocal<byte[]> BUFFERS = ThreadLocal.withInitial(() -> new byte[4096]);
+	private static final ThreadLocal<byte[]> BUFFERS = ThreadLocal.withInitial(() -> new byte[4096]);
 
-    /**
-     * @param buildata the buildata folder outputted by buildtools
-     * @param spigot   the spigot jar
-     */
-    public static void remap(File buildata, File spigot, File output) throws IOException {
-        SpigotRemapper remapper = new SpigotRemapper(
-                new File(buildata, "mappings/bukkit-" + PlatformUtil.MINECRAFT_VERSION + "-cl.csrg"),
-                new File(buildata, "mappings/bukkit-" + PlatformUtil.MINECRAFT_VERSION + "-members.csrg")
-        );
+	/**
+	 * @param buildata the buildata folder outputted by buildtools
+	 * @param spigot   the spigot jar
+	 */
+	public static void remap(File buildata, File spigot, File output) throws IOException {
+		SpigotRemapper remapper = new SpigotRemapper(
+				new File(buildata, "mappings/bukkit-" + PlatformUtil.MINECRAFT_VERSION + "-cl.csrg"),
+				new File(buildata, "mappings/bukkit-" + PlatformUtil.MINECRAFT_VERSION + "-members.csrg")
+		);
 
-        ZipFile file = new ZipFile(spigot);
-        Enumeration<? extends ZipEntry> enumeration = file.entries();
-        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(output));
-        while (enumeration.hasMoreElements()) {
-            ZipEntry entry = enumeration.nextElement();
-            InputStream in = file.getInputStream(entry);
-            if (entry.getName().endsWith(".class")) {
-                ClassReader reader = new ClassReader(in);
-                ClassWriter writer = new ClassWriter(0);
-                ClsRmpr remap = new ClsRmpr(writer, remapper);
-                reader.accept(remap, 0);
-                out.putNextEntry(new ZipEntry(remap.getName() + ".class"));
-                out.write(writer.toByteArray());
-            } else {
-                out.putNextEntry(entry);
-                to(in, out);
-            }
-            out.closeEntry();
-        }
-        out.close();
-    }
+		ZipFile file = new ZipFile(spigot);
+		Enumeration<? extends ZipEntry> enumeration = file.entries();
+		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(output));
+		while (enumeration.hasMoreElements()) {
+			ZipEntry entry = enumeration.nextElement();
+			InputStream in = file.getInputStream(entry);
+			if (entry.getName().endsWith(".class")) {
+				ClassReader reader = new ClassReader(in);
+				ClassWriter writer = new ClassWriter(0);
+				ClsRmpr remap = new ClsRmpr(writer, remapper);
+				reader.accept(remap, 0);
+				out.putNextEntry(new ZipEntry(remap.getName() + ".class"));
+				out.write(writer.toByteArray());
+			} else {
+				out.putNextEntry(entry);
+				to(in, out);
+			}
+			out.closeEntry();
+		}
+		out.close();
+	}
 
-    public static void main(String[] args) throws IOException {
-        remap(new File("ohno/BuildData"), new File("ohno/out/spigot-1.16.4.jar"), new File("ohno/obf.jar"));
-    }
+	public static void main(String[] args) throws IOException {
+		remap(new File("ohno/BuildData"), new File("ohno/out/spigot-1.16.4.jar"), new File("ohno/obf.jar"));
+	}
 
-    private static void to(InputStream in, OutputStream out) throws IOException {
-        byte[] buf = BUFFERS.get();
-        int read;
-        while ((read = in.read(buf)) != -1) {
-            out.write(buf, 0, read);
-        }
-    }
+	private static void to(InputStream in, OutputStream out) throws IOException {
+		byte[] buf = BUFFERS.get();
+		int read;
+		while ((read = in.read(buf)) != -1) {
+			out.write(buf, 0, read);
+		}
+	}
 
-    private static class ClsRmpr extends ClassRemapper {
-        public ClsRmpr(ClassWriter writer, SpigotRemapper remapper) {
-            super(writer, remapper);
-        }
+	private static class ClsRmpr extends ClassRemapper {
+		public ClsRmpr(ClassWriter writer, SpigotRemapper remapper) {
+			super(writer, remapper);
+		}
 
-        public String getName() {
-            return this.remapper.mapType(this.className);
-        }
+		public String getName() {
+			return this.remapper.mapType(this.className);
+		}
 
-        // todo lambda remapping
-    }
+		// todo lambda remapping
+	}
 }

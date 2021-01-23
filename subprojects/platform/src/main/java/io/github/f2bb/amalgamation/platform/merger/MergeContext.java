@@ -28,33 +28,33 @@ import java.util.concurrent.Executor;
  */
 public interface MergeContext {
 
-    /**
-     * @return The executor to use for merging. Can dramatically increase speed
-     */
-    Executor getExecutor();
+	/**
+	 * @return The executor to use for merging. Can dramatically increase speed
+	 */
+	Executor getExecutor();
 
-    /**
-     * Accepts a merged class
-     *
-     * @param node The merged class
-     */
-    void accept(ClassNode node);
+	/**
+	 * Accepts a merged class
+	 *
+	 * @param node The merged class
+	 */
+	void accept(ClassNode node);
 
-    /**
-     * Accepts content from a non-class file, or a file which was skipped by {@link #shouldAttemptMerge(PlatformData, String)}
-     *
-     * @param platform The platform which has this resource
-     * @param name     The name of this resource
-     * @param bytes    The content of this resource
-     */
-    void acceptResource(PlatformData platform, String name, byte[] bytes);
+	/**
+	 * Accepts content from a non-class file, or a file which was skipped by {@link #shouldAttemptMerge(PlatformData, String)}
+	 *
+	 * @param platform The platform which has this resource
+	 * @param name     The name of this resource
+	 * @param bytes    The content of this resource
+	 */
+	void acceptResource(PlatformData platform, String name, byte[] bytes);
 
-    /**
-     * Should an attempt be made to merge the class. Otherwise, the class will be treated as a resource
-     *
-     * @param platform The platform origin
-     * @param name     The file name, which includes the <code>.class</code> at the end
-     * @return Should the class be merged
-     */
-    boolean shouldAttemptMerge(PlatformData platform, String name);
+	/**
+	 * Should an attempt be made to merge the class. Otherwise, the class will be treated as a resource
+	 *
+	 * @param platform The platform origin
+	 * @param name     The file name, which includes the <code>.class</code> at the end
+	 * @return Should the class be merged
+	 */
+	boolean shouldAttemptMerge(PlatformData platform, String name);
 }

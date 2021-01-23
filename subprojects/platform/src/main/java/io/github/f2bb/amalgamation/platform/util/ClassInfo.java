@@ -27,6 +27,8 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassInfo {
+	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
+	private static final String DISPLACE = Type.getDescriptor(Displace.class);
 	public final ClassNode node;
 	public final String[] names;
 
@@ -35,7 +37,13 @@ public class ClassInfo {
 		this.names = names;
 	}
 
-	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
+	public static AnnotationNode displace(String name) {
+		AnnotationNode node = new AnnotationNode(DISPLACE);
+		node.visit("value", name);
+		node.visitEnd();
+		return node;
+	}
+
 	public AnnotationNode createPlatformAnnotation() {
 		AnnotationNode node = new AnnotationNode(PLATFORM_DESC);
 		AnnotationVisitor array = node.visitArray("value");
@@ -51,13 +59,5 @@ public class ClassInfo {
 
 	public String[] getNames() {
 		return this.names;
-	}
-
-	private static final String DISPLACE = Type.getDescriptor(Displace.class);
-	public static AnnotationNode displace(String name) {
-		AnnotationNode node = new AnnotationNode(DISPLACE);
-		node.visit("value", name);
-		node.visitEnd();
-		return node;
 	}
 }
