@@ -17,55 +17,42 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package net.devtech.testbytecodemerge.mergers;
+package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.devtech.testbytecodemerge.ClassInfo;
-import io.github.f2bb.amalgamation.Parent;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.Interface;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
-public class SuperclassMerger implements Merger {
+public class InterfaceMerger implements Merger {
+	public static final String INTERFACE = Type.getDescriptor(Interface.class);
+
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {
-		Map<String, List<ClassInfo>> supers = new HashMap<>();
+		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
 		for (ClassInfo info : infos) {
-			supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);
-		}
-
-		// most common super class, this gets priority and is what is shown in the source
-		String mostCommon = null;
-		int count = 0;
-		for (String s : supers.keySet()) {
-			int size = supers.get(s).size();
-			if (size > count) {
-				mostCommon = s;
-				count = size;
+			for (String anInterface : info.node.interfaces) {
+				interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
 			}
 		}
 
-		if (mostCommon == null && count == 0) {
-			throw new IllegalStateException("no classes! " + supers);
-		}
+		interfaces.forEach((s, i) -> {
+			node.interfaces.add(s);
+			if(i.size() == infos.size()) return;
 
-		node.superName = mostCommon;
+			AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
+			AnnotationVisitor visitor = n.visitArray("platform");
+			for (ClassInfo info : i) {
+				visitor.visit("platform", info.createPlatformAnnotation());
+			}
 
-		supers.remove(mostCommon);
-		if (!supers.isEmpty()) {
-			supers.forEach((s, i) -> {
-				AnnotationVisitor n = node.visitAnnotation(Type.getDescriptor(Parent.class), true);
-				AnnotationVisitor visitor = n.visitArray("platform");
-				for (ClassInfo info : i) {
-					visitor.visit("platform", info.createPlatformAnnotation());
-				}
-
-				n.visit("parent", Type.getObjectType(s));
-			});
-		}
+			n.visit("parent", Type.getObjectType(s));
+		});
 	}
 }

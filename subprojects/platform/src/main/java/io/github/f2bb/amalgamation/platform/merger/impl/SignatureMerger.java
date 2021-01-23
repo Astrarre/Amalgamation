@@ -17,13 +17,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package net.devtech.testbytecodemerge.mergers;
+package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.devtech.testbytecodemerge.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;

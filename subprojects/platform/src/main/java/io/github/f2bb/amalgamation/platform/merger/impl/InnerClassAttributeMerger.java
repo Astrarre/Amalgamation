@@ -1,9 +1,9 @@
-package net.devtech.testbytecodemerge.mergers;
+package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.List;
 
 import net.devtech.testbytecodemerge.BytecodeMerger;
-import net.devtech.testbytecodemerge.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 

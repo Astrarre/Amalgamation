@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package net.devtech.testbytecodemerge.mergers;
+package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.devtech.testbytecodemerge.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.Access;
 import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;

@@ -17,9 +17,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.platform.spigot;
+package io.github.f2bb.amalgamation.platform.util.spigot;
 
-import io.github.f2bb.amalgamation.platform.PlatformUtil;
+import io.github.f2bb.amalgamation.platform.util.PlatformUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;

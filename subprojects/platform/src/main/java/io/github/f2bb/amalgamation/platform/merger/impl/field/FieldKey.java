@@ -17,23 +17,34 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package net.devtech.testbytecodemerge.mergers;
+package io.github.f2bb.amalgamation.platform.merger.impl.field;
 
-import java.util.List;
+import java.util.Objects;
 
-import net.devtech.testbytecodemerge.ClassInfo;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 
-public interface Merger extends Opcodes {
-	// decompile or source-level merging
-	//
-	void merge(ClassNode node, List<ClassInfo> infos);
+public class FieldKey {
+	public final FieldNode node;
 
-	default Merger andThen(Merger merger) {
-		return (node, infos) -> {
-			this.merge(node, infos);
-			merger.merge(node, infos);
-		};
+	public FieldKey(FieldNode node) {this.node = node;}
+
+	@Override
+	public int hashCode() {
+		return 0;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+		if (!(object instanceof FieldKey)) {
+			return false;
+		}
+
+		FieldKey key = (FieldKey) object;
+		FieldNode a = this.node, b = key.node;
+
+		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature);
 	}
 }

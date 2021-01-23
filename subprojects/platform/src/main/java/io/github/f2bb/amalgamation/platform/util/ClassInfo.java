@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package net.devtech.testbytecodemerge;
+package io.github.f2bb.amalgamation.platform.util;
 
 import io.github.f2bb.amalgamation.Displace;
 import io.github.f2bb.amalgamation.Platform;
@@ -35,8 +35,9 @@ public class ClassInfo {
 		this.names = names;
 	}
 
+	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
 	public AnnotationNode createPlatformAnnotation() {
-		AnnotationNode node = new AnnotationNode(Type.getDescriptor(Platform.class));
+		AnnotationNode node = new AnnotationNode(PLATFORM_DESC);
 		AnnotationVisitor array = node.visitArray("value");
 		for (String s : this.names) {
 			array.visit("value", s);

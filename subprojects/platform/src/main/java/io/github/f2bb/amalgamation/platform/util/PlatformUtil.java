@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.platform;
+package io.github.f2bb.amalgamation.platform.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import io.github.f2bb.amalgamation.platform.forge.ForgeInstalls;
 import net.minecraftforge.installer.DownloadUtils;
 import net.minecraftforge.installer.actions.ProgressCallback;
 import net.minecraftforge.installer.json.Install;

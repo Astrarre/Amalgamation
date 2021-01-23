@@ -20,8 +20,8 @@
 package io.github.f2bb.amalgamation.platform.merger;
 
 import io.github.f2bb.amalgamation.Platform;
-import net.devtech.testbytecodemerge.BytecodeMerger;
-import net.devtech.testbytecodemerge.ClassInfo;
+import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -89,7 +89,7 @@ public class PlatformMerger {
                 }
 
                 ClassNode merged = new ClassNode();
-                BytecodeMerger.MERGER.merge(merged, infos);
+                Merger.MERGER.merge(merged, infos);
                 mergeContext.accept(merged);
             }
         }, mergeContext.getExecutor())));
