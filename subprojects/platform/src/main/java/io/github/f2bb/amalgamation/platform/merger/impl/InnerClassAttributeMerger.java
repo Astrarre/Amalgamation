@@ -26,7 +26,7 @@ import org.objectweb.asm.tree.InnerClassNode;
 import java.util.List;
 import java.util.Set;
 
-public class InnerClassAttributeMerger implements Merger {
+class InnerClassAttributeMerger implements Merger {
 
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {

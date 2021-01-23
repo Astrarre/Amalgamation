@@ -30,7 +30,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public class AccessMerger implements @Platform({"fabric"}) Merger {
+class AccessMerger implements @Platform({"fabric"}) Merger {
 
 	public static final String ACCESSES = Type.getDescriptor(Access.Accesses.class);
 	public static final String ACCESS = Type.getDescriptor(Access.class);

@@ -19,39 +19,21 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
-import io.github.f2bb.amalgamation.Interface;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
-class InterfaceMerger implements Merger {
-
-	public static final String INTERFACE = Type.getDescriptor(Interface.class);
+class BaseMerger implements Merger {
 
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {
-		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
+		node.name = infos.get(0).node.name;
+
 		for (ClassInfo info : infos) {
-			for (String anInterface : info.node.interfaces) {
-				interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
-			}
+			node.version = Math.max(node.version, info.node.version);
 		}
-
-		interfaces.forEach((s, i) -> {
-			node.interfaces.add(s);
-			if (i.size() == infos.size()) return;
-
-			AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
-			AnnotationVisitor visitor = n.visitArray("platform");
-			for (ClassInfo info : i) {
-				visitor.visit("platform", info.createPlatformAnnotation());
-			}
-
-			n.visit("parent", Type.getObjectType(s));
-		});
 	}
 
 	@Override

@@ -31,19 +31,7 @@ import java.util.Set;
 
 public interface Merger extends Opcodes {
 
-	Merger MERGER = new Merger() {
-		@Override
-		public void merge(ClassNode node, List<ClassInfo> infos) {
-			ClassNode root = infos.get(0).node;
-			node.name = root.name;
-			node.version = root.version;
-		}
-
-		@Override
-		public boolean strip(ClassNode in, Set<String> available) {
-			return false;
-		}
-	}
+	Merger MERGER = new BaseMerger()
 			.andThen(new SuperclassMerger())
 			.andThen(new InterfaceMerger())
 			.andThen(new AccessMerger())

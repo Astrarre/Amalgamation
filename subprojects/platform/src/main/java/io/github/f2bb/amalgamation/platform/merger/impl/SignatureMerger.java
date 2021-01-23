@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SignatureMerger extends SignatureWriter implements Merger {
+class SignatureMerger extends SignatureWriter implements Merger {
 
 	private final ClassNode root;
 

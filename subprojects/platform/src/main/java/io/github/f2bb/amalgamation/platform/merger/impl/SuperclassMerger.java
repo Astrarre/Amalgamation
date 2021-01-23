@@ -27,7 +27,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 
-public class SuperclassMerger implements Merger {
+class SuperclassMerger implements Merger {
 
 	@Override
 	public void merge(ClassNode node, List<ClassInfo> infos) {
