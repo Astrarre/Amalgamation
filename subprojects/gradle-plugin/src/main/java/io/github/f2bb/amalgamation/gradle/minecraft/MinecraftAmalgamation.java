@@ -32,19 +32,7 @@ import java.util.Collection;
 public interface MinecraftAmalgamation extends BaseAmalgamation {
 
     /**
-     * @return The mapping dependency
-     */
-    Dependency getMappings();
-
-    /**
-     * Sets the mappings dependency to use
-     *
-     * @param mappings The mappings to use
-     */
-    void setMappings(Dependency mappings);
-
-    /**
-     * Sets the mappings dependency to use
+     * Adds a mappings dependency to use
      *
      * @param dependencyNotation The mappings to use. See {@link DependencyHandler#create(Object)}
      */

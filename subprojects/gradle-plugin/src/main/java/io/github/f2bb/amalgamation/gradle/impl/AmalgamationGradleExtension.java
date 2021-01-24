@@ -39,7 +39,7 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
     private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
     private final Set<Forge> forgeSpecs = new HashSet<>();
     private final Set<Fabric> fabricSpecs = new HashSet<>();
-    private Dependency mappings;
+    private final Set<Dependency> mappings = new HashSet<>();
 
     private Dependency myDependency;
 
@@ -48,18 +48,8 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
     }
 
     @Override
-    public Dependency getMappings() {
-        return mappings;
-    }
-
-    @Override
-    public void setMappings(Dependency mappings) {
-        this.mappings = mappings;
-    }
-
-    @Override
     public void mappings(Object dependencyNotation) {
-        setMappings(project.getDependencies().create(dependencyNotation));
+        mappings.add(project.getDependencies().create(dependencyNotation));
     }
 
     @Override

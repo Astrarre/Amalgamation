@@ -188,10 +188,8 @@ class Fabric {
         // Step 5 - Remap everything to named
         List<Path> toMerge = new ArrayList<>();
 
-        for (Dependency dependency : fabric.getDependencies()) {
-            for (File file : AmalgamationImpl.resolve(project, dependency)) {
-                toMerge.add(file.toPath());
-            }
+        for (File file : AmalgamationImpl.resolve(project, fabric.getDependencies())) {
+            toMerge.add(file.toPath());
         }
 
         {
@@ -212,12 +210,10 @@ class Fabric {
                 remapper.readInputsAsync(tag, intermediaryServerJar);
             }
 
-            for (Dependency dependency : fabric.getRemap()) {
-                for (File file : AmalgamationImpl.resolve(project, dependency)) {
-                    InputTag tag = remapper.createInputTag();
-                    tags.put(file.toPath(), tag);
-                    remapper.readInputsAsync(tag, file.toPath());
-                }
+            for (File file : AmalgamationImpl.resolve(project, fabric.getRemap())) {
+                InputTag tag = remapper.createInputTag();
+                tags.put(file.toPath(), tag);
+                remapper.readInputsAsync(tag, file.toPath());
             }
 
             for (File file : classpath) {
