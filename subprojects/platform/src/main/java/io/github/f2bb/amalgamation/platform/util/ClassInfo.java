@@ -28,7 +28,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 public class ClassInfo {
 	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
-	private static final String DISPLACE = Type.getDescriptor(Displace.class);
+	public static final String DISPLACE = Type.getDescriptor(Displace.class);
 	public final ClassNode node;
 	public final String[] names;
 
