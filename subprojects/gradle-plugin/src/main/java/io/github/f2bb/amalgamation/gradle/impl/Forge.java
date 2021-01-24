@@ -20,6 +20,7 @@
 package io.github.f2bb.amalgamation.gradle.impl;
 
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -40,7 +41,7 @@ class Forge {
         this.forge = forge;
     }
 
-    public List<Path> getFiles(MinecraftMappings mappings) {
+    public List<Path> getFiles(MappingSet mappings) {
         throw new UnsupportedOperationException();
     }
 }

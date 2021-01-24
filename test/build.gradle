@@ -57,17 +57,17 @@ amalgamation {
     //     // names = ['forge', '1.16.4']
     // }
 
-    fabric("1.16.4") {
-        // names = ['fabric', '1.16.4']
+    fabric("1.16") {
+        // names = ['fabric', '1.16']
         remap("net.fabricmc:fabric-loader:0.11.0")
-        remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
+        remap("net.fabricmc.fabric-api:fabric-api:0.28.5+1.15")
     }
 
-    // fabric("1.16.5") {
-    //     // names = ['fabric', '1.16.5']
-    //     remap("net.fabricmc:fabric-loader:0.11.0")
-    //     remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
-    // }
+    fabric("1.16.5") {
+        // names = ['fabric', '1.16.5']
+        remap("net.fabricmc:fabric-loader:0.11.0")
+        remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
+    }
 
     generic {
         name 'guava-25.0'

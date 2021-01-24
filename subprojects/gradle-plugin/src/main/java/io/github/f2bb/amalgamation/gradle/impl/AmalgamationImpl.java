@@ -25,12 +25,15 @@ import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
+import net.fabricmc.lorenztiny.TinyMappingsReader;
+import net.fabricmc.mapping.tree.TinyMappingFactory;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -90,7 +93,7 @@ public class AmalgamationImpl {
             platforms.add(new PlatformData(spec.getNames(), files));
         }
 
-        MinecraftMappings mappings;
+        MappingSet mappings;
 
         if (mappingsDependency != null) {
             mappings = loadMappings(resolve(project, mappingsDependency));
@@ -133,11 +136,14 @@ public class AmalgamationImpl {
         }
     }
 
-    private static MinecraftMappings loadMappings(Set<File> files) throws IOException {
-        MinecraftMappings mappings = new MinecraftMappings(MappingSet.create(), MappingSet.create(), MappingSet.create());
+    private static MappingSet loadMappings(Set<File> files) throws IOException {
+        MappingSet mappings = MappingSet.create();
 
         for (File file : files) {
-            MinecraftMappings.load(file.toPath(), mappings);
+            try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null);
+                 BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
+                new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "intermediary", "named").read(mappings);
+            }
         }
 
         return mappings;

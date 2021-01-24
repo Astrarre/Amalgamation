@@ -19,14 +19,18 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import net.fabricmc.lorenztiny.TinyMappingsReader;
+import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -52,7 +56,7 @@ class Fabric {
         this.fabric = fabric;
     }
 
-    public List<Path> getFiles(MinecraftMappings mappings) throws IOException {
+    public List<Path> getFiles(MappingSet mappings) throws IOException {
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
@@ -137,7 +141,7 @@ class Fabric {
         // Step 3 - Remap to intermediary
         {
             TinyRemapper remapper = TinyRemapper.newRemapper()
-                    .withMappings(MappingUtils.createMappingProvider(mappings.officialToIntermediary))
+                    .withMappings(MappingUtils.createMappingProvider(officialToIntermediary()))
                     .build();
 
             InputTag clientTag = remapper.createInputTag();
@@ -192,7 +196,7 @@ class Fabric {
 
         {
             TinyRemapper remapper = TinyRemapper.newRemapper()
-                    .withMappings(MappingUtils.createMappingProvider(mappings.intermediaryToNamed))
+                    .withMappings(MappingUtils.createMappingProvider(mappings))
                     .build();
             Map<Path, InputTag> tags = new HashMap<>();
 
@@ -235,5 +239,14 @@ class Fabric {
         }
 
         return toMerge;
+    }
+
+    private MappingSet officialToIntermediary() throws IOException {
+        File file = Iterables.getOnlyElement(AmalgamationImpl.resolve(project, project.getDependencies().create("net.fabricmc:intermediary:" + minecraftVersion + ":v2")));
+
+        try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null);
+             BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
+            return new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "official", "intermediary").read();
+        }
     }
 }
