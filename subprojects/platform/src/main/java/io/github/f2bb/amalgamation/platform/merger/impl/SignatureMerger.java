@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -46,7 +47,7 @@ class SignatureMerger extends SignatureWriter implements Merger {
 	}
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
+	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
 		SignatureMerger writer = new SignatureMerger(node);
 		for (ClassInfo info : infos) {
 			String sign = info.node.signature;

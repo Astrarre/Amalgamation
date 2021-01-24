@@ -88,7 +88,7 @@ public class PlatformMerger {
 				}
 
 				ClassNode merged = new ClassNode();
-				Merger.MERGER.merge(merged, infos);
+				Merger.MERGER.merge(merged, infos, availablePlatforms);
 				mergeContext.accept(merged);
 			}
 		}, mergeContext.getExecutor())));

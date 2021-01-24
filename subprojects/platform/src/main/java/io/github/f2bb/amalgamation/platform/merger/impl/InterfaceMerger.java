@@ -26,10 +26,13 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Interface;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.TypeAnnotationNode;
 
@@ -37,7 +40,7 @@ class InterfaceMerger implements Merger {
 	public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
+	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
 		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
 		for (ClassInfo info : infos) {
 			for (String anInterface : info.node.interfaces) {
@@ -73,6 +76,22 @@ class InterfaceMerger implements Merger {
 				}
 			}
 		}
+
+		for (AnnotationNode annotation : in.visibleAnnotations) {
+			if(INTERFACE.equals(annotation.desc)) {
+				List<Object> values = annotation.values;
+				if(!SplitterUtil.matches((List<AnnotationNode>)values.get(values.indexOf("platform") + 1), available)) {
+					in.interfaces.remove(values.get(values.indexOf("parent") + 1));
+				}
+			}
+		}
 		return false;
+	}
+
+	class UnderflowException {
+	class      Fraction           {
+		UnderflowException e;
+		     Fraction      fraction;
+	}
 	}
 }

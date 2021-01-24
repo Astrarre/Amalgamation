@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
@@ -31,7 +32,7 @@ import java.util.*;
 public class MethodMerger implements Merger {
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
+	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
 		Map<MethodKey, List<ClassInfo>> toMerge = new HashMap<>();
 		for (ClassInfo info : infos) {
 			for (MethodNode method : info.node.methods) {

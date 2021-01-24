@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Platform;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.impl.field.FieldMerger;
 import io.github.f2bb.amalgamation.platform.merger.impl.method.MethodMerger;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
@@ -40,7 +41,7 @@ public interface Merger extends Opcodes {
 			.andThen(new FieldMerger())
 			.andThen(new InnerClassAttributeMerger());
 
-	void merge(ClassNode node, List<ClassInfo> infos);
+	void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available);
 
 	/**
 	 * Strips the class by filtering out unavailable platforms
@@ -75,9 +76,9 @@ public interface Merger extends Opcodes {
 	default Merger andThen(Merger merger) {
 		return new Merger() {
 			@Override
-			public void merge(ClassNode node, List<ClassInfo> infos) {
-				Merger.this.merge(node, infos);
-				merger.merge(node, infos);
+			public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
+				Merger.this.merge(node, infos, available);
+				merger.merge(node, infos, available);
 			}
 
 			@Override

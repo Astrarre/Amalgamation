@@ -20,21 +20,20 @@
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import io.github.f2bb.amalgamation.Parent;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.TypeAnnotationNode;
 
 import java.util.*;
 
 class SuperclassMerger implements Merger {
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
+	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
 		Map<String, List<ClassInfo>> supers = new HashMap<>();
 		for (ClassInfo info : infos) {
 			supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);

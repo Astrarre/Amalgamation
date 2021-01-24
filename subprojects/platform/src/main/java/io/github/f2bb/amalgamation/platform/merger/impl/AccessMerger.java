@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Access;
+import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
@@ -88,7 +89,7 @@ public class AccessMerger implements Merger {
 	}
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
+	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
 		Map<Integer, List<ClassInfo>> accessFlags = new HashMap<>();
 		for (ClassInfo info : infos) {
 			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
