@@ -23,6 +23,11 @@ import java.lang.annotation.*;
 
 /**
  * a sided platform
+ *
+ * example:
+ * <code>
+ *     public class Foo implements @Platform("forge") Runnable
+ * </code>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(Platform.Platforms.class)

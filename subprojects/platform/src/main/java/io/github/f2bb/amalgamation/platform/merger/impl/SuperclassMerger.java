@@ -21,9 +21,13 @@ package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import io.github.f2bb.amalgamation.Parent;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.TypeAnnotationNode;
 
 import java.util.*;
 
@@ -69,6 +73,14 @@ class SuperclassMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
+		for (AnnotationNode annotation : in.visibleAnnotations) {
+			List<Object> values = annotation.values;
+			List<AnnotationNode> platforms = (List<AnnotationNode>) values.get(values.indexOf("platform") + 1);
+			if (SplitterUtil.matches(platforms, available)) {
+				Type type = (Type) values.get(values.indexOf("parent") + 1);
+				in.superName = type.getInternalName();
+			}
+		}
 		return false;
 	}
 }

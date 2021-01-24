@@ -19,16 +19,21 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.github.f2bb.amalgamation.Interface;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.ClassNode;
-
-import java.util.*;
+import org.objectweb.asm.tree.TypeAnnotationNode;
 
 class InterfaceMerger implements Merger {
-
 	public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
 	@Override
@@ -42,7 +47,9 @@ class InterfaceMerger implements Merger {
 
 		interfaces.forEach((s, i) -> {
 			node.interfaces.add(s);
-			if (i.size() == infos.size()) return;
+			if (i.size() == infos.size()) {
+				return;
+			}
 
 			AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
 			AnnotationVisitor visitor = n.visitArray("platform");
@@ -56,6 +63,16 @@ class InterfaceMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
+		List<String> interfaces = new ArrayList<>(in.interfaces);
+		for (TypeAnnotationNode annotation : in.visibleTypeAnnotations) {
+			TypeReference reference = new TypeReference(annotation.typeRef);
+			if (reference.getSort() == TypeReference.CLASS_EXTENDS) {
+				int i = reference.getSuperTypeIndex();
+				if (i >= 0) {
+					in.interfaces.remove(interfaces.get(i));
+				}
+			}
+		}
 		return false;
 	}
 }

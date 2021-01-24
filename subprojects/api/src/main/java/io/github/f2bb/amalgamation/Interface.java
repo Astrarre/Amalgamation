@@ -19,9 +19,16 @@
 
 package io.github.f2bb.amalgamation;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * a platform specific interface
  */
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
 public @interface Interface {
 
     /**

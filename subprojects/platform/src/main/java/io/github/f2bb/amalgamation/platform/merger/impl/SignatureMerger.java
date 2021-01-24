@@ -94,6 +94,8 @@ class SignatureMerger extends SignatureWriter implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
+		// todo this is complete and utter pain
+		// it's not even used at runtime so I could honestly care less
 		return false;
 	}
 
