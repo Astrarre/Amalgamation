@@ -19,14 +19,28 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import net.fabricmc.tinyremapper.InputTag;
+import net.fabricmc.tinyremapper.NonClassCopyMode;
+import net.fabricmc.tinyremapper.OutputConsumerPath;
+import net.fabricmc.tinyremapper.TinyRemapper;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 class Fabric {
+
+    private static final Gson GSON = new Gson();
 
     private final Project project;
     final String minecraftVersion;
@@ -38,7 +52,177 @@ class Fabric {
         this.fabric = fabric;
     }
 
-    public Set<File> getFiles(MinecraftMappings mappings) {
-        throw new UnsupportedOperationException();
+    public List<Path> getFiles(MinecraftMappings mappings) throws IOException {
+        Path workingDirectory = project.getBuildDir().toPath().resolve("amalgamation");
+
+        // Step 1 - Download Minecraft
+        Path clientJar = Files.createTempFile(workingDirectory, "minecraft-client", ".jar");
+        Path serverJar = Files.createTempFile(workingDirectory, "minecraft-server", ".jar");
+        Path intermediaryClientJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-client", ".jar");
+        Path intermediaryServerJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-server", ".jar");
+        List<String> libraries = new ArrayList<>();
+
+        try (InputStream _a = new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json").openStream();
+             Reader globalManifestReader = new InputStreamReader(_a, StandardCharsets.UTF_8)) {
+            String manifestUrl = null;
+
+            for (JsonElement element : GSON.fromJson(globalManifestReader, JsonObject.class).getAsJsonArray("versions")) {
+                JsonObject object = element.getAsJsonObject();
+                if (object.get("id").getAsString().equals(minecraftVersion)) {
+                    manifestUrl = object.get("url").getAsString();
+                    break;
+                }
+            }
+
+            if (manifestUrl == null) {
+                throw new IllegalStateException("Version " + minecraftVersion + " was not found");
+            }
+
+            String client;
+            String server;
+
+            try (InputStream _b = new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json").openStream();
+                 Reader versionManifestReader = new InputStreamReader(_b, StandardCharsets.UTF_8)) {
+                JsonObject versionManifest = GSON.fromJson(versionManifestReader, JsonObject.class);
+                JsonObject downloads = versionManifest.getAsJsonObject("downloads");
+
+                client = downloads.getAsJsonObject("client").get("url").getAsString();
+                server = downloads.getAsJsonObject("server").get("url").getAsString();
+
+                for (JsonElement element : versionManifest.getAsJsonArray("libraries")) {
+                    libraries.add(element.getAsJsonObject().get("name").getAsString());
+                }
+            }
+
+            if (client == null) {
+                throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
+            }
+
+            if (server == null) {
+                throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
+            }
+
+            try (InputStream inputStream = new URL(client).openStream()) {
+                Files.copy(inputStream, clientJar);
+            }
+
+            try (InputStream inputStream = new URL(server).openStream()) {
+                Files.copy(inputStream, serverJar);
+            }
+        }
+
+        // Step 2 - Strip embedded libraries inside the server jar
+        try (FileSystem fileSystem = FileSystems.newFileSystem(serverJar, (ClassLoader) null)) {
+            Path root = fileSystem.getPath("/");
+
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String name = root.relativize(file).toString();
+
+                    if (!name.startsWith("net/minecraft/") && name.contains("/")) {
+                        Files.delete(file);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+        // Step 3 - Remap to intermediary
+        {
+            TinyRemapper remapper = TinyRemapper.newRemapper()
+                    .withMappings(MappingUtils.createMappingProvider(mappings.officialToIntermediary))
+                    .build();
+
+            InputTag clientTag = remapper.createInputTag();
+            InputTag serverTag = remapper.createInputTag();
+
+            remapper.readInputsAsync(clientTag, clientJar);
+            remapper.readInputsAsync(serverTag, serverJar);
+
+            try (OutputConsumerPath output = new OutputConsumerPath.Builder(intermediaryClientJar).build()) {
+                output.addNonClassFiles(clientJar, NonClassCopyMode.FIX_META_INF, remapper);
+                remapper.apply(output, clientTag);
+            }
+
+            try (OutputConsumerPath output = new OutputConsumerPath.Builder(intermediaryServerJar).build()) {
+                output.addNonClassFiles(serverJar, NonClassCopyMode.FIX_META_INF, remapper);
+                remapper.apply(output, serverTag);
+            }
+
+            remapper.finish();
+        }
+
+        // Step 4 - Collect classpath
+        Set<File> classpath;
+
+        {
+            List<Dependency> dependencies = new ArrayList<>(fabric.getDependencies());
+
+            for (String library : libraries) {
+                Dependency dependency = project.getDependencies().create(library);
+                dependencies.add(dependency);
+
+                // Also add this Minecraft library to the project classpath
+                project.getDependencies().add("compileClasspath", dependency);
+            }
+
+            classpath = project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getFiles();
+        }
+
+        // Step 5 - Remap everything to named
+        List<Path> toMerge = new ArrayList<>();
+
+        for (Dependency dependency : fabric.getDependencies()) {
+            for (File file : AmalgamationImpl.resolve(project, dependency)) {
+                toMerge.add(file.toPath());
+            }
+        }
+
+        {
+            TinyRemapper remapper = TinyRemapper.newRemapper()
+                    .withMappings(MappingUtils.createMappingProvider(mappings.intermediaryToNamed))
+                    .build();
+            Map<Path, InputTag> tags = new HashMap<>();
+
+            {
+                InputTag tag = remapper.createInputTag();
+                tags.put(intermediaryClientJar, tag);
+                remapper.readInputsAsync(tag, intermediaryClientJar);
+            }
+
+            {
+                InputTag tag = remapper.createInputTag();
+                tags.put(intermediaryServerJar, tag);
+                remapper.readInputsAsync(tag, intermediaryServerJar);
+            }
+
+            for (Dependency dependency : fabric.getRemap()) {
+                for (File file : AmalgamationImpl.resolve(project, dependency)) {
+                    InputTag tag = remapper.createInputTag();
+                    tags.put(file.toPath(), tag);
+                    remapper.readInputsAsync(tag, file.toPath());
+                }
+            }
+
+            for (File file : classpath) {
+                remapper.readClassPathAsync(file.toPath());
+            }
+
+            for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
+                Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
+                toMerge.add(out);
+
+                try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
+                    output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
+                    remapper.apply(output, entry.getValue());
+                }
+            }
+
+            remapper.finish();
+        }
+
+        return toMerge;
     }
 }

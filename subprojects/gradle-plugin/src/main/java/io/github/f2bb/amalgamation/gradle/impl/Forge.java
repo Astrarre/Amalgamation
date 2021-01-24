@@ -23,9 +23,8 @@ import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.List;
 
 class Forge {
 
@@ -41,7 +40,7 @@ class Forge {
         this.forge = forge;
     }
 
-    public Set<File> getFiles(MinecraftMappings mappings) {
+    public List<Path> getFiles(MinecraftMappings mappings) {
         throw new UnsupportedOperationException();
     }
 }

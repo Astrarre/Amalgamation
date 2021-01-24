@@ -19,10 +19,9 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
+import net.fabricmc.tinyremapper.IMappingProvider;
 import org.cadixdev.lorenz.MappingSet;
-import org.cadixdev.lorenz.model.ClassMapping;
-import org.cadixdev.lorenz.model.InnerClassMapping;
-import org.cadixdev.lorenz.model.TopLevelClassMapping;
+import org.cadixdev.lorenz.model.*;
 
 import java.util.function.Consumer;
 
@@ -32,6 +31,23 @@ public class MappingUtils {
         for (TopLevelClassMapping topLevelClassMapping : mappings.getTopLevelClassMappings()) {
             iterateClasses(topLevelClassMapping, consumer);
         }
+    }
+
+    public static IMappingProvider createMappingProvider(MappingSet mappings) {
+        return out -> MappingUtils.iterateClasses(mappings, classMapping -> {
+            String owner = classMapping.getFullObfuscatedName();
+            out.acceptClass(owner, classMapping.getFullDeobfuscatedName());
+
+            for (MethodMapping methodMapping : classMapping.getMethodMappings()) {
+                out.acceptMethod(new IMappingProvider.Member(owner, methodMapping.getObfuscatedName(), methodMapping.getObfuscatedDescriptor()), methodMapping.getDeobfuscatedName());
+            }
+
+            for (FieldMapping fieldMapping : classMapping.getFieldMappings()) {
+                fieldMapping.getType().ifPresent(fieldType -> {
+                    out.acceptField(new IMappingProvider.Member(owner, fieldMapping.getObfuscatedName(), fieldType.toString()), fieldMapping.getDeobfuscatedName());
+                });
+            }
+        });
     }
 
     private static void iterateClasses(ClassMapping<?, ?> classMapping, Consumer<ClassMapping<?, ?>> consumer) {

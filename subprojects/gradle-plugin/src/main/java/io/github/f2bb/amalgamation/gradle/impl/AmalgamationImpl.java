@@ -89,13 +89,19 @@ public class AmalgamationImpl {
             platforms.add(new PlatformData(spec.getNames(), files));
         }
 
-        MinecraftMappings mappings = loadMappings(resolve(project, mappingsDependency));
+        MinecraftMappings mappings;
+
+        if (mappingsDependency != null) {
+            mappings = loadMappings(resolve(project, mappingsDependency));
+        } else {
+            mappings = null;
+        }
 
         for (Forge spec : forgeSpecs) {
             Map<String, byte[]> files = new HashMap<>();
 
-            for (File file : spec.getFiles(mappings)) {
-                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+            for (Path path : spec.getFiles(mappings)) {
+                try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
                     PlatformData.readFiles(files, fileSystem.getPath("/"));
                 }
             }
@@ -106,8 +112,8 @@ public class AmalgamationImpl {
         for (Fabric spec : fabricSpecs) {
             Map<String, byte[]> files = new HashMap<>();
 
-            for (File file : spec.getFiles(mappings)) {
-                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+            for (Path path : spec.getFiles(mappings)) {
+                try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
                     PlatformData.readFiles(files, fileSystem.getPath("/"));
                 }
             }
@@ -178,7 +184,7 @@ public class AmalgamationImpl {
         }
     }
 
-    private static Set<File> resolve(Project project, Dependency dependency) {
+    static Set<File> resolve(Project project, Dependency dependency) {
         return project.getConfigurations().detachedConfiguration(dependency).resolve();
     }
 
