@@ -24,6 +24,7 @@ import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
@@ -76,6 +77,13 @@ public class FieldMerger implements Merger {
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
 		in.fields.removeIf(field -> !SplitterUtil.matches(field.visibleAnnotations, available));
+		in.fields.forEach(f -> {
+			for (AnnotationNode annotation : f.visibleAnnotations) {
+				if(ClassInfo.DISPLACE.equals(annotation.desc)) {
+					f.name = (String) annotation.values.get(1);
+				}
+			}
+		});
 		return false;
 	}
 
