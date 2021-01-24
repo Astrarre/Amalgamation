@@ -50,17 +50,18 @@ repositories {
 
 amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
+                                                // looks like a string to me ngl
 
     // Assuming this is 1.16.4 forge
     // forge("1.16.4", "net.minecraftforge:forge:1.16.4-35.1.37") {
     //     // names = ['forge', '1.16.4']
     // }
 
-    // fabric("1.16.4") {
-    //     // names = ['fabric', '1.16.4']
-    //     remap("net.fabricmc:fabric-loader:0.11.0")
-    //     remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
-    // }
+    fabric("1.16.4") {
+        // names = ['fabric', '1.16.4']
+        remap("net.fabricmc:fabric-loader:0.11.0")
+        remap("net.fabricmc.fabric-api:fabric-api:0.28.4+1.16")
+    }
 
     // fabric("1.16.5") {
     //     // names = ['fabric', '1.16.5']
@@ -83,9 +84,7 @@ dependencies {
     compileOnly(amalgamation.create())
 }
 
-task epic(type: StripJar) {
+task fabric(type: StripJar) {
     from jar
-    platform 'forge'
-    platform '1.16.4'
-    platform 'guava-27'
+    platform 'fabric'
 }

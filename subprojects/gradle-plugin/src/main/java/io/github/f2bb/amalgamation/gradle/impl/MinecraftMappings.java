@@ -46,7 +46,7 @@ class MinecraftMappings {
     static void load(Path path, MinecraftMappings mappings) throws IOException {
         try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null);
              BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
-            TinyTree tree = TinyMappingFactory.load(reader, false);
+            TinyTree tree = TinyMappingFactory.loadLegacy(reader);
 
             new TinyMappingsReader(tree, "official", "intermediary").read(mappings.officialToIntermediary);
             new TinyMappingsReader(tree, "official", "named").read(mappings.officialToNamed);

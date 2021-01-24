@@ -53,7 +53,7 @@ class Fabric {
     }
 
     public List<Path> getFiles(MinecraftMappings mappings) throws IOException {
-        Path workingDirectory = project.getBuildDir().toPath().resolve("amalgamation");
+        Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
         Path clientJar = Files.createTempFile(workingDirectory, "minecraft-client", ".jar");
@@ -61,6 +61,11 @@ class Fabric {
         Path intermediaryClientJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-client", ".jar");
         Path intermediaryServerJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-server", ".jar");
         List<String> libraries = new ArrayList<>();
+
+        Files.delete(clientJar);
+        Files.delete(serverJar);
+        Files.delete(intermediaryClientJar);
+        Files.delete(intermediaryServerJar);
 
         try (InputStream _a = new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json").openStream();
              Reader globalManifestReader = new InputStreamReader(_a, StandardCharsets.UTF_8)) {
@@ -81,7 +86,7 @@ class Fabric {
             String client;
             String server;
 
-            try (InputStream _b = new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json").openStream();
+            try (InputStream _b = new URL(manifestUrl).openStream();
                  Reader versionManifestReader = new InputStreamReader(_b, StandardCharsets.UTF_8)) {
                 JsonObject versionManifest = GSON.fromJson(versionManifestReader, JsonObject.class);
                 JsonObject downloads = versionManifest.getAsJsonObject("downloads");
@@ -168,6 +173,11 @@ class Fabric {
                 project.getDependencies().add("compileClasspath", dependency);
             }
 
+            project.getRepositories().maven(repository -> {
+                repository.setName("Minecraft Libraries");
+                repository.setUrl("https://libraries.minecraft.net/");
+            });
+
             classpath = project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getFiles();
         }
 
@@ -212,6 +222,7 @@ class Fabric {
 
             for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
                 Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
+                Files.delete(out);
                 toMerge.add(out);
 
                 try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
