@@ -21,7 +21,7 @@ package io.github.f2bb.amalgamation.gradle.impl;
 
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 
-public class Fabric {
+class Fabric {
 
     final String minecraftVersion;
     public final MinecraftPlatformSpec fabric;

@@ -30,7 +30,6 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class PlatformMerger {
 
@@ -94,11 +93,7 @@ public class PlatformMerger {
 			}
 		}, mergeContext.getExecutor())));
 
-		try {
-			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
-		} catch (InterruptedException | ExecutionException exception) {
-			throw new RuntimeException(exception);
-		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 	}
 
 	private static ClassNode read(byte[] bytes) {

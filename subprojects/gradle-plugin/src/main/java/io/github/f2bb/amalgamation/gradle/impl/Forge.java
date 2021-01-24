@@ -22,7 +22,7 @@ package io.github.f2bb.amalgamation.gradle.impl;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.gradle.api.artifacts.Dependency;
 
-public class Forge {
+class Forge {
 
     final String minecraftVersion;
     final Dependency dependency;

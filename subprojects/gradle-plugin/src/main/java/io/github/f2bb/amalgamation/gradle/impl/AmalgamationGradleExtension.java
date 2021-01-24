@@ -17,79 +17,84 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft;
+package io.github.f2bb.amalgamation.gradle.impl;
 
 import groovy.lang.Closure;
-import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradleExtension;
-import io.github.f2bb.amalgamation.gradle.impl.AmalgamationImpl;
-import io.github.f2bb.amalgamation.gradle.impl.Fabric;
-import io.github.f2bb.amalgamation.gradle.impl.Forge;
+import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamation;
+import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.FileCollection;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.IOException;
 import java.util.*;
 
-public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradleExtension {
+public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 
-    private Dependency mappings;
+    private final Project project;
 
+    private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
     private final Set<Forge> forgeSpecs = new HashSet<>();
     private final Set<Fabric> fabricSpecs = new HashSet<>();
+    private Dependency mappings;
 
-    public MinecraftAmalgamationGradleExtension(Project project) {
-        super(project);
+    private Dependency myDependency;
+
+    public AmalgamationGradleExtension(Project project) {
+        this.project = project;
     }
 
-    /**
-     * @return The mapping dependency
-     */
+    @Override
     public Dependency getMappings() {
         return mappings;
     }
 
-    /**
-     * Sets the mappings dependency to use
-     *
-     * @param mappings The mappings to use
-     */
+    @Override
     public void setMappings(Dependency mappings) {
         this.mappings = mappings;
     }
 
-    /**
-     * Sets the mappings dependency to use
-     *
-     * @param dependencyNotation The mappings to use. See {@link DependencyHandler#create(Object)}
-     */
+    @Override
     public void mappings(Object dependencyNotation) {
         setMappings(project.getDependencies().create(dependencyNotation));
     }
 
-    /**
-     * Adds a Forge based platform
-     *
-     * @param minecraftVersion The Minecraft version
-     * @param dependency       The Forge dependency
-     * @param configureClosure Closure to configure this platform
-     */
+    @Override
+    public void generic(Closure configureClosure) {
+        genericAction(spec -> {
+            ConfigureUtil.configure(configureClosure, spec);
+        });
+    }
+
+    @Override
+    public void genericAction(Action<GenericPlatformSpec> configureAction) {
+        assertMutable();
+
+        GenericPlatformSpec spec = new GenericPlatformSpec(project);
+        configureAction.execute(spec);
+
+        if (spec.getNames().isEmpty()) {
+            throw new IllegalStateException("No names were given to this platform");
+        }
+
+        if (spec.getDependencies().isEmpty()) {
+            throw new IllegalStateException("No dependencies were given to this platform");
+        }
+
+        genericSpecs.add(spec);
+    }
+
+    @Override
     public void forge(String minecraftVersion, Object dependency, Closure configureClosure) {
         forgeAction(minecraftVersion, dependency, spec -> {
             ConfigureUtil.configure(configureClosure, spec);
         });
     }
 
-    /**
-     * Adds a Forge based platform
-     *
-     * @param minecraftVersion The Minecraft version
-     * @param dependency       The Forge dependency
-     * @param configureAction  Action to configure this platform
-     */
+    @Override
     public void forgeAction(String minecraftVersion, Object dependency, Action<MinecraftPlatformSpec> configureAction) {
         assertMutable();
 
@@ -101,24 +106,14 @@ public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradle
         forgeSpecs.add(new Forge(minecraftVersion, project.getDependencies().create(dependency), forge));
     }
 
-    /**
-     * Adds a Fabric based platform
-     *
-     * @param minecraftVersion The Minecraft version
-     * @param configureClosure Closure to configure this platform
-     */
+    @Override
     public void fabric(String minecraftVersion, Closure configureClosure) {
         fabricAction(minecraftVersion, spec -> {
             ConfigureUtil.configure(configureClosure, spec);
         });
     }
 
-    /**
-     * Adds a Fabric based platform
-     *
-     * @param minecraftVersion The Minecraft version
-     * @param configureAction  Action to configure this platform
-     */
+    @Override
     public void fabricAction(String minecraftVersion, Action<MinecraftPlatformSpec> configureAction) {
         assertMutable();
 
@@ -130,12 +125,7 @@ public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradle
         fabricSpecs.add(new Fabric(minecraftVersion, fabric));
     }
 
-    /**
-     * Freezes this extension and creates the merged dependency
-     *
-     * @return A dependency which can be added to a configuration
-     * @throws IOException If an I/O exception occurs
-     */
+    @Override
     public Dependency create() throws IOException {
         if (myDependency != null) {
             return myDependency;
@@ -144,12 +134,7 @@ public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradle
         return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
     }
 
-    /**
-     * Collects the dependencies which are available for the provided platforms
-     *
-     * @param platforms The platforms to filter by
-     * @return A collection of dependencies which crab
-     */
+    @Override
     public FileCollection getClasspath(Collection<String> platforms) {
         List<Dependency> dependencies = new ArrayList<>();
 
@@ -174,5 +159,11 @@ public class MinecraftAmalgamationGradleExtension extends BaseAmalgamationGradle
         }
 
         return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
+    }
+
+    protected void assertMutable() {
+        if (myDependency != null) {
+            throw new IllegalStateException("Dependency matrix is frozen");
+        }
     }
 }

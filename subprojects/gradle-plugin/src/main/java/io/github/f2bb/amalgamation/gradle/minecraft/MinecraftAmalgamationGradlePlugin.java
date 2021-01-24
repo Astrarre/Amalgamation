@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
+import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,6 @@ public class MinecraftAmalgamationGradlePlugin implements Plugin<Project> {
 
     @Override
     public void apply(@NotNull Project target) {
-        target.getExtensions().create("amalgamation", MinecraftAmalgamationGradleExtension.class, target);
+        target.getExtensions().create(MinecraftAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
     }
 }

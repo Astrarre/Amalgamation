@@ -21,7 +21,7 @@ package io.github.f2bb.amalgamation.gradle.impl;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.f2bb.amalgamation.gradle.minecraft.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;

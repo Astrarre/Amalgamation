@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
+import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;

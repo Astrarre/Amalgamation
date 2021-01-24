@@ -24,6 +24,11 @@ buildscript {
         mavenCentral()
 
         maven {
+            name = "FabricMC"
+            url = uri("https://maven.fabricmc.net/")
+        }
+
+        maven {
             name = "MinecraftForge"
             url = uri("https://files.minecraftforge.net/maven")
         }
