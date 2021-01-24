@@ -34,11 +34,17 @@ public class SplitterUtil {
 	}
 
 	public static boolean matches(List<AnnotationNode> nodes, Set<String> platforms) {
+		boolean notVisited = true;
 		for (AnnotationNode node : nodes) {
 			if (matches(node, platforms)) {
 				return true;
 			}
+
+			if(notVisited && ClassInfo.PLATFORM_DESC.equals(node.desc)) {
+				notVisited = false;
+			}
 		}
-		return false;
+		return notVisited;
 	}
+
 }

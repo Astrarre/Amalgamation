@@ -19,6 +19,9 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
+import java.util.List;
+import java.util.Set;
+
 import io.github.f2bb.amalgamation.Platform;
 import io.github.f2bb.amalgamation.platform.merger.impl.field.FieldMerger;
 import io.github.f2bb.amalgamation.platform.merger.impl.method.MethodMerger;
@@ -26,12 +29,9 @@ import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.List;
-import java.util.Set;
-
 public interface Merger extends Opcodes {
 
-	Merger MERGER = new BaseMerger()
+	Merger MERGER = new HeaderMerger()
 			.andThen(new SuperclassMerger())
 			.andThen(new InterfaceMerger())
 			.andThen(new AccessMerger())

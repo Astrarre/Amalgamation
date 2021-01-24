@@ -19,21 +19,119 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.github.f2bb.amalgamation.Access;
-import io.github.f2bb.amalgamation.Platform;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.lang.reflect.Modifier;
-import java.util.*;
-
-class AccessMerger implements @Platform({"fabric"}) Merger {
-
-	public static final String ACCESSES = Type.getDescriptor(Access.Accesses.class);
+public class AccessMerger implements Merger {
 	public static final String ACCESS = Type.getDescriptor(Access.class);
+
+	public static int getAccess(AnnotationNode annotation) {
+		List<Object> values = annotation.values;
+		List<String> vals = (List<String>) values.get(values.indexOf("flags") + 1);
+		int access = 0;
+		for (String val : vals) {
+			switch (val) {
+			case "public":
+				access |= ACC_PUBLIC;
+				break;
+			case "protect":
+				access |= ACC_PROTECTED;
+				break;
+			case "private":
+				access |= ACC_PRIVATE;
+				break;
+			case "interface":
+				access |= ACC_INTERFACE;
+				break;
+			case "abstract":
+				access |= ACC_ABSTRACT;
+				break;
+			case "enum":
+				access |= ACC_ENUM;
+				break;
+			case "@interface":
+				access |= ACC_ANNOTATION;
+				break;
+			case "final":
+				access |= ACC_FINAL;
+				break;
+			case "static":
+				access |= ACC_STATIC;
+				break;
+			case "synchronized":
+				access |= ACC_SYNCHRONIZED;
+				break;
+			case "volatile":
+				access |= ACC_VOLATILE;
+				break;
+			case "transient":
+				access |= ACC_TRANSIENT;
+				break;
+			case "native":
+				access |= ACC_NATIVE;
+				break;
+			}
+		}
+		return access;
+	}
+
+	@Override
+	public void merge(ClassNode node, List<ClassInfo> infos) {
+		Map<Integer, List<ClassInfo>> accessFlags = new HashMap<>();
+		for (ClassInfo info : infos) {
+			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
+		}
+
+		int widest = getWidest(accessFlags);
+		accessFlags.remove(widest);
+		node.access = widest;
+
+		if (!accessFlags.isEmpty()) {
+			if (node.visibleAnnotations == null) {
+				node.visibleAnnotations = new ArrayList<>();
+			}
+			node.visibleAnnotations.addAll(visit(accessFlags));
+		}
+	}
+
+	@Override
+	public boolean strip(ClassNode in, Set<String> available) {
+		for (AnnotationNode annotation : in.visibleAnnotations) {
+			if (ACCESS.equals(annotation.desc)) {
+				List<Object> values = annotation.values;
+				if (SplitterUtil.matches((List<AnnotationNode>) values.get(values.indexOf("platforms") + 1), available)) {
+					in.access = getAccess(annotation);
+				}
+			}
+		}
+		return false;
+	}
+
+	public static int getWidest(Map<Integer, List<ClassInfo>> accessFlags) {
+		int widest = 0;
+		for (int access : accessFlags.keySet()) {
+			if (Modifier.isPublic(access)) {
+				widest = access;
+			} else if (Modifier.isProtected(access) && !Modifier.isPublic(widest)) {
+				widest = access;
+			} else if (widest == 0) {
+				widest = access;
+			}
+		}
+		return widest;
+	}
 
 	public static List<AnnotationNode> visit(Map<Integer, List<ClassInfo>> accessFlags) {
 		List<AnnotationNode> node = new ArrayList<>();
@@ -59,7 +157,8 @@ class AccessMerger implements @Platform({"fabric"}) Merger {
 			if (Modifier.isInterface(access)) {
 				flags.visit("flags", "interface");
 			} else if (Modifier.isAbstract(access)) {
-				flags.visit("flags", "abstract class");
+				flags.visit("flags", "abstract");
+				flags.visit("flags", "class");
 			} else if ((ACC_ENUM & access) != 0) {
 				flags.visit("flags", "enum");
 			} else if ((ACC_ANNOTATION & access) != 0) {
@@ -97,41 +196,5 @@ class AccessMerger implements @Platform({"fabric"}) Merger {
 			node.add(accessAnnotation);
 		});
 		return node;
-	}
-
-	public static int getWidest(Map<Integer, List<ClassInfo>> accessFlags) {
-		int widest = 0;
-		for (int access : accessFlags.keySet()) {
-			if (Modifier.isPublic(access)) {
-				widest = access;
-			} else if (Modifier.isProtected(access) && !Modifier.isPublic(widest)) {
-				widest = access;
-			} else if (widest == 0) {
-				widest = access;
-			}
-		}
-		return widest;
-	}
-
-	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos) {
-		Map<Integer, List<ClassInfo>> accessFlags = new HashMap<>();
-		for (ClassInfo info : infos) {
-			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
-		}
-
-		int widest = getWidest(accessFlags);
-		accessFlags.remove(widest);
-		node.access = widest;
-
-		if (!accessFlags.isEmpty()) {
-			if (node.visibleAnnotations == null) node.visibleAnnotations = new ArrayList<>();
-			node.visibleAnnotations.addAll(visit(accessFlags));
-		}
-	}
-
-	@Override
-	public boolean strip(ClassNode in, Set<String> available) {
-		return false;
 	}
 }
