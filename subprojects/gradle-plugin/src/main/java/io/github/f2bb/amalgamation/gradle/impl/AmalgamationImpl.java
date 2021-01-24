@@ -42,7 +42,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class AmalgamationImpl {
 
@@ -109,15 +112,43 @@ public class AmalgamationImpl {
         }
 
         for (Fabric spec : fabricSpecs) {
-            Map<String, byte[]> files = new HashMap<>();
+            ClasspathClientServer ccs = spec.getFiles(mappings);
 
-            for (Path path : spec.getFiles(mappings)) {
-                try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
-                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+            {
+                Map<String, byte[]> files = new HashMap<>();
+
+                for (Path path : ccs.classpath) {
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
+                        PlatformData.readFiles(files, fileSystem.getPath("/"));
+                    }
                 }
+
+                platforms.add(new PlatformData(spec.fabric.getNames(), files));
             }
 
-            platforms.add(new PlatformData(spec.fabric.getNames(), files));
+            {
+                Map<String, byte[]> files = new HashMap<>();
+
+                try (FileSystem fileSystem = FileSystems.newFileSystem(ccs.client, (ClassLoader) null)) {
+                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+                }
+
+                Set<String> copy = new HashSet<>(spec.fabric.getNames());
+                copy.add("client");
+                platforms.add(new PlatformData(copy, files));
+            }
+
+            {
+                Map<String, byte[]> files = new HashMap<>();
+
+                try (FileSystem fileSystem = FileSystems.newFileSystem(ccs.server, (ClassLoader) null)) {
+                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+                }
+
+                Set<String> copy = new HashSet<>(spec.fabric.getNames());
+                copy.add("server");
+                platforms.add(new PlatformData(copy, files));
+            }
         }
 
         Files.createDirectories(outputFile.getParent());

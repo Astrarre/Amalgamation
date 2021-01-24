@@ -56,7 +56,7 @@ class Fabric {
         this.fabric = fabric;
     }
 
-    public List<Path> getFiles(MappingSet mappings) throws IOException {
+    public ClasspathClientServer getFiles(MappingSet mappings) throws IOException {
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
@@ -187,6 +187,8 @@ class Fabric {
 
         // Step 5 - Remap everything to named
         List<Path> toMerge = new ArrayList<>();
+        Path mappedClient = null;
+        Path mappedServer = null;
 
         for (File file : AmalgamationImpl.resolve(project, fabric.getDependencies())) {
             toMerge.add(file.toPath());
@@ -197,17 +199,17 @@ class Fabric {
                     .withMappings(MappingUtils.createMappingProvider(mappings))
                     .build();
             Map<Path, InputTag> tags = new HashMap<>();
+            InputTag clientTag = remapper.createInputTag();
+            InputTag serverTag = remapper.createInputTag();
 
             {
-                InputTag tag = remapper.createInputTag();
-                tags.put(intermediaryClientJar, tag);
-                remapper.readInputsAsync(tag, intermediaryClientJar);
+                tags.put(intermediaryClientJar, clientTag);
+                remapper.readInputsAsync(clientTag, intermediaryClientJar);
             }
 
             {
-                InputTag tag = remapper.createInputTag();
-                tags.put(intermediaryServerJar, tag);
-                remapper.readInputsAsync(tag, intermediaryServerJar);
+                tags.put(intermediaryServerJar, serverTag);
+                remapper.readInputsAsync(serverTag, intermediaryServerJar);
             }
 
             for (File file : AmalgamationImpl.resolve(project, fabric.getRemap())) {
@@ -221,20 +223,30 @@ class Fabric {
             }
 
             for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
+                InputTag tag = entry.getValue();
+
                 Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
+
+                if (tag == clientTag) {
+                    mappedClient = out;
+                } else if (tag == serverTag) {
+                    mappedServer = out;
+                } else {
+                    toMerge.add(out);
+                }
+
                 Files.delete(out);
-                toMerge.add(out);
 
                 try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
                     output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
-                    remapper.apply(output, entry.getValue());
+                    remapper.apply(output, tag);
                 }
             }
 
             remapper.finish();
         }
 
-        return toMerge;
+        return new ClasspathClientServer(toMerge, mappedClient, mappedServer);
     }
 
     private MappingSet officialToIntermediary() throws IOException {
