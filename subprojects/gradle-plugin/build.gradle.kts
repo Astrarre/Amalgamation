@@ -43,6 +43,7 @@ dependencies {
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("org.cadixdev", "lorenz", "0.5.6")
     implementation("net.fabricmc", "tiny-remapper", "0.3.2")
+    implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
 }
 
 gradlePlugin {

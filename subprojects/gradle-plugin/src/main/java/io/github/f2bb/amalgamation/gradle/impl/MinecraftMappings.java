@@ -19,7 +19,17 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
+import net.fabricmc.lorenztiny.TinyMappingsReader;
+import net.fabricmc.mapping.tree.TinyMappingFactory;
+import net.fabricmc.mapping.tree.TinyTree;
 import org.cadixdev.lorenz.MappingSet;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 class MinecraftMappings {
 
@@ -27,9 +37,20 @@ class MinecraftMappings {
     final MappingSet intermediaryToNamed;
     final MappingSet officialToNamed;
 
-    public MinecraftMappings(MappingSet officialToIntermediary, MappingSet intermediaryToNamed, MappingSet officialToNamed) {
+    MinecraftMappings(MappingSet officialToIntermediary, MappingSet intermediaryToNamed, MappingSet officialToNamed) {
         this.officialToIntermediary = officialToIntermediary;
         this.intermediaryToNamed = intermediaryToNamed;
         this.officialToNamed = officialToNamed;
+    }
+
+    static void load(Path path, MinecraftMappings mappings) throws IOException {
+        try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null);
+             BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
+            TinyTree tree = TinyMappingFactory.load(reader, false);
+
+            new TinyMappingsReader(tree, "official", "intermediary").read(mappings.officialToIntermediary);
+            new TinyMappingsReader(tree, "official", "named").read(mappings.officialToNamed);
+            new TinyMappingsReader(tree, "intermediary", "named").read(mappings.intermediaryToNamed);
+        }
     }
 }

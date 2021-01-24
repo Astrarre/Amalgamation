@@ -25,6 +25,7 @@ import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
@@ -132,8 +133,14 @@ public class AmalgamationImpl {
         }
     }
 
-    private static MinecraftMappings loadMappings(Set<File> files) {
-        throw new UnsupportedOperationException();
+    private static MinecraftMappings loadMappings(Set<File> files) throws IOException {
+        MinecraftMappings mappings = new MinecraftMappings(MappingSet.create(), MappingSet.create(), MappingSet.create());
+
+        for (File file : files) {
+            MinecraftMappings.load(file.toPath(), mappings);
+        }
+
+        return mappings;
     }
 
     private static String hash(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
