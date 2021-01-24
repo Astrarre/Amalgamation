@@ -72,36 +72,62 @@ public class AmalgamationImpl {
         return project.getDependencies().create(GROUP + ":" + hash + ":" + VERSION);
     }
 
-    private static void processInternal(Path outputFile, Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
-        if (fabricSpecs.isEmpty() && forgeSpecs.isEmpty()) {
-            Set<PlatformData> platforms = new HashSet<>();
+    private static void processInternal(Path outputFile, Project project, Dependency mappingsDependency, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+        Set<PlatformData> platforms = new HashSet<>();
 
-            for (GenericPlatformSpec spec : genericSpecs) {
-                Map<String, byte[]> files = new HashMap<>();
+        for (GenericPlatformSpec spec : genericSpecs) {
+            Map<String, byte[]> files = new HashMap<>();
 
-                for (Dependency dependency : spec.getDependencies()) {
-                    for (File file : resolve(project, dependency)) {
-                        try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
-                            PlatformData.readFiles(files, fileSystem.getPath("/"));
-                        }
+            for (Dependency dependency : spec.getDependencies()) {
+                for (File file : resolve(project, dependency)) {
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+                        PlatformData.readFiles(files, fileSystem.getPath("/"));
                     }
                 }
-
-                platforms.add(new PlatformData(spec.getNames(), files));
             }
 
-            Files.createDirectories(outputFile.getParent());
-            try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toUri()), new HashMap<String, Object>() {{
-                put("create", "true");
-            }})) {
-                PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
-            } catch (Throwable throwable) {
-                Files.deleteIfExists(outputFile);
-                throw throwable;
-            }
-        } else {
-            // TODO: Make it actually work
+            platforms.add(new PlatformData(spec.getNames(), files));
         }
+
+        MinecraftMappings mappings = loadMappings(resolve(project, mappingsDependency));
+
+        for (Forge spec : forgeSpecs) {
+            Map<String, byte[]> files = new HashMap<>();
+
+            for (File file : spec.getFiles(mappings)) {
+                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+                }
+            }
+
+            platforms.add(new PlatformData(spec.forge.getNames(), files));
+        }
+
+        for (Fabric spec : fabricSpecs) {
+            Map<String, byte[]> files = new HashMap<>();
+
+            for (File file : spec.getFiles(mappings)) {
+                try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
+                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+                }
+            }
+
+            platforms.add(new PlatformData(spec.fabric.getNames(), files));
+        }
+
+        Files.createDirectories(outputFile.getParent());
+        try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toUri()), new HashMap<String, Object>() {{
+            put("create", "true");
+        }})) {
+            PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
+        } catch (Throwable throwable) {
+            Files.deleteIfExists(outputFile);
+            throw throwable;
+        }
+    }
+
+    private static MinecraftMappings loadMappings(Set<File> files) {
+        throw new UnsupportedOperationException();
     }
 
     private static String hash(Project project, Dependency mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {

@@ -19,29 +19,17 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
-import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
+import org.cadixdev.lorenz.MappingSet;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
+class MinecraftMappings {
 
-class Forge {
+    final MappingSet officialToIntermediary;
+    final MappingSet intermediaryToNamed;
+    final MappingSet officialToNamed;
 
-    private final Project project;
-    final String minecraftVersion;
-    final Dependency dependency;
-    final MinecraftPlatformSpec forge;
-
-    public Forge(Project project, String minecraftVersion, Dependency dependency, MinecraftPlatformSpec forge) {
-        this.project = project;
-        this.minecraftVersion = minecraftVersion;
-        this.dependency = dependency;
-        this.forge = forge;
-    }
-
-    public Set<File> getFiles(MinecraftMappings mappings) {
-        throw new UnsupportedOperationException();
+    public MinecraftMappings(MappingSet officialToIntermediary, MappingSet intermediaryToNamed, MappingSet officialToNamed) {
+        this.officialToIntermediary = officialToIntermediary;
+        this.intermediaryToNamed = intermediaryToNamed;
+        this.officialToNamed = officialToNamed;
     }
 }

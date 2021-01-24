@@ -103,7 +103,7 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
         forge.name(minecraftVersion);
         configureAction.execute(forge);
 
-        forgeSpecs.add(new Forge(minecraftVersion, project.getDependencies().create(dependency), forge));
+        forgeSpecs.add(new Forge(project, minecraftVersion, project.getDependencies().create(dependency), forge));
     }
 
     @Override
@@ -122,7 +122,7 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
         fabric.name(minecraftVersion);
         configureAction.execute(fabric);
 
-        fabricSpecs.add(new Fabric(minecraftVersion, fabric));
+        fabricSpecs.add(new Fabric(project, minecraftVersion, fabric));
     }
 
     @Override

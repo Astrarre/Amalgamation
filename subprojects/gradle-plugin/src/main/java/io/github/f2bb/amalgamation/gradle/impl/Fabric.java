@@ -20,14 +20,25 @@
 package io.github.f2bb.amalgamation.gradle.impl;
 
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import org.gradle.api.Project;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.Set;
 
 class Fabric {
 
+    private final Project project;
     final String minecraftVersion;
-    public final MinecraftPlatformSpec fabric;
+    final MinecraftPlatformSpec fabric;
 
-    public Fabric(String minecraftVersion, MinecraftPlatformSpec fabric) {
+    public Fabric(Project project, String minecraftVersion, MinecraftPlatformSpec fabric) {
+        this.project = project;
         this.minecraftVersion = minecraftVersion;
         this.fabric = fabric;
+    }
+
+    public Set<File> getFiles(MinecraftMappings mappings) {
+        throw new UnsupportedOperationException();
     }
 }
