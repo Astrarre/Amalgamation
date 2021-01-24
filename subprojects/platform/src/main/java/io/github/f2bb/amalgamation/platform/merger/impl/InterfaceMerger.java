@@ -87,11 +87,4 @@ class InterfaceMerger implements Merger {
 		}
 		return false;
 	}
-
-	class UnderflowException {
-	class      Fraction           {
-		UnderflowException e;
-		     Fraction      fraction;
-	}
-	}
 }
