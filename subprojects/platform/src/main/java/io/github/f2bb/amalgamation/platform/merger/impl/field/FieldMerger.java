@@ -21,6 +21,7 @@ package io.github.f2bb.amalgamation.platform.merger.impl.field;
 
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.tree.ClassNode;
@@ -74,6 +75,7 @@ public class FieldMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
+		in.fields.removeIf(field -> !SplitterUtil.matches(field.visibleAnnotations, available));
 		return false;
 	}
 

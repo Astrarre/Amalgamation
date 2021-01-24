@@ -21,6 +21,7 @@ package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
+import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -78,6 +79,7 @@ public class MethodMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
+		in.methods.removeIf(method -> !SplitterUtil.matches(method.visibleAnnotations, available));
 		return false;
 	}
 
