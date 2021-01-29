@@ -42,10 +42,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AmalgamationImpl {
 
@@ -180,28 +177,44 @@ public class AmalgamationImpl {
 
         put(hasher, resolve(project, mappings));
 
-        for (Forge spec : forgeSpecs) {
+        List<Forge> sortedForgeSpecs = new ArrayList<>(forgeSpecs);
+        sortedForgeSpecs.sort((o1, o2) -> compare(o1.forge.getNames(), o2.forge.getNames()));
+
+        for (Forge spec : sortedForgeSpecs) {
             hasher.putUnencodedChars(spec.minecraftVersion);
             put(hasher, resolve(project, spec.dependency));
             put(hasher, resolve(project, spec.forge.getDependencies()));
             put(hasher, resolve(project, spec.forge.getRemap()));
         }
 
-        for (Fabric spec : fabricSpecs) {
+        List<Fabric> sortedFabricSpecs = new ArrayList<>(fabricSpecs);
+        sortedFabricSpecs.sort((o1, o2) -> compare(o1.fabric.getNames(), o2.fabric.getNames()));
+
+        for (Fabric spec : sortedFabricSpecs) {
             hasher.putUnencodedChars(spec.minecraftVersion);
             put(hasher, resolve(project, spec.fabric.getDependencies()));
             put(hasher, resolve(project, spec.fabric.getRemap()));
         }
 
-        for (GenericPlatformSpec spec : genericSpecs) {
+        List<GenericPlatformSpec> sortedGenericSpecs = new ArrayList<>(genericSpecs);
+        sortedGenericSpecs.sort((o1, o2) -> compare(o1.getNames(), o2.getNames()));
+
+        for (GenericPlatformSpec spec : sortedGenericSpecs) {
             put(hasher, resolve(project, spec.getDependencies()));
         }
 
         return hasher.hash().toString();
     }
 
+    private static int compare(Set<String> a, Set<String> b) {
+        return a.toString().compareTo(b.toString());
+    }
+
     private static void put(Hasher hasher, Set<File> files) throws IOException {
-        for (File file : files) {
+        List<File> sorted = new ArrayList<>(files);
+        sorted.sort(null);
+
+        for (File file : sorted) {
             hasher.putBytes(Files.readAllBytes(file.toPath()));
         }
     }
