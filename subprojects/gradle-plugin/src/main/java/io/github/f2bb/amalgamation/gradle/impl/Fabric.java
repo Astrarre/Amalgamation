@@ -36,10 +36,11 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -65,15 +66,9 @@ class Fabric {
         // Step 1 - Download Minecraft
         Path clientJar;
         Path serverJar;
-        Path intermediaryClientJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-client", ".jar");
-        Path intermediaryServerJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-server", ".jar");
         List<String> libraries = new ArrayList<>();
 
-        Files.delete(intermediaryClientJar);
-        Files.delete(intermediaryServerJar);
-
-        try (InputStream _a = new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json").openStream();
-             Reader globalManifestReader = new InputStreamReader(_a, StandardCharsets.UTF_8)) {
+        try (Reader globalManifestReader = Files.newBufferedReader(cache.download("version_manifest.json", new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json")))) {
             String manifestUrl = null;
 
             for (JsonElement element : GSON.fromJson(globalManifestReader, JsonObject.class).getAsJsonArray("versions")) {
@@ -91,8 +86,7 @@ class Fabric {
             String client;
             String server;
 
-            try (InputStream _b = new URL(manifestUrl).openStream();
-                 Reader versionManifestReader = new InputStreamReader(_b, StandardCharsets.UTF_8)) {
+            try (Reader versionManifestReader = Files.newBufferedReader(cache.download("manifest.json", new URL(manifestUrl)))) {
                 JsonObject versionManifest = GSON.fromJson(versionManifestReader, JsonObject.class);
                 JsonObject downloads = versionManifest.getAsJsonObject("downloads");
 
@@ -118,7 +112,7 @@ class Fabric {
 
             serverJar = cache.computeIfAbsent("server.jar", sink -> {
                 sink.putUnencodedChars("Strip libraries");
-                sink.putUnencodedChars(server);
+                sink.putBytes(originalServerJar);
             }, output -> {
                 Files.write(output, originalServerJar);
 
@@ -142,29 +136,9 @@ class Fabric {
         }
 
         // Step 2 - Remap to intermediary
-        {
-            TinyRemapper remapper = TinyRemapper.newRemapper()
-                    .withMappings(MappingUtils.createMappingProvider(officialToIntermediary()))
-                    .build();
-
-            InputTag clientTag = remapper.createInputTag();
-            InputTag serverTag = remapper.createInputTag();
-
-            remapper.readInputsAsync(clientTag, clientJar);
-            remapper.readInputsAsync(serverTag, serverJar);
-
-            try (OutputConsumerPath output = new OutputConsumerPath.Builder(intermediaryClientJar).build()) {
-                output.addNonClassFiles(clientJar, NonClassCopyMode.FIX_META_INF, remapper);
-                remapper.apply(output, clientTag);
-            }
-
-            try (OutputConsumerPath output = new OutputConsumerPath.Builder(intermediaryServerJar).build()) {
-                output.addNonClassFiles(serverJar, NonClassCopyMode.FIX_META_INF, remapper);
-                remapper.apply(output, serverTag);
-            }
-
-            remapper.finish();
-        }
+        MappingSet officialToIntermediary = officialToIntermediary();
+        Path intermediaryClientJar = remap(cache, "client.jar", officialToIntermediary, clientJar);
+        Path intermediaryServerJar = remap(cache, "server.jar", officialToIntermediary, serverJar);
 
         // Step 3 - Collect classpath
         Set<File> classpath;
@@ -250,6 +224,26 @@ class Fabric {
         }
 
         return new ClasspathClientServer(toMerge, mappedClient, mappedServer);
+    }
+
+    private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar) {
+        return cache.computeIfAbsent(output, sink -> {
+            sink.putUnencodedChars("Remap official to intermediary");
+            sink.putBytes(Files.readAllBytes(jar));
+        }, path -> {
+            TinyRemapper remapper = TinyRemapper.newRemapper()
+                    .withMappings(MappingUtils.createMappingProvider(officialToIntermediary))
+                    .build();
+
+            remapper.readInputsAsync(jar);
+
+            try (OutputConsumerPath out = new OutputConsumerPath.Builder(path).build()) {
+                out.addNonClassFiles(jar, NonClassCopyMode.FIX_META_INF, remapper);
+                remapper.apply(out);
+            }
+
+            remapper.finish();
+        });
     }
 
     private MappingSet officialToIntermediary() throws IOException {

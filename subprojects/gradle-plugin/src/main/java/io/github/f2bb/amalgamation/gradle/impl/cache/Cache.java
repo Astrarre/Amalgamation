@@ -21,7 +21,6 @@ package io.github.f2bb.amalgamation.gradle.impl.cache;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.hash.PrimitiveSink;
 import org.gradle.api.Project;
 
 import java.io.ByteArrayOutputStream;
@@ -30,7 +29,6 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Consumer;
 
 public class Cache {
 
@@ -40,7 +38,7 @@ public class Cache {
         this.basePath = basePath;
     }
 
-    public Path computeIfAbsent(String output, Consumer<PrimitiveSink> sink, Populator populator) {
+    public Path computeIfAbsent(String output, SinkConsumer sink, Populator populator) {
         String hash;
         byte[] log;
 
@@ -50,7 +48,12 @@ public class Cache {
 
             try (PrintStream printStream = new PrintStream(stream)) {
                 new Throwable().printStackTrace(printStream);
-                sink.accept(new LoggingSink(hasher, printStream));
+
+                try {
+                    sink.accept(new LoggingSink(hasher, printStream));
+                } catch (Throwable throwable) {
+                    throw new RuntimeException(throwable);
+                }
             }
 
             hash = hasher.hash().toString();
