@@ -51,22 +51,13 @@ repositories {
 }
 
 amalgamation {
-    mappings "net.fabricmc:yarn:1.16.5+build.1" // this is a dependency, not a string
-                                                // looks like a string to me ngl
+    mappings "net.fabricmc:yarn:1.16.5+build.1"
 
-    // Assuming this is 1.16.4 forge
-    // forge("1.16.4", "net.minecraftforge:forge:1.16.4-35.1.37") {
-    //     // names = ['forge', '1.16.4']
-    // }
-
-    fabric("1.16") {
-        // names = ['fabric', '1.16']
-        remap("net.fabricmc.fabric-api:fabric-api:0.28.5+1.15")
-    }
-
-    fabric("1.16.5") {
-        // names = ['fabric', '1.16.5']
-        remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
+    for (def version : ["1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16",
+                        "1.15.2", "1.15.1", "1.15",
+                        "1.14.4", "1.14.3", "1.14.2", "1.14.1", "1.14"]) {
+        fabric(version) {
+        }
     }
 }
 
