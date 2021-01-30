@@ -22,9 +22,12 @@ package io.github.f2bb.amalgamation.gradle.impl.cache;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
+import org.gradle.api.Project;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -71,5 +74,20 @@ public class Cache {
         }
 
         return out;
+    }
+
+    public Path download(String output, URL url) {
+        return computeIfAbsent(output, sink -> {
+            sink.putUnencodedChars("download");
+            sink.putUnencodedChars(url.toString());
+        }, path -> {
+            try (InputStream inputStream = url.openStream()) {
+                Files.copy(inputStream, path);
+            }
+        });
+    }
+
+    public static Cache of(Project project) {
+        return new Cache(project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("cache"));
     }
 }

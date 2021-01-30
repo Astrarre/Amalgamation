@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import net.fabricmc.lorenztiny.TinyMappingsReader;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
@@ -58,6 +59,7 @@ class Fabric {
     }
 
     public ClasspathClientServer getFiles(MappingSet mappings) throws IOException {
+        Cache cache = Cache.of(project);
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
@@ -112,13 +114,8 @@ class Fabric {
                 throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
             }
 
-            try (InputStream inputStream = new URL(client).openStream()) {
-                Files.copy(inputStream, clientJar);
-            }
-
-            try (InputStream inputStream = new URL(server).openStream()) {
-                Files.copy(inputStream, serverJar);
-            }
+            Files.copy(cache.download("client.jar", new URL(client)), clientJar);
+            Files.copy(cache.download("server.jar", new URL(server)), serverJar);
         }
 
         // Step 2 - Strip embedded libraries inside the server jar
