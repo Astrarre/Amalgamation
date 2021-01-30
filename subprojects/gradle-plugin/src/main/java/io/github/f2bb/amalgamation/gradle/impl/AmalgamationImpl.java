@@ -22,6 +22,7 @@ package io.github.f2bb.amalgamation.gradle.impl;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
@@ -58,6 +59,10 @@ public class AmalgamationImpl {
             "    <artifactId>{hash}</artifactId>\n" +
             "    <version>" + VERSION + "</version>\n" +
             "</project>\n";
+
+    public static Cache of(Project project) {
+        return new Cache(project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("cache"));
+    }
 
     public static Dependency createDependencyFromMatrix(Project project, Configuration mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         if (forgeSpecs.isEmpty() && fabricSpecs.isEmpty() && genericSpecs.isEmpty()) {
@@ -225,7 +230,7 @@ public class AmalgamationImpl {
     }
 
     private static Path getJarCoordinates(Project project, String hash) throws IOException {
-        Path root = project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation");
+        Path root = project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("repository");
         Path folder = Files.createDirectories(root.resolve(GROUP).resolve(hash).resolve(VERSION));
         Path jar = folder.resolve(hash + "-" + VERSION + ".jar");
         Path pom = folder.resolve(hash + "-" + VERSION + ".pom");
