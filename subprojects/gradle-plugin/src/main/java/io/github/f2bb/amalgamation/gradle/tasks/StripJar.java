@@ -33,7 +33,6 @@ import java.util.*;
 
 public class StripJar extends Jar {
 
-    @Input
     private final Set<String> platforms = new HashSet<>();
 
     public StripJar() {
@@ -63,6 +62,7 @@ public class StripJar extends Jar {
         });
     }
 
+    @Input
     public Set<String> getPlatforms() {
         return platforms;
     }
