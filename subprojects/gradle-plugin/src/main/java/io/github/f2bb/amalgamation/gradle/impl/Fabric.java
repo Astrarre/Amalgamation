@@ -168,6 +168,7 @@ class Fabric {
         TinyRemapper remapper = TinyRemapper.newRemapper()
                 .withMappings(MappingUtils.createMappingProvider(mappings))
                 .build();
+        Set<Path> yes = new HashSet<>();
         Map<Path, InputTag> tags = new HashMap<>();
 
         for (File file : Iterables.concat(remap, Sets.newHashSet(with.toFile()))) {
@@ -185,6 +186,7 @@ class Fabric {
 
             Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
             Files.delete(out);
+            yes.add(out);
 
             try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
                 output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
@@ -193,7 +195,7 @@ class Fabric {
         }
 
         remapper.finish();
-        return tags.keySet();
+        return yes;
     }
 
     private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar) {
