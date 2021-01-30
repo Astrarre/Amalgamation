@@ -37,7 +37,7 @@ public class Cache {
         this.basePath = basePath;
     }
 
-    public Path computeIfAbsent(String extension, Consumer<PrimitiveSink> sink, Populator populator) {
+    public Path computeIfAbsent(String output, Consumer<PrimitiveSink> sink, Populator populator) {
         String hash;
         byte[] log;
 
@@ -55,21 +55,21 @@ public class Cache {
         }
 
         Path path = basePath.resolve(hash);
-        Path jar = path.resolve("output" + (extension.isEmpty() ? "" : "." + extension));
+        Path out = path.resolve(output);
 
-        if (!Files.exists(jar)) {
+        if (!Files.exists(out)) {
             try {
                 Path logPath = path.resolve("log.txt");
                 Files.createDirectories(path);
                 Files.deleteIfExists(logPath);
 
                 Files.write(logPath, log);
-                populator.populate(jar);
+                populator.populate(out);
             } catch (Throwable throwable) {
                 throw new RuntimeException(throwable);
             }
         }
 
-        return jar;
+        return out;
     }
 }
