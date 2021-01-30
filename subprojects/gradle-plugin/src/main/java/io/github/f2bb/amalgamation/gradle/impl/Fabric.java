@@ -34,7 +34,6 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Dependency;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,7 +42,10 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class Fabric {
 
@@ -140,26 +142,11 @@ class Fabric {
         Path intermediaryClientJar = remap(cache, "client.jar", officialToIntermediary, clientJar);
         Path intermediaryServerJar = remap(cache, "server.jar", officialToIntermediary, serverJar);
 
-        // Step 3 - Collect classpath
-        Set<File> classpath;
+        // Step 3 - Collect inputs
+        Configuration remap = fabric.getRemap().copy();
 
-        {
-            Configuration dependencies = fabric.getDependencies().copy();
-
-            for (String library : libraries) {
-                Dependency dependency = project.getDependencies().create(library);
-                dependencies.getDependencies().add(dependency);
-
-                // Also add this Minecraft library to the project classpath
-                project.getDependencies().add("compileClasspath", dependency);
-            }
-
-            project.getRepositories().maven(repository -> {
-                repository.setName("Minecraft Libraries");
-                repository.setUrl("https://libraries.minecraft.net/");
-            });
-
-            classpath = dependencies.resolve();
+        for (String library : libraries) {
+            remap.getDependencies().add(project.getDependencies().create(library));
         }
 
         // Step 4 - Remap everything to named
@@ -167,7 +154,7 @@ class Fabric {
         Path mappedClient = null;
         Path mappedServer = null;
 
-        for (File file : fabric.getDependencies().resolve()) {
+        for (File file : fabric.getDependencies()) {
             toMerge.add(file.toPath());
         }
 
@@ -189,13 +176,13 @@ class Fabric {
                 remapper.readInputsAsync(serverTag, intermediaryServerJar);
             }
 
-            for (File file : fabric.getRemap().resolve()) {
+            for (File file : remap) {
                 InputTag tag = remapper.createInputTag();
                 tags.put(file.toPath(), tag);
                 remapper.readInputsAsync(tag, file.toPath());
             }
 
-            for (File file : classpath) {
+            for (File file : fabric.getDependencies()) {
                 remapper.readClassPathAsync(file.toPath());
             }
 

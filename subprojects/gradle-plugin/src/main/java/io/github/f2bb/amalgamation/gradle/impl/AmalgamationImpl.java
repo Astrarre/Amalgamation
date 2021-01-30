@@ -80,7 +80,7 @@ public class AmalgamationImpl {
         for (GenericPlatformSpec spec : genericSpecs) {
             Map<String, byte[]> files = new HashMap<>();
 
-            for (File file : spec.getDependencies().resolve()) {
+            for (File file : spec.getDependencies()) {
                 try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
                     PlatformData.readFiles(files, fileSystem.getPath("/"));
                 }
