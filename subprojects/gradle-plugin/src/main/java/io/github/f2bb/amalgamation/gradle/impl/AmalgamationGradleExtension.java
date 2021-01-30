@@ -21,8 +21,10 @@ package io.github.f2bb.amalgamation.gradle.impl;
 
 import groovy.lang.Closure;
 import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.minecraft.MappingTarget;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamation;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -117,6 +119,11 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
         configureAction.execute(fabric);
 
         fabricSpecs.add(new Fabric(project, minecraftVersion, fabric));
+    }
+
+    @Override
+    public MappingSet createMappings(MappingTarget target, String version) {
+        return MappingSet.create();
     }
 
     @Override

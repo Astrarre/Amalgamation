@@ -17,6 +17,8 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+import io.github.f2bb.amalgamation.gradle.minecraft.MappingTarget
+import io.github.f2bb.amalgamation.gradle.tasks.RemapJar
 import io.github.f2bb.amalgamation.gradle.tasks.StripJar
 
 buildscript {
@@ -74,9 +76,15 @@ dependencies {
     compileOnly("io.github.f2bb.amalgamation:api")
 }
 
-task fabric_1_16(type: StripJar) {
+task stripFabric_1_16(type: StripJar) {
     with jar
-    archiveName 'yes.jar'
-    platform 'fabric'
-    platform '1.16'
+    archivesBaseName = 'fabric-1.16-dev'
+    platform(['fabric', '1.16'])
+}
+
+task fabric_1_16(type: RemapJar) {
+    with stripFabric_1_16
+    archivesBaseName = 'fabric-1.16'
+    classpath = configurations.compileClasspath
+    mappings = amalgamation.createMappings(MappingTarget.INTERMEDIARY, '1.16')
 }

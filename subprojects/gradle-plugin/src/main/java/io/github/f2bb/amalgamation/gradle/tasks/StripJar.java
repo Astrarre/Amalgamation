@@ -29,10 +29,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class StripJar extends Jar {
 
@@ -71,6 +68,12 @@ public class StripJar extends Jar {
     }
 
     public void platform(Object platform) {
-        platforms.add(String.valueOf(platform));
+        if (platform instanceof Collection) {
+            for (Object o : ((Collection<?>) platform)) {
+                platform(o);
+            }
+        } else {
+            platforms.add(String.valueOf(platform));
+        }
     }
 }

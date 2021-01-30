@@ -21,13 +21,9 @@ package io.github.f2bb.amalgamation.gradle.minecraft;
 
 import groovy.lang.Closure;
 import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamation;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Action;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.file.FileCollection;
-
-import java.io.IOException;
-import java.util.Collection;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
 
@@ -73,18 +69,11 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
     void fabricAction(String minecraftVersion, Action<MinecraftPlatformSpec> configureAction);
 
     /**
-     * Freezes this extension and creates the merged dependency
+     * Creates the mapping which joins the development mappings to the given target
      *
-     * @return A dependency which can be added to a configuration
-     * @throws IOException If an I/O exception occurs
+     * @param target  The target of the mapping set
+     * @param version The Minecraft version being used
+     * @return A mapping between the development mappings to the target
      */
-    Dependency create() throws IOException;
-
-    /**
-     * Collects the dependencies which are available for the provided platforms
-     *
-     * @param platforms The platforms to filter by
-     * @return A collection of dependencies which crab
-     */
-    FileCollection getClasspath(Collection<String> platforms);
+    MappingSet createMappings(MappingTarget target, String version);
 }
