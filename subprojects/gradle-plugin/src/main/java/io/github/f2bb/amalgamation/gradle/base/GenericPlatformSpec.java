@@ -24,12 +24,13 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class GenericPlatformSpec {
 
     protected final Project project;
-    private final Set<String> names = new HashSet<>();
+    private final Set<String> names = new LinkedHashSet<>();
     private final Set<Dependency> dependencies = new HashSet<>();
 
     public GenericPlatformSpec(Project project) {
