@@ -19,9 +19,7 @@
 
 package io.github.f2bb.amalgamation.gradle.impl.cache;
 
-import com.google.common.hash.PrimitiveSink;
+public interface UnsafeConsumer<T> {
 
-public interface SinkConsumer {
-
-    void accept(PrimitiveSink sink) throws Throwable;
+    void accept(T t) throws Throwable;
 }
