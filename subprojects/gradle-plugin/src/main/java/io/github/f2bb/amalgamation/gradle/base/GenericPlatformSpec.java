@@ -20,10 +20,9 @@
 package io.github.f2bb.amalgamation.gradle.base;
 
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -31,10 +30,11 @@ public class GenericPlatformSpec {
 
     protected final Project project;
     private final Set<String> names = new LinkedHashSet<>();
-    private final Set<Dependency> dependencies = new HashSet<>();
+    private final Configuration dependencies;
 
     public GenericPlatformSpec(Project project) {
         this.project = project;
+        dependencies = project.getConfigurations().detachedConfiguration();
     }
 
     /**
@@ -52,7 +52,7 @@ public class GenericPlatformSpec {
      * @param dependencyNotation The dependency to add. See {@link DependencyHandler#create(Object)}
      */
     public void add(Object dependencyNotation) {
-        dependencies.add(project.getDependencies().create(dependencyNotation));
+        dependencies.getDependencies().add(project.getDependencies().create(dependencyNotation));
     }
 
     /**
@@ -65,7 +65,7 @@ public class GenericPlatformSpec {
     /**
      * @return The dependencies of this platform
      */
-    public Set<Dependency> getDependencies() {
+    public Configuration getDependencies() {
         return dependencies;
     }
 }

@@ -25,12 +25,15 @@ import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamation;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.util.ConfigureUtil;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 
@@ -39,17 +42,18 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
     private final Set<GenericPlatformSpec> genericSpecs = new HashSet<>();
     private final Set<Forge> forgeSpecs = new HashSet<>();
     private final Set<Fabric> fabricSpecs = new HashSet<>();
-    private final Set<Dependency> mappings = new HashSet<>();
+    private final Configuration mappings;
 
     private Dependency myDependency;
 
     public AmalgamationGradleExtension(Project project) {
         this.project = project;
+        mappings = project.getConfigurations().detachedConfiguration();
     }
 
     @Override
     public void mappings(Object dependencyNotation) {
-        mappings.add(project.getDependencies().create(dependencyNotation));
+        mappings.getDependencies().add(project.getDependencies().create(dependencyNotation));
     }
 
     @Override
@@ -126,29 +130,29 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 
     @Override
     public FileCollection getClasspath(Collection<String> platforms) {
-        List<Dependency> dependencies = new ArrayList<>();
+        Configuration classpath = project.getConfigurations().detachedConfiguration();
 
         for (Forge spec : forgeSpecs) {
             if (spec.forge.getNames().containsAll(platforms)) {
-                dependencies.addAll(spec.forge.getDependencies());
-                dependencies.addAll(spec.forge.getRemap());
+                classpath.extendsFrom(spec.forge.getDependencies());
+                classpath.extendsFrom(spec.forge.getRemap());
             }
         }
 
         for (Fabric spec : fabricSpecs) {
             if (spec.fabric.getNames().containsAll(platforms)) {
-                dependencies.addAll(spec.fabric.getDependencies());
-                dependencies.addAll(spec.fabric.getRemap());
+                classpath.extendsFrom(spec.fabric.getDependencies());
+                classpath.extendsFrom(spec.fabric.getRemap());
             }
         }
 
         for (GenericPlatformSpec spec : genericSpecs) {
             if (spec.getNames().containsAll(platforms)) {
-                dependencies.addAll(spec.getDependencies());
+                classpath.extendsFrom(spec.getDependencies());
             }
         }
 
-        return project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getAsFileTree();
+        return classpath.getAsFileTree();
     }
 
     protected void assertMutable() {

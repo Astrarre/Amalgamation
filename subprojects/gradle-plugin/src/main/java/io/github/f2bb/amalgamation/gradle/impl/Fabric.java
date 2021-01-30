@@ -32,6 +32,7 @@ import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 
 import java.io.*;
@@ -167,11 +168,11 @@ class Fabric {
         Set<File> classpath;
 
         {
-            List<Dependency> dependencies = new ArrayList<>(fabric.getDependencies());
+            Configuration dependencies = fabric.getDependencies().copy();
 
             for (String library : libraries) {
                 Dependency dependency = project.getDependencies().create(library);
-                dependencies.add(dependency);
+                dependencies.getDependencies().add(dependency);
 
                 // Also add this Minecraft library to the project classpath
                 project.getDependencies().add("compileClasspath", dependency);
@@ -182,7 +183,7 @@ class Fabric {
                 repository.setUrl("https://libraries.minecraft.net/");
             });
 
-            classpath = project.getConfigurations().detachedConfiguration(dependencies.toArray(new Dependency[0])).getFiles();
+            classpath = dependencies.resolve();
         }
 
         // Step 5 - Remap everything to named
@@ -190,7 +191,7 @@ class Fabric {
         Path mappedClient = null;
         Path mappedServer = null;
 
-        for (File file : AmalgamationImpl.resolve(project, fabric.getDependencies())) {
+        for (File file : fabric.getDependencies().resolve()) {
             toMerge.add(file.toPath());
         }
 
@@ -212,7 +213,7 @@ class Fabric {
                 remapper.readInputsAsync(serverTag, intermediaryServerJar);
             }
 
-            for (File file : AmalgamationImpl.resolve(project, fabric.getRemap())) {
+            for (File file : fabric.getRemap().resolve()) {
                 InputTag tag = remapper.createInputTag();
                 tags.put(file.toPath(), tag);
                 remapper.readInputsAsync(tag, file.toPath());

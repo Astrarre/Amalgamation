@@ -29,6 +29,7 @@ import net.fabricmc.lorenztiny.TinyMappingsReader;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
@@ -58,7 +59,7 @@ public class AmalgamationImpl {
             "    <version>" + VERSION + "</version>\n" +
             "</project>\n";
 
-    public static Dependency createDependencyFromMatrix(Project project, Set<Dependency> mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+    public static Dependency createDependencyFromMatrix(Project project, Configuration mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         if (forgeSpecs.isEmpty() && fabricSpecs.isEmpty() && genericSpecs.isEmpty()) {
             throw new IllegalStateException("No dependencies are present");
         }
@@ -67,19 +68,19 @@ public class AmalgamationImpl {
         Path file = getJarCoordinates(project, hash);
 
         if (!Files.exists(file)) {
-            processInternal(file, project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
+            processInternal(file, mappings, forgeSpecs, fabricSpecs, genericSpecs);
         }
 
         return project.getDependencies().create(GROUP + ":" + hash + ":" + VERSION);
     }
 
-    private static void processInternal(Path outputFile, Project project, Set<Dependency> mappingsDependencies, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+    private static void processInternal(Path outputFile, Configuration mappingsDependencies, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         Set<PlatformData> platforms = new HashSet<>();
 
         for (GenericPlatformSpec spec : genericSpecs) {
             Map<String, byte[]> files = new HashMap<>();
 
-            for (File file : resolve(project, spec.getDependencies())) {
+            for (File file : spec.getDependencies().resolve()) {
                 try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
                     PlatformData.readFiles(files, fileSystem.getPath("/"));
                 }
@@ -91,7 +92,7 @@ public class AmalgamationImpl {
         MappingSet mappings;
 
         if (mappingsDependencies != null) {
-            mappings = loadMappings(resolve(project, mappingsDependencies));
+            mappings = loadMappings(mappingsDependencies.resolve());
         } else {
             mappings = null;
         }
@@ -172,10 +173,10 @@ public class AmalgamationImpl {
         return mappings;
     }
 
-    private static String hash(Project project, Set<Dependency> mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+    private static String hash(Project project, Configuration mappings, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         Hasher hasher = Hashing.sha256().newHasher();
 
-        put(hasher, resolve(project, mappings));
+        put(hasher, mappings.resolve());
 
         List<Forge> sortedForgeSpecs = new ArrayList<>(forgeSpecs);
         sortedForgeSpecs.sort((o1, o2) -> compare(o1.forge.getNames(), o2.forge.getNames()));
@@ -183,8 +184,8 @@ public class AmalgamationImpl {
         for (Forge spec : sortedForgeSpecs) {
             hasher.putUnencodedChars(spec.minecraftVersion);
             put(hasher, resolve(project, spec.dependency));
-            put(hasher, resolve(project, spec.forge.getDependencies()));
-            put(hasher, resolve(project, spec.forge.getRemap()));
+            put(hasher, spec.forge.getDependencies().resolve());
+            put(hasher, spec.forge.getRemap().resolve());
         }
 
         List<Fabric> sortedFabricSpecs = new ArrayList<>(fabricSpecs);
@@ -192,15 +193,15 @@ public class AmalgamationImpl {
 
         for (Fabric spec : sortedFabricSpecs) {
             hasher.putUnencodedChars(spec.minecraftVersion);
-            put(hasher, resolve(project, spec.fabric.getDependencies()));
-            put(hasher, resolve(project, spec.fabric.getRemap()));
+            put(hasher, spec.fabric.getDependencies().resolve());
+            put(hasher, spec.fabric.getRemap().resolve());
         }
 
         List<GenericPlatformSpec> sortedGenericSpecs = new ArrayList<>(genericSpecs);
         sortedGenericSpecs.sort((o1, o2) -> compare(o1.getNames(), o2.getNames()));
 
         for (GenericPlatformSpec spec : sortedGenericSpecs) {
-            put(hasher, resolve(project, spec.getDependencies()));
+            put(hasher, spec.getDependencies().resolve());
         }
 
         return hasher.hash().toString();
@@ -221,16 +222,6 @@ public class AmalgamationImpl {
 
     static Set<File> resolve(Project project, Dependency dependency) {
         return project.getConfigurations().detachedConfiguration(dependency).resolve();
-    }
-
-    static Set<File> resolve(Project project, Set<Dependency> dependencies) {
-        Set<File> files = new HashSet<>();
-
-        for (Dependency dependency : dependencies) {
-            files.addAll(resolve(project, dependency));
-        }
-
-        return files;
     }
 
     private static Path getJarCoordinates(Project project, String hash) throws IOException {
