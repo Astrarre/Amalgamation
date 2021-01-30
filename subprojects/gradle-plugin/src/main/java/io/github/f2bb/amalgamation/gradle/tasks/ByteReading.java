@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
 
-class ByteReading extends FilterReader {
+public class ByteReading extends FilterReader {
 
     public Reader data;
 

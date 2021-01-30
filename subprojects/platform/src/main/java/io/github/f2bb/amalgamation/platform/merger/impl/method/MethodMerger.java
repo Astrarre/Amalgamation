@@ -83,6 +83,7 @@ public class MethodMerger implements Merger {
 	public boolean strip(ClassNode in, Set<String> available) {
 		in.methods.removeIf(method -> !SplitterUtil.matches(method.visibleAnnotations, available));
 		in.methods.forEach(m -> {
+			if (m.visibleAnnotations != null)
 			for (AnnotationNode annotation : m.visibleAnnotations) {
 				if(ClassInfo.DISPLACE.equals(annotation.desc)) {
 					m.name = (String) annotation.values.get(1);

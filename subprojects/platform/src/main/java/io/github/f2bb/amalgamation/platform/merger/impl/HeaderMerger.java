@@ -27,6 +27,10 @@ public class HeaderMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
-		return SplitterUtil.matches(in.visibleAnnotations, available);
+		if (in.visibleAnnotations == null) {
+			in.visibleAnnotations = new ArrayList<>();
+		}
+
+		return !SplitterUtil.matches(in.visibleAnnotations, available);
 	}
 }

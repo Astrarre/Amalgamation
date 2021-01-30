@@ -67,12 +67,15 @@ class InterfaceMerger implements Merger {
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
 		List<String> interfaces = new ArrayList<>(in.interfaces);
+		if (in.visibleTypeAnnotations != null)
 		for (TypeAnnotationNode annotation : in.visibleTypeAnnotations) {
-			TypeReference reference = new TypeReference(annotation.typeRef);
-			if (reference.getSort() == TypeReference.CLASS_EXTENDS) {
-				int i = reference.getSuperTypeIndex();
-				if (i >= 0) {
-					in.interfaces.remove(interfaces.get(i));
+			if (!SplitterUtil.matches(annotation, available)) {
+				TypeReference reference = new TypeReference(annotation.typeRef);
+				if (reference.getSort() == TypeReference.CLASS_EXTENDS) {
+					int i = reference.getSuperTypeIndex();
+					if (i >= 0) {
+						in.interfaces.remove(interfaces.get(i));
+					}
 				}
 			}
 		}

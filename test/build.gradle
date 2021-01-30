@@ -59,32 +59,24 @@ amalgamation {
 
     fabric("1.16") {
         // names = ['fabric', '1.16']
-        remap("net.fabricmc:fabric-loader:0.11.0")
         remap("net.fabricmc.fabric-api:fabric-api:0.28.5+1.15")
     }
 
     fabric("1.16.5") {
         // names = ['fabric', '1.16.5']
-        remap("net.fabricmc:fabric-loader:0.11.0")
         remap("net.fabricmc.fabric-api:fabric-api:0.29.4+1.16")
-    }
-
-    generic {
-        name 'guava-25.0'
-        add(group: 'com.google.guava', name: 'guava', version: '25.0-jre')
-    }
-
-    generic {
-        name 'guava-30.0'
-        add(group: 'com.google.guava', name: 'guava', version: '30.0-jre')
     }
 }
 
 dependencies {
     compileOnly(amalgamation.create())
+    compileOnly("net.fabricmc:fabric-loader:0.11.0")
+    compileOnly("io.github.f2bb.amalgamation:api")
 }
 
-task fabric(type: StripJar) {
-    from jar
+task fabric_1_16(type: StripJar) {
+    with jar
+    archiveName 'yes.jar'
     platform 'fabric'
+    platform '1.16'
 }

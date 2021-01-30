@@ -35,6 +35,8 @@ public class SplitterUtil {
 
 	public static boolean matches(List<AnnotationNode> nodes, Set<String> platforms) {
 		boolean notVisited = true;
+		if (nodes == null)
+			return true;
 		for (AnnotationNode node : nodes) {
 			if (matches(node, platforms)) {
 				return true;
