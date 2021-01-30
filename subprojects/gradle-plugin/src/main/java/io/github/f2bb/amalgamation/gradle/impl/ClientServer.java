@@ -20,16 +20,14 @@
 package io.github.f2bb.amalgamation.gradle.impl;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Set;
 
-class ClasspathClientServer {
+class ClientServer {
 
-    final List<Path> classpath;
-    final Path client;
-    final Path server;
+    final Set<Path> client;
+    final Set<Path> server;
 
-    ClasspathClientServer(List<Path> classpath, Path client, Path server) {
-        this.classpath = classpath;
+    ClientServer(Set<Path> client, Set<Path> server) {
         this.client = client;
         this.server = server;
     }

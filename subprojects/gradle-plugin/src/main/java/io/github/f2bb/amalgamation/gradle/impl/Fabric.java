@@ -20,6 +20,7 @@
 package io.github.f2bb.amalgamation.gradle.impl;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -42,10 +43,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class Fabric {
 
@@ -61,7 +59,7 @@ class Fabric {
         this.fabric = fabric;
     }
 
-    public ClasspathClientServer getFiles(MappingSet mappings) throws IOException {
+    public ClientServer getFiles(MappingSet mappings) throws IOException {
         Cache cache = Cache.of(project);
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
@@ -149,68 +147,53 @@ class Fabric {
             remap.getDependencies().add(project.getDependencies().create(library));
         }
 
+        project.getRepositories().maven(repository -> {
+            repository.setName("Minecraft Libraries");
+            repository.setUrl("https://libraries.minecraft.net/");
+        });
+
         // Step 4 - Remap everything to named
-        List<Path> toMerge = new ArrayList<>();
-        Path mappedClient = null;
-        Path mappedServer = null;
+        Set<Path> toMergeClient = something(mappings, intermediaryClientJar, remap, workingDirectory);
+        Set<Path> toMergeServer = something(mappings, intermediaryServerJar, remap, workingDirectory);
 
         for (File file : fabric.getDependencies()) {
-            toMerge.add(file.toPath());
+            toMergeClient.add(file.toPath());
+            toMergeServer.add(file.toPath());
         }
 
-        {
-            TinyRemapper remapper = TinyRemapper.newRemapper()
-                    .withMappings(MappingUtils.createMappingProvider(mappings))
-                    .build();
-            Map<Path, InputTag> tags = new HashMap<>();
-            InputTag clientTag = remapper.createInputTag();
-            InputTag serverTag = remapper.createInputTag();
+        return new ClientServer(toMergeClient, toMergeServer);
+    }
 
-            {
-                tags.put(intermediaryClientJar, clientTag);
-                remapper.readInputsAsync(clientTag, intermediaryClientJar);
-            }
+    private Set<Path> something(MappingSet mappings, Path with, Configuration remap, Path workingDirectory) throws IOException {
+        TinyRemapper remapper = TinyRemapper.newRemapper()
+                .withMappings(MappingUtils.createMappingProvider(mappings))
+                .build();
+        Map<Path, InputTag> tags = new HashMap<>();
 
-            {
-                tags.put(intermediaryServerJar, serverTag);
-                remapper.readInputsAsync(serverTag, intermediaryServerJar);
-            }
-
-            for (File file : remap) {
-                InputTag tag = remapper.createInputTag();
-                tags.put(file.toPath(), tag);
-                remapper.readInputsAsync(tag, file.toPath());
-            }
-
-            for (File file : fabric.getDependencies()) {
-                remapper.readClassPathAsync(file.toPath());
-            }
-
-            for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
-                InputTag tag = entry.getValue();
-
-                Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
-
-                if (tag == clientTag) {
-                    mappedClient = out;
-                } else if (tag == serverTag) {
-                    mappedServer = out;
-                } else {
-                    toMerge.add(out);
-                }
-
-                Files.delete(out);
-
-                try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
-                    output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
-                    remapper.apply(output, tag);
-                }
-            }
-
-            remapper.finish();
+        for (File file : Iterables.concat(remap, Sets.newHashSet(with.toFile()))) {
+            InputTag tag = remapper.createInputTag();
+            tags.put(file.toPath(), tag);
+            remapper.readInputsAsync(tag, file.toPath());
         }
 
-        return new ClasspathClientServer(toMerge, mappedClient, mappedServer);
+        for (File file : fabric.getDependencies()) {
+            remapper.readClassPathAsync(file.toPath());
+        }
+
+        for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
+            InputTag tag = entry.getValue();
+
+            Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
+            Files.delete(out);
+
+            try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
+                output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
+                remapper.apply(output, tag);
+            }
+        }
+
+        remapper.finish();
+        return tags.keySet();
     }
 
     private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar) {

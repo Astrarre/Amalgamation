@@ -63,8 +63,10 @@ public class Cache {
 
         Path path = basePath.resolve(hash);
         Path out = path.resolve(output);
+        Path ok = path.resolve("ok");
 
-        if (!Files.exists(out)) {
+        // OK marker
+        if (!Files.exists(ok)) {
             try {
                 Path logPath = path.resolve("log.txt");
                 Files.createDirectories(path);
@@ -72,6 +74,7 @@ public class Cache {
 
                 Files.write(logPath, log);
                 populator.accept(out);
+                Files.write(ok, new byte[0]);
             } catch (Throwable throwable) {
                 throw new RuntimeException(throwable);
             }

@@ -110,28 +110,18 @@ public class AmalgamationImpl {
         }
 
         for (Fabric spec : fabricSpecs) {
-            ClasspathClientServer ccs = spec.getFiles(mappings);
+            ClientServer cs = spec.getFiles(mappings);
 
             {
                 Map<String, byte[]> files = new HashMap<>();
 
-                for (Path path : ccs.classpath) {
-                    try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
+                for (Path client : cs.client) {
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(client, (ClassLoader) null)) {
                         PlatformData.readFiles(files, fileSystem.getPath("/"));
                     }
                 }
 
-                platforms.add(new PlatformData(spec.fabric.getNames(), files));
-            }
-
-            {
-                Map<String, byte[]> files = new HashMap<>();
-
-                try (FileSystem fileSystem = FileSystems.newFileSystem(ccs.client, (ClassLoader) null)) {
-                    PlatformData.readFiles(files, fileSystem.getPath("/"));
-                }
-
-                Set<String> copy = new HashSet<>(spec.fabric.getNames());
+                Set<String> copy = new LinkedHashSet<>(spec.fabric.getNames());
                 copy.add("client");
                 platforms.add(new PlatformData(copy, files));
             }
@@ -139,11 +129,13 @@ public class AmalgamationImpl {
             {
                 Map<String, byte[]> files = new HashMap<>();
 
-                try (FileSystem fileSystem = FileSystems.newFileSystem(ccs.server, (ClassLoader) null)) {
-                    PlatformData.readFiles(files, fileSystem.getPath("/"));
+                for (Path server : cs.server) {
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(server, (ClassLoader) null)) {
+                        PlatformData.readFiles(files, fileSystem.getPath("/"));
+                    }
                 }
 
-                Set<String> copy = new HashSet<>(spec.fabric.getNames());
+                Set<String> copy = new LinkedHashSet<>(spec.fabric.getNames());
                 copy.add("server");
                 platforms.add(new PlatformData(copy, files));
             }
