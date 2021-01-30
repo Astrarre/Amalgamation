@@ -63,14 +63,12 @@ class Fabric {
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
-        Path clientJar = Files.createTempFile(workingDirectory, "minecraft-client", ".jar");
-        Path serverJar = Files.createTempFile(workingDirectory, "minecraft-server", ".jar");
+        Path clientJar;
+        Path serverJar;
         Path intermediaryClientJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-client", ".jar");
         Path intermediaryServerJar = Files.createTempFile(workingDirectory, "minecraft-intermediary-server", ".jar");
         List<String> libraries = new ArrayList<>();
 
-        Files.delete(clientJar);
-        Files.delete(serverJar);
         Files.delete(intermediaryClientJar);
         Files.delete(intermediaryServerJar);
 
@@ -114,29 +112,36 @@ class Fabric {
                 throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
             }
 
-            Files.copy(cache.download("client.jar", new URL(client)), clientJar);
-            Files.copy(cache.download("server.jar", new URL(server)), serverJar);
-        }
+            clientJar = cache.download("client.jar", new URL(client));
 
-        // Step 2 - Strip embedded libraries inside the server jar
-        try (FileSystem fileSystem = FileSystems.newFileSystem(serverJar, (ClassLoader) null)) {
-            Path root = fileSystem.getPath("/");
+            byte[] originalServerJar = Files.readAllBytes(cache.download("server.jar", new URL(server)));
 
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String name = root.relativize(file).toString();
+            serverJar = cache.computeIfAbsent("server.jar", sink -> {
+                sink.putUnencodedChars("Strip libraries");
+                sink.putUnencodedChars(server);
+            }, output -> {
+                Files.write(output, originalServerJar);
 
-                    if (!name.startsWith("net/minecraft/") && name.contains("/")) {
-                        Files.delete(file);
-                    }
+                try (FileSystem fileSystem = FileSystems.newFileSystem(output, (ClassLoader) null)) {
+                    Path root = fileSystem.getPath("/");
 
-                    return FileVisitResult.CONTINUE;
+                    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            String name = root.relativize(file).toString();
+
+                            if (!name.startsWith("net/minecraft/") && name.contains("/")) {
+                                Files.delete(file);
+                            }
+
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
                 }
             });
         }
 
-        // Step 3 - Remap to intermediary
+        // Step 2 - Remap to intermediary
         {
             TinyRemapper remapper = TinyRemapper.newRemapper()
                     .withMappings(MappingUtils.createMappingProvider(officialToIntermediary()))
@@ -161,7 +166,7 @@ class Fabric {
             remapper.finish();
         }
 
-        // Step 4 - Collect classpath
+        // Step 3 - Collect classpath
         Set<File> classpath;
 
         {
@@ -183,7 +188,7 @@ class Fabric {
             classpath = dependencies.resolve();
         }
 
-        // Step 5 - Remap everything to named
+        // Step 4 - Remap everything to named
         List<Path> toMerge = new ArrayList<>();
         Path mappedClient = null;
         Path mappedServer = null;
