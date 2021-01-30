@@ -41,6 +41,10 @@ public class StripJar extends Jar {
 
     public StripJar() {
         getMainSpec().appendCachingSafeCopyAction(fileCopyDetails -> {
+            if (!fileCopyDetails.getName().endsWith(".class")) {
+                return;
+            }
+
             ClassNode node = new ClassNode();
 
             try {
