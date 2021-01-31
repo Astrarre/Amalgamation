@@ -154,7 +154,7 @@ class Fabric {
 
         // Step 4 - Remap everything to named
         Set<Path> toMergeClient = something(mappings, intermediaryClientJar, remap, workingDirectory);
-        Set<Path> toMergeServer = something(mappings, intermediaryServerJar, remap, workingDirectory);
+        Set<Path> toMergeServer = something(mappings, intermediaryServerJar, Collections.emptySet(), workingDirectory);
 
         for (File file : fabric.getDependencies()) {
             toMergeClient.add(file.toPath());
@@ -164,7 +164,7 @@ class Fabric {
         return new ClientServer(toMergeClient, toMergeServer);
     }
 
-    private Set<Path> something(MappingSet mappings, Path with, Configuration remap, Path workingDirectory) throws IOException {
+    private Set<Path> something(MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory) throws IOException {
         TinyRemapper remapper = TinyRemapper.newRemapper()
                 .withMappings(MappingUtils.createMappingProvider(mappings))
                 .build();
