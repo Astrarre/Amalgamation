@@ -24,6 +24,9 @@ import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamation;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.file.FileCollection;
+
+import java.util.Collection;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
 
@@ -76,4 +79,12 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
      * @return A mapping between the development mappings to the target
      */
     MappingSet createMappings(MappingTarget target, String version);
+
+    /**
+     * Collects the mapped dependencies which are available for the provided platforms
+     *
+     * @param platforms The platforms to filter by
+     * @return A collection of dependencies
+     */
+    FileCollection getMappedClasspath(Collection<String> platforms);
 }

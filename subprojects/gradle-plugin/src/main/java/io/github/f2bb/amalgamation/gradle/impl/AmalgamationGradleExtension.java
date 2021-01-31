@@ -127,6 +127,11 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
     }
 
     @Override
+    public FileCollection getMappedClasspath(Collection<String> platforms) {
+        return getClasspath(platforms);
+    }
+
+    @Override
     public Dependency create() throws IOException {
         if (myDependency != null) {
             return myDependency;

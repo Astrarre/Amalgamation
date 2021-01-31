@@ -55,7 +55,7 @@ public interface BaseAmalgamation {
      * Collects the dependencies which are available for the provided platforms
      *
      * @param platforms The platforms to filter by
-     * @return A collection of dependencies which crab
+     * @return A collection of dependencies
      */
     FileCollection getClasspath(Collection<String> platforms);
 }
