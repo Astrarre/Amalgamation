@@ -19,15 +19,25 @@
 
 package io.github.f2bb.amalgamation.gradle.minecraft;
 
+import java.io.IOException;
+
+import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
+import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
+import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class MinecraftAmalgamationGradlePlugin implements Plugin<Project> {
-
+public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlugin implements Plugin<Project> {
     @Override
     public void apply(@NotNull Project target) {
-        target.getExtensions().create(MinecraftAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
+        super.apply(target);
+        try {
+            target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, Cache.globalCache(target), target);
+        } catch (IOException e) {
+            System.out.println("FAIL!!!!");
+            throw new RuntimeException(e);
+        }
     }
 }

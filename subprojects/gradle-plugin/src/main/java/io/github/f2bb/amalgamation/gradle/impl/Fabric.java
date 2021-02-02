@@ -19,229 +19,211 @@
 
 package io.github.f2bb.amalgamation.gradle.impl;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
+import org.cadixdev.lorenz.MappingSet;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.internal.Pair;
+
 import net.fabricmc.lorenztiny.TinyMappingsReader;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
-import org.cadixdev.lorenz.MappingSet;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.internal.Pair;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
 
 class Fabric {
 
-    private static final Gson GSON = new Gson();
+	private static final Gson GSON = new Gson();
+	final String minecraftVersion;
+	final MinecraftPlatformSpec fabric;
+	private final Project project;
 
-    private final Project project;
-    final String minecraftVersion;
-    final MinecraftPlatformSpec fabric;
+	public Fabric(Project project, String minecraftVersion, MinecraftPlatformSpec fabric) {
+		this.project = project;
+		this.minecraftVersion = minecraftVersion;
+		this.fabric = fabric;
+	}
 
-    public Fabric(Project project, String minecraftVersion, MinecraftPlatformSpec fabric) {
-        this.project = project;
-        this.minecraftVersion = minecraftVersion;
-        this.fabric = fabric;
-    }
+	public ClientServer getFiles(MappingSet mappings, Set<File> mappingsFiles) throws IOException {
+		Cache cache = Cache.globalCache(project);
+		Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
-    public ClientServer getFiles(MappingSet mappings, Set<File> mappingsFiles) throws IOException {
-        Cache cache = Cache.globalCache(project);
-        Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
+		// Step 1 - Download Minecraft
+		Path clientJar;
+		Path serverJar;
+		List<String> libraries = new ArrayList<>();
 
-        // Step 1 - Download Minecraft
-        Path clientJar;
-        Path serverJar;
-        List<String> libraries = new ArrayList<>();
+		LauncherMeta meta = project.getExtensions().getByType(LauncherMeta.class);
 
-        project.getLogger().debug("getting version manifest . . .");
-        try (Reader globalManifestReader = Files.newBufferedReader(cache.download("version_manifest.json", new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json")))) {
-            String manifestUrl = null;
+		LauncherMeta.Version version = meta.versions.get(this.minecraftVersion);
 
-            for (JsonElement element : GSON.fromJson(globalManifestReader, JsonObject.class).getAsJsonArray("versions")) {
-                JsonObject object = element.getAsJsonObject();
-                if (object.get("id").getAsString().equals(minecraftVersion)) {
-                    manifestUrl = object.get("url").getAsString();
-                    break;
-                }
-            }
+		project.getLogger().lifecycle("getting client . . .");
+		clientJar = cache.download(this.minecraftVersion + "-client.jar", new URL(version.getClientJar()));
 
-            if (manifestUrl == null) {
-                throw new IllegalStateException("Version " + minecraftVersion + " was not found");
-            }
+		project.getLogger().lifecycle("getting server . . .");
+		Path unstrippedServerJar = cache.download(this.minecraftVersion + "-server.jar", new URL(version.getServerJar()));
 
-            String client;
-            String server;
+		project.getLogger().lifecycle("getting server without libraries . . .");
+		serverJar = cache.computeIfAbsent(this.minecraftVersion + "-stripped-server.jar", sink -> {
+			sink.putUnencodedChars("Strip libraries");
+			sink.putLong(Files.getLastModifiedTime(unstrippedServerJar).toMillis());
+		}, output -> {
+			Files.copy(unstrippedServerJar, output);
+			try (FileSystem fileSystem = FileSystems.newFileSystem(output, (ClassLoader) null)) {
+				Path root = fileSystem.getPath("/");
+				Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+						String name = root.relativize(file).toString();
+						if (!name.startsWith("net/minecraft/") && name.contains("/")) {
+							Files.delete(file);
+						}
+						return FileVisitResult.CONTINUE;
+					}
+				});
+			}
+		});
 
-            try (Reader versionManifestReader = Files.newBufferedReader(cache.download("manifest.json", new URL(manifestUrl)))) {
-                JsonObject versionManifest = GSON.fromJson(versionManifestReader, JsonObject.class);
-                JsonObject downloads = versionManifest.getAsJsonObject("downloads");
+		// Step 2 - Remap to intermediary
+		Pair<MappingSet, Collection<File>> officialToIntermediary = officialToIntermediary();
+		// todo what if intermediary re-releases or smth, this needs better caching
+		// todo use the same TinyRemapper instance
+		project.getLogger().lifecycle("getting intermediary client . . .");
+		Path intermediaryClientJar = remap(cache,
+				this.minecraftVersion + "-intermediary-client.jar",
+				officialToIntermediary.left,
+				clientJar,
+				officialToIntermediary.right);
+		project.getLogger().lifecycle("getting intermediary server . . .");
+		Path intermediaryServerJar = remap(cache,
+				this.minecraftVersion + "-intermediary-server.jar",
+				officialToIntermediary.left,
+				serverJar,
+				officialToIntermediary.right);
 
-                client = downloads.getAsJsonObject("client").get("url").getAsString();
-                server = downloads.getAsJsonObject("server").get("url").getAsString();
+		// Step 3 - Collect inputs
+		Configuration remap = fabric.getRemap().copy();
 
-                for (JsonElement element : versionManifest.getAsJsonArray("libraries")) {
-                    libraries.add(element.getAsJsonObject().get("name").getAsString());
-                }
-            }
+		for (String library : libraries) {
+			remap.getDependencies().add(project.getDependencies().create(library));
+		}
 
-            if (client == null) {
-                throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
-            }
+		project.getRepositories().maven(repository -> {
+			repository.setName("Minecraft Libraries");
+			repository.setUrl("https://libraries.minecraft.net/");
+		});
 
-            if (server == null) {
-                throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
-            }
+		// Step 4 - Remap everything to named
+		Set<Path> temporary = new HashSet<>();
+		Set<Path> toMergeClient = something(temporary, mappings, intermediaryClientJar, remap, workingDirectory, mappingsFiles);
+		Set<Path> toMergeServer = something(temporary, mappings, intermediaryServerJar, Collections.emptySet(), workingDirectory, mappingsFiles);
 
-            project.getLogger().debug("getting client . . .");
-            clientJar = cache.download(this.minecraftVersion + "-client.jar", new URL(client));
+		for (File file : fabric.getDependencies()) {
+			toMergeClient.add(file.toPath());
+			toMergeServer.add(file.toPath());
+		}
 
-            project.getLogger().debug("getting server . . .");
-            Path unstrippedServerJar = cache.download(this.minecraftVersion + "-server.jar", new URL(server));
+		return new ClientServer(temporary, toMergeClient, toMergeServer);
+	}
 
-            project.getLogger().debug("getting server without libraries . . .");
-            serverJar = cache.computeIfAbsent(this.minecraftVersion + "-stripped-server.jar", sink -> {
-                sink.putUnencodedChars("Strip libraries");
-                sink.putLong(Files.getLastModifiedTime(unstrippedServerJar).toMillis());
-            }, output -> {
-                Files.copy(unstrippedServerJar, output);
-                try (FileSystem fileSystem = FileSystems.newFileSystem(output, (ClassLoader) null)) {
-                    Path root = fileSystem.getPath("/");
-                    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            String name = root.relativize(file).toString();
-                            if (!name.startsWith("net/minecraft/") && name.contains("/")) {
-                                Files.delete(file);
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                }
-            });
-        }
+	private Pair<MappingSet, Collection<File>> officialToIntermediary() throws IOException {
+		Set<File> files = AmalgamationImpl.resolve(project,
+				project.getDependencies().create("net.fabricmc:intermediary:" + minecraftVersion + ":v2"));
+		File file = Iterables.getOnlyElement(files);
+		try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null); BufferedReader reader = Files.newBufferedReader(
+				fileSystem.getPath("/mappings/mappings.tiny"))) {
+			return Pair.of(new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "official", "intermediary").read(), files);
+		}
+	}
 
-        // Step 2 - Remap to intermediary
-        Pair<MappingSet, Collection<File>> officialToIntermediary = officialToIntermediary();
-        // todo what if intermediary re-releases or smth, this needs better caching
-        // todo use the same TinyRemapper instance
-        project.getLogger().debug("getting intermediary client . . .");
-        Path intermediaryClientJar = remap(cache, this.minecraftVersion + "-intermediary-client.jar", officialToIntermediary.left, clientJar, officialToIntermediary.right);
-        project.getLogger().debug("getting intermediary server . . .");
-        Path intermediaryServerJar = remap(cache, this.minecraftVersion + "-intermediary-server.jar", officialToIntermediary.left, serverJar, officialToIntermediary.right);
+	private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar, Collection<File> files) {
+		return cache.computeIfAbsent(output, sink -> {
+			sink.putUnencodedChars("Remap official to intermediary");
+			sink.putLong(Files.getLastModifiedTime(jar).toMillis());
+			for (File file : files) {
+				sink.putLong(file.lastModified());
+				sink.putString(file.getAbsolutePath(), StandardCharsets.UTF_8);
+			}
+		}, path -> {
+			TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtils.createMappingProvider(officialToIntermediary)).build();
 
-        // Step 3 - Collect inputs
-        Configuration remap = fabric.getRemap().copy();
+			remapper.readInputsAsync(jar);
 
-        for (String library : libraries) {
-            remap.getDependencies().add(project.getDependencies().create(library));
-        }
+			try (OutputConsumerPath out = new OutputConsumerPath.Builder(path).build()) {
+				out.addNonClassFiles(jar, NonClassCopyMode.FIX_META_INF, remapper);
+				remapper.apply(out);
+			}
 
-        project.getRepositories().maven(repository -> {
-            repository.setName("Minecraft Libraries");
-            repository.setUrl("https://libraries.minecraft.net/");
-        });
+			remapper.finish();
+		});
+	}
 
-        // Step 4 - Remap everything to named
-        Set<Path> temporary = new HashSet<>();
-        Set<Path> toMergeClient = something(temporary, mappings, intermediaryClientJar, remap, workingDirectory, mappingsFiles);
-        Set<Path> toMergeServer = something(temporary, mappings, intermediaryServerJar, Collections.emptySet(), workingDirectory, mappingsFiles);
+	/**
+	 * @param with the 'main' jar to remap
+	 * @param remap everything else to remap
+	 */
+	private Set<Path> something(Set<Path> temporary,
+			MappingSet mappings,
+			Path with,
+			Iterable<File> remap,
+			Path workingDirectory,
+			Set<File> mappingsFiles) throws IOException {
+		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtils.createMappingProvider(mappings)).build();
 
-        for (File file : fabric.getDependencies()) {
-            toMergeClient.add(file.toPath());
-            toMergeServer.add(file.toPath());
-        }
+		Set<Path> yes = new HashSet<>();
+		Map<Path, InputTag> tags = new HashMap<>();
 
-        return new ClientServer(temporary, toMergeClient, toMergeServer);
-    }
+		for (File file : Iterables.concat(remap, Collections.singleton(with.toFile()))) {
+			InputTag tag = remapper.createInputTag();
+			tags.put(file.toPath(), tag);
+			remapper.readInputsAsync(tag, file.toPath());
+		}
 
+		for (File file : fabric.getDependencies()) {
+			remapper.readClassPathAsync(file.toPath());
+		}
 
-    /**
-     * @param with the 'main' jar to remap
-     * @param remap everything else to remap
-     */
-    private Set<Path> something(Set<Path> temporary, MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory, Set<File> mappingsFiles) throws IOException {
-        TinyRemapper remapper = TinyRemapper.newRemapper()
-                .withMappings(MappingUtils.createMappingProvider(mappings))
-                .build();
+		for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
+			InputTag tag = entry.getValue();
 
-        Set<Path> yes = new HashSet<>();
-        Map<Path, InputTag> tags = new HashMap<>();
+			Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
+			Files.delete(out);
+			yes.add(out);
+			temporary.add(out);
 
-        for (File file : Iterables.concat(remap, Collections.singleton(with.toFile()))) {
-            InputTag tag = remapper.createInputTag();
-            tags.put(file.toPath(), tag);
-            remapper.readInputsAsync(tag, file.toPath());
-        }
+			try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
+				output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
+				remapper.apply(output, tag);
+			}
+		}
 
-        for (File file : fabric.getDependencies()) {
-            remapper.readClassPathAsync(file.toPath());
-        }
-
-        for (Map.Entry<Path, InputTag> entry : tags.entrySet()) {
-            InputTag tag = entry.getValue();
-
-            Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
-            Files.delete(out);
-            yes.add(out);
-            temporary.add(out);
-
-            try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
-                output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);
-                remapper.apply(output, tag);
-            }
-        }
-
-        remapper.finish();
-        return yes;
-    }
-
-    private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar, Collection<File> files) {
-        return cache.computeIfAbsent(output, sink -> {
-            sink.putUnencodedChars("Remap official to intermediary");
-            sink.putLong(Files.getLastModifiedTime(jar).toMillis());
-            for (File file : files) {
-                sink.putLong(file.lastModified());
-                sink.putString(file.getAbsolutePath(), StandardCharsets.UTF_8);
-            }
-        }, path -> {
-            TinyRemapper remapper = TinyRemapper.newRemapper()
-                    .withMappings(MappingUtils.createMappingProvider(officialToIntermediary))
-                    .build();
-
-            remapper.readInputsAsync(jar);
-
-            try (OutputConsumerPath out = new OutputConsumerPath.Builder(path).build()) {
-                out.addNonClassFiles(jar, NonClassCopyMode.FIX_META_INF, remapper);
-                remapper.apply(out);
-            }
-
-            remapper.finish();
-        });
-    }
-
-    private Pair<MappingSet, Collection<File>> officialToIntermediary() throws IOException {
-        Set<File> files = AmalgamationImpl.resolve(project, project.getDependencies().create("net.fabricmc:intermediary:" + minecraftVersion + ":v2"));
-        File file = Iterables.getOnlyElement(files);
-        try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null);
-             BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
-            return Pair.of(new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "official", "intermediary").read(), files);
-        }
-    }
+		remapper.finish();
+		return yes;
+	}
 }

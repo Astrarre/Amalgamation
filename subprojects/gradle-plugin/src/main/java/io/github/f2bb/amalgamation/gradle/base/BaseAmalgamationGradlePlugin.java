@@ -19,17 +19,18 @@
 
 package io.github.f2bb.amalgamation.gradle.base;
 
+import com.google.gson.Gson;
 import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
+	public static final Gson GSON = new Gson();
 	public static boolean refreshDependencies;
 
 	@Override
 	public void apply(@NotNull Project target) {
-		System.out.println("CACHE LOCATION AAAA    " + target.getGradle().getGradleHomeDir() + "   " + target.getGradle().getGradleUserHomeDir());
 		refreshDependencies = target.getGradle().getStartParameter().isRefreshDependencies();
 		target.getExtensions().create(BaseAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
 	}

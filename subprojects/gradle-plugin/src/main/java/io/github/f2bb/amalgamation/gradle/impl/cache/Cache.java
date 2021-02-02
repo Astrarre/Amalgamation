@@ -38,7 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 
-public class Cache {
+public final class Cache {
     private final Logger logger;
     private final Path basePath;
     // todo global download path
