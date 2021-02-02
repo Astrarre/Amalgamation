@@ -20,6 +20,7 @@
 package io.github.f2bb.amalgamation.platform.util;
 
 import io.github.f2bb.amalgamation.Displace;
+import io.github.f2bb.amalgamation.Parent;
 import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
@@ -27,8 +28,9 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassInfo {
-	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
+	public static final String PLATFORM = Type.getDescriptor(Platform.class);
 	public static final String DISPLACE = Type.getDescriptor(Displace.class);
+	public static final String PARENT = Type.getDescriptor(Parent.class);
 	public final ClassNode node;
 	public final String[] names;
 
@@ -45,7 +47,7 @@ public class ClassInfo {
 	}
 
 	public AnnotationNode createPlatformAnnotation() {
-		AnnotationNode node = new AnnotationNode(PLATFORM_DESC);
+		AnnotationNode node = new AnnotationNode(PLATFORM);
 		AnnotationVisitor array = node.visitArray("value");
 		for (String s : this.names) {
 			array.visit("value", s);
@@ -60,4 +62,6 @@ public class ClassInfo {
 	public String[] getNames() {
 		return this.names;
 	}
+
+
 }

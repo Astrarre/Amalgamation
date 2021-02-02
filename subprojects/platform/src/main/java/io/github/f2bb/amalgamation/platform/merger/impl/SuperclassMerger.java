@@ -72,12 +72,17 @@ class SuperclassMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
-		for (AnnotationNode annotation : in.visibleAnnotations) {
-			List<Object> values = annotation.values;
-			List<AnnotationNode> platforms = (List<AnnotationNode>) values.get(values.indexOf("platform") + 1);
-			if (SplitterUtil.matches(platforms, available)) {
-				Type type = (Type) values.get(values.indexOf("parent") + 1);
-				in.superName = type.getInternalName();
+		Iterator<AnnotationNode> iterator = in.visibleAnnotations.iterator();
+		while (iterator.hasNext()) {
+			AnnotationNode annotation = iterator.next();
+			if (ClassInfo.PARENT.equals(annotation.desc)) {
+				List<Object> values = annotation.values;
+				List<AnnotationNode> platforms = (List<AnnotationNode>) values.get(values.indexOf("platform") + 1);
+				if (SplitterUtil.matches(platforms, available)) {
+					Type type = (Type) values.get(values.indexOf("parent") + 1);
+					in.superName = type.getInternalName();
+				}
+				iterator.remove();
 			}
 		}
 		return false;

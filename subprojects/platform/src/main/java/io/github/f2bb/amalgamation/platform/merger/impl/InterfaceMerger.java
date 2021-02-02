@@ -21,6 +21,7 @@ package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,24 +68,31 @@ class InterfaceMerger implements Merger {
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
 		List<String> interfaces = new ArrayList<>(in.interfaces);
-		if (in.visibleTypeAnnotations != null)
-		for (TypeAnnotationNode annotation : in.visibleTypeAnnotations) {
-			if (!SplitterUtil.matches(annotation, available)) {
-				TypeReference reference = new TypeReference(annotation.typeRef);
-				if (reference.getSort() == TypeReference.CLASS_EXTENDS) {
-					int i = reference.getSuperTypeIndex();
-					if (i >= 0) {
-						in.interfaces.remove(interfaces.get(i));
+		if (in.visibleTypeAnnotations != null) {
+			Iterator<TypeAnnotationNode> iterator = in.visibleTypeAnnotations.iterator();
+			while (iterator.hasNext()) {
+				TypeAnnotationNode annotation = iterator.next();
+				if (!SplitterUtil.matches(annotation, available)) {
+					TypeReference reference = new TypeReference(annotation.typeRef);
+					if (reference.getSort() == TypeReference.CLASS_EXTENDS) {
+						int i = reference.getSuperTypeIndex();
+						if (i >= 0) {
+							iterator.remove();
+							in.interfaces.remove(interfaces.get(i));
+						}
 					}
 				}
 			}
 		}
 
-		for (AnnotationNode annotation : in.visibleAnnotations) {
-			if(INTERFACE.equals(annotation.desc)) {
+		Iterator<AnnotationNode> iterator = in.visibleAnnotations.iterator();
+		while (iterator.hasNext()) {
+			AnnotationNode annotation = iterator.next();
+			if (INTERFACE.equals(annotation.desc)) {
 				List<Object> values = annotation.values;
-				if(!SplitterUtil.matches((List<AnnotationNode>)values.get(values.indexOf("platform") + 1), available)) {
+				if (!SplitterUtil.matches((List<AnnotationNode>) values.get(values.indexOf("platform") + 1), available)) {
 					in.interfaces.remove(values.get(values.indexOf("parent") + 1));
+					iterator.remove();
 				}
 			}
 		}

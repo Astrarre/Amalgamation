@@ -1,12 +1,14 @@
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class HeaderMerger implements Merger {
@@ -31,6 +33,16 @@ public class HeaderMerger implements Merger {
 			in.visibleAnnotations = new ArrayList<>();
 		}
 
-		return !SplitterUtil.matches(in.visibleAnnotations, available);
+		boolean notStripped = SplitterUtil.matches(in.visibleAnnotations, available);
+		if(notStripped) {
+			Iterator<AnnotationNode> iterator = in.visibleAnnotations.iterator();
+			while (iterator.hasNext()) {
+				AnnotationNode annotation = iterator.next();
+				if(ClassInfo.PLATFORM.equals(annotation.desc)) {
+					iterator.remove();
+				}
+			}
+		}
+		return !notStripped;
 	}
 }

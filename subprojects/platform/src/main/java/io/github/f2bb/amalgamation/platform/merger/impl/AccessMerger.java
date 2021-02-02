@@ -22,6 +22,7 @@ package io.github.f2bb.amalgamation.platform.merger.impl;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -109,12 +110,15 @@ public class AccessMerger implements Merger {
 
 	@Override
 	public boolean strip(ClassNode in, Set<String> available) {
-		for (AnnotationNode annotation : in.visibleAnnotations) {
+		Iterator<AnnotationNode> iterator = in.visibleAnnotations.iterator();
+		while (iterator.hasNext()) {
+			AnnotationNode annotation = iterator.next();
 			if (ACCESS.equals(annotation.desc)) {
 				List<Object> values = annotation.values;
 				if (SplitterUtil.matches((List<AnnotationNode>) values.get(values.indexOf("platforms") + 1), available)) {
 					in.access = getAccess(annotation);
 				}
+				iterator.remove();
 			}
 		}
 		return false;

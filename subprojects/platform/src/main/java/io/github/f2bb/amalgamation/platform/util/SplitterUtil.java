@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class SplitterUtil {
 	public static boolean matches(AnnotationNode node, Set<String> platforms) {
-		if (ClassInfo.PLATFORM_DESC.equals(node.desc)) {
+		if (ClassInfo.PLATFORM.equals(node.desc)) {
 			return platforms.containsAll((List<String>) node.values.get(1));
 		} else {
 			return false;
@@ -42,7 +42,7 @@ public class SplitterUtil {
 				return true;
 			}
 
-			if(notVisited && ClassInfo.PLATFORM_DESC.equals(node.desc)) {
+			if(notVisited && ClassInfo.PLATFORM.equals(node.desc)) {
 				notVisited = false;
 			}
 		}

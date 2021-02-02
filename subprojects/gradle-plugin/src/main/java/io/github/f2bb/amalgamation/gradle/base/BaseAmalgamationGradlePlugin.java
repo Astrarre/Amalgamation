@@ -25,9 +25,12 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
+	public static boolean refreshDependencies;
 
-    @Override
-    public void apply(@NotNull Project target) {
-        target.getExtensions().create(BaseAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
-    }
+	@Override
+	public void apply(@NotNull Project target) {
+		System.out.println("CACHE LOCATION AAAA    " + target.getGradle().getGradleHomeDir() + "   " + target.getGradle().getGradleUserHomeDir());
+		refreshDependencies = target.getGradle().getStartParameter().isRefreshDependencies();
+		target.getExtensions().create(BaseAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
+	}
 }

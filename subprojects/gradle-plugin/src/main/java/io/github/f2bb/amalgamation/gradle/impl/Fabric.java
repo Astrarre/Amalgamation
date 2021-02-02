@@ -35,6 +35,7 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.internal.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,7 +61,7 @@ class Fabric {
     }
 
     public ClientServer getFiles(MappingSet mappings) throws IOException {
-        Cache cache = Cache.of(project);
+        Cache cache = Cache.globalCache(project);
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
         // Step 1 - Download Minecraft
@@ -106,28 +107,24 @@ class Fabric {
                 throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
             }
 
-            clientJar = cache.download("client.jar", new URL(client));
+            clientJar = cache.download(this.minecraftVersion + "-client.jar", new URL(client));
 
-            byte[] originalServerJar = Files.readAllBytes(cache.download("server.jar", new URL(server)));
-
-            serverJar = cache.computeIfAbsent("server.jar", sink -> {
+            Path unstrippedServerJar = cache.download(this.minecraftVersion + "-server.jar", new URL(server));
+            serverJar = cache.computeIfAbsent(this.minecraftVersion + "-stripped-server.jar", sink -> {
                 sink.putUnencodedChars("Strip libraries");
-                sink.putBytes(originalServerJar);
+                sink.putLong(Files.getLastModifiedTime(unstrippedServerJar).toMillis());
             }, output -> {
-                Files.write(output, originalServerJar);
+                Files.copy(unstrippedServerJar, output);
 
                 try (FileSystem fileSystem = FileSystems.newFileSystem(output, (ClassLoader) null)) {
                     Path root = fileSystem.getPath("/");
-
                     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             String name = root.relativize(file).toString();
-
                             if (!name.startsWith("net/minecraft/") && name.contains("/")) {
                                 Files.delete(file);
                             }
-
                             return FileVisitResult.CONTINUE;
                         }
                     });
@@ -136,9 +133,10 @@ class Fabric {
         }
 
         // Step 2 - Remap to intermediary
-        MappingSet officialToIntermediary = officialToIntermediary();
-        Path intermediaryClientJar = remap(cache, "client.jar", officialToIntermediary, clientJar);
-        Path intermediaryServerJar = remap(cache, "server.jar", officialToIntermediary, serverJar);
+        Pair<MappingSet, Collection<File>> officialToIntermediary = officialToIntermediary();
+        // todo what if intermediary re-releases or smth, this needs better caching
+        Path intermediaryClientJar = remap(cache, this.minecraftVersion + "-intermediary-client.jar", officialToIntermediary.left, clientJar, officialToIntermediary.right);
+        Path intermediaryServerJar = remap(cache, this.minecraftVersion + "-intermediary-server.jar", officialToIntermediary.left, serverJar, officialToIntermediary.right);
 
         // Step 3 - Collect inputs
         Configuration remap = fabric.getRemap().copy();
@@ -163,6 +161,7 @@ class Fabric {
 
         return new ClientServer(toMergeClient, toMergeServer);
     }
+
 
     private Set<Path> something(MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory) throws IOException {
         TinyRemapper remapper = TinyRemapper.newRemapper()
@@ -198,10 +197,13 @@ class Fabric {
         return yes;
     }
 
-    private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar) {
+    private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar, Collection<File> files) {
         return cache.computeIfAbsent(output, sink -> {
             sink.putUnencodedChars("Remap official to intermediary");
-            sink.putBytes(Files.readAllBytes(jar));
+            sink.putLong(Files.getLastModifiedTime(jar).toMillis());
+            for (File file : files) {
+                sink.putLong(file.lastModified());
+            }
         }, path -> {
             TinyRemapper remapper = TinyRemapper.newRemapper()
                     .withMappings(MappingUtils.createMappingProvider(officialToIntermediary))
@@ -218,12 +220,12 @@ class Fabric {
         });
     }
 
-    private MappingSet officialToIntermediary() throws IOException {
-        File file = Iterables.getOnlyElement(AmalgamationImpl.resolve(project, project.getDependencies().create("net.fabricmc:intermediary:" + minecraftVersion + ":v2")));
-
+    private Pair<MappingSet, Collection<File>> officialToIntermediary() throws IOException {
+        Set<File> files = AmalgamationImpl.resolve(project, project.getDependencies().create("net.fabricmc:intermediary:" + minecraftVersion + ":v2"));
+        File file = Iterables.getOnlyElement(files);
         try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null);
              BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
-            return new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "official", "intermediary").read();
+            return Pair.of(new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), "official", "intermediary").read(), files);
         }
     }
 }

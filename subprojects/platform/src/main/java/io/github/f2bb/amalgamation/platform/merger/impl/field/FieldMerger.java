@@ -79,9 +79,14 @@ public class FieldMerger implements Merger {
 	public boolean strip(ClassNode in, Set<String> available) {
 		in.fields.removeIf(field -> !SplitterUtil.matches(field.visibleAnnotations, available));
 		in.fields.forEach(f -> {
-			for (AnnotationNode annotation : f.visibleAnnotations) {
-				if(ClassInfo.DISPLACE.equals(annotation.desc)) {
+			Iterator<AnnotationNode> iterator = f.visibleAnnotations.iterator();
+			while (iterator.hasNext()) {
+				AnnotationNode annotation = iterator.next();
+				if (ClassInfo.DISPLACE.equals(annotation.desc)) {
 					f.name = (String) annotation.values.get(1);
+					iterator.remove();
+				} else if(ClassInfo.PLATFORM.equals(annotation.desc)) {
+					iterator.remove();
 				}
 			}
 		});
