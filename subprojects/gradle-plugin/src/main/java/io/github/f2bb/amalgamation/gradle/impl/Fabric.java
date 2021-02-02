@@ -60,7 +60,7 @@ class Fabric {
         this.fabric = fabric;
     }
 
-    public ClientServer getFiles(MappingSet mappings) throws IOException {
+    public ClientServer getFiles(MappingSet mappings, Set<File> mappingsFiles) throws IOException {
         Cache cache = Cache.globalCache(project);
         Path workingDirectory = Files.createDirectories(project.getBuildDir().toPath().resolve("amalgamation"));
 
@@ -69,6 +69,7 @@ class Fabric {
         Path serverJar;
         List<String> libraries = new ArrayList<>();
 
+        project.getLogger().debug("getting version manifest . . .");
         try (Reader globalManifestReader = Files.newBufferedReader(cache.download("version_manifest.json", new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json")))) {
             String manifestUrl = null;
 
@@ -107,15 +108,18 @@ class Fabric {
                 throw new IllegalStateException("Client download for " + minecraftVersion + " was not found");
             }
 
+            project.getLogger().debug("getting client . . .");
             clientJar = cache.download(this.minecraftVersion + "-client.jar", new URL(client));
 
+            project.getLogger().debug("getting server . . .");
             Path unstrippedServerJar = cache.download(this.minecraftVersion + "-server.jar", new URL(server));
+
+            project.getLogger().debug("getting server without libraries . . .");
             serverJar = cache.computeIfAbsent(this.minecraftVersion + "-stripped-server.jar", sink -> {
                 sink.putUnencodedChars("Strip libraries");
                 sink.putLong(Files.getLastModifiedTime(unstrippedServerJar).toMillis());
             }, output -> {
                 Files.copy(unstrippedServerJar, output);
-
                 try (FileSystem fileSystem = FileSystems.newFileSystem(output, (ClassLoader) null)) {
                     Path root = fileSystem.getPath("/");
                     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -135,7 +139,10 @@ class Fabric {
         // Step 2 - Remap to intermediary
         Pair<MappingSet, Collection<File>> officialToIntermediary = officialToIntermediary();
         // todo what if intermediary re-releases or smth, this needs better caching
+        // todo use the same TinyRemapper instance
+        project.getLogger().debug("getting intermediary client . . .");
         Path intermediaryClientJar = remap(cache, this.minecraftVersion + "-intermediary-client.jar", officialToIntermediary.left, clientJar, officialToIntermediary.right);
+        project.getLogger().debug("getting intermediary server . . .");
         Path intermediaryServerJar = remap(cache, this.minecraftVersion + "-intermediary-server.jar", officialToIntermediary.left, serverJar, officialToIntermediary.right);
 
         // Step 3 - Collect inputs
@@ -151,26 +158,35 @@ class Fabric {
         });
 
         // Step 4 - Remap everything to named
-        Set<Path> toMergeClient = something(mappings, intermediaryClientJar, remap, workingDirectory);
-        Set<Path> toMergeServer = something(mappings, intermediaryServerJar, Collections.emptySet(), workingDirectory);
+        Set<Path> temporary = new HashSet<>();
+        Set<Path> toMergeClient = something(temporary, mappings, intermediaryClientJar, remap, workingDirectory, mappingsFiles);
+        Set<Path> toMergeServer = something(temporary, mappings, intermediaryServerJar, Collections.emptySet(), workingDirectory, mappingsFiles);
 
         for (File file : fabric.getDependencies()) {
             toMergeClient.add(file.toPath());
             toMergeServer.add(file.toPath());
         }
 
-        return new ClientServer(toMergeClient, toMergeServer);
+        return new ClientServer(temporary, toMergeClient, toMergeServer);
     }
 
 
-    private Set<Path> something(MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory) throws IOException {
+    /**
+     * @param with the 'main' jar to remap
+     * @param remap everything else to remap
+     * @param mappingsFiles
+     * @return
+     * @throws IOException
+     */
+    private Set<Path> something(Set<Path> temporary, MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory, Set<File> mappingsFiles) throws IOException {
         TinyRemapper remapper = TinyRemapper.newRemapper()
                 .withMappings(MappingUtils.createMappingProvider(mappings))
                 .build();
+
         Set<Path> yes = new HashSet<>();
         Map<Path, InputTag> tags = new HashMap<>();
 
-        for (File file : Iterables.concat(remap, Sets.newHashSet(with.toFile()))) {
+        for (File file : Iterables.concat(remap, Collections.singleton(with.toFile()))) {
             InputTag tag = remapper.createInputTag();
             tags.put(file.toPath(), tag);
             remapper.readInputsAsync(tag, file.toPath());
@@ -186,6 +202,7 @@ class Fabric {
             Path out = Files.createTempFile(workingDirectory, "mapped", ".jar");
             Files.delete(out);
             yes.add(out);
+            temporary.add(out);
 
             try (OutputConsumerPath output = new OutputConsumerPath.Builder(out).build()) {
                 output.addNonClassFiles(entry.getKey(), NonClassCopyMode.FIX_META_INF, remapper);

@@ -23,11 +23,12 @@ import java.nio.file.Path;
 import java.util.Set;
 
 class ClientServer {
-
+    final Set<Path> temporaries;
     final Set<Path> client;
     final Set<Path> server;
 
-    ClientServer(Set<Path> client, Set<Path> server) {
+    ClientServer(Set<Path> dir, Set<Path> client, Set<Path> server) {
+        this.temporaries = dir;
         this.client = client;
         this.server = server;
     }

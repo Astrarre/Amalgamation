@@ -90,11 +90,13 @@ public class AmalgamationImpl {
         }
 
         MappingSet mappings;
-
+        Set<File> mappingsFiles;
         if (mappingsDependencies != null) {
-            mappings = loadMappings(mappingsDependencies.resolve());
+            mappingsFiles = mappingsDependencies.resolve();
+            mappings = loadMappings(mappingsFiles);
         } else {
             mappings = null;
+            mappingsFiles = null;
         }
 
         for (Forge spec : forgeSpecs) {
@@ -110,7 +112,7 @@ public class AmalgamationImpl {
         }
 
         for (Fabric spec : fabricSpecs) {
-            ClientServer cs = spec.getFiles(mappings);
+            ClientServer cs = spec.getFiles(mappings, mappingsFiles);
 
             {
                 Map<String, byte[]> files = new HashMap<>();
@@ -138,6 +140,10 @@ public class AmalgamationImpl {
                 Set<String> copy = new LinkedHashSet<>(spec.fabric.getNames());
                 copy.add("server");
                 platforms.add(new PlatformData(copy, files));
+            }
+
+            for (Path path : cs.temporaries) {
+                Files.delete(path);
             }
         }
 
