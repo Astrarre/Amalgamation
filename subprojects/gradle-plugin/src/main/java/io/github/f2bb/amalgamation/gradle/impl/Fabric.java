@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -174,9 +175,6 @@ class Fabric {
     /**
      * @param with the 'main' jar to remap
      * @param remap everything else to remap
-     * @param mappingsFiles
-     * @return
-     * @throws IOException
      */
     private Set<Path> something(Set<Path> temporary, MappingSet mappings, Path with, Iterable<File> remap, Path workingDirectory, Set<File> mappingsFiles) throws IOException {
         TinyRemapper remapper = TinyRemapper.newRemapper()
@@ -220,6 +218,7 @@ class Fabric {
             sink.putLong(Files.getLastModifiedTime(jar).toMillis());
             for (File file : files) {
                 sink.putLong(file.lastModified());
+                sink.putString(file.getAbsolutePath(), StandardCharsets.UTF_8);
             }
         }, path -> {
             TinyRemapper remapper = TinyRemapper.newRemapper()

@@ -214,7 +214,8 @@ public class AmalgamationImpl {
         sorted.sort(null);
 
         for (File file : sorted) {
-            hasher.putBytes(Files.readAllBytes(file.toPath()));
+            hasher.putLong(file.lastModified());
+            hasher.putString(file.getAbsolutePath(), StandardCharsets.UTF_8);
         }
     }
 

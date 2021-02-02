@@ -54,11 +54,10 @@ amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1"
 
     fabric('1.16.5') {
-        
     }
 
-    fabric('1.14.4') {
-    }
+    //fabric('1.14.4') {
+    //}
 }
 
 dependencies {
