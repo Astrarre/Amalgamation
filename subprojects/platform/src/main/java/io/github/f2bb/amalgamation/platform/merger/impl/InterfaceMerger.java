@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Interface;
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
@@ -41,21 +40,21 @@ class InterfaceMerger implements Merger {
 	public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
+	public void merge(MergerContext mergerContext) {
 		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
-		for (ClassInfo info : infos) {
+		for (ClassInfo info : mergerContext.getInfos()) {
 			for (String anInterface : info.node.interfaces) {
 				interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
 			}
 		}
 
 		interfaces.forEach((s, i) -> {
-			node.interfaces.add(s);
-			if (i.size() == infos.size()) {
+			mergerContext.getNode().interfaces.add(s);
+			if (i.size() == mergerContext.getInfos().size()) {
 				return;
 			}
 
-			AnnotationVisitor n = node.visitAnnotation(INTERFACE, true);
+			AnnotationVisitor n = mergerContext.getNode().visitAnnotation(INTERFACE, true);
 			AnnotationVisitor visitor = n.visitArray("platform");
 			for (ClassInfo info : i) {
 				visitor.visit("platform", info.createPlatformAnnotation());

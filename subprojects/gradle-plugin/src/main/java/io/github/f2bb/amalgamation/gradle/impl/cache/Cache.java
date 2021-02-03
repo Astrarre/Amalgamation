@@ -19,15 +19,6 @@
 
 package io.github.f2bb.amalgamation.gradle.impl.cache;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.hash.PrimitiveSink;
-import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
-import org.apache.tools.ant.filters.StringInputStream;
-import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
-import org.gradle.internal.impldep.org.codehaus.plexus.util.StringOutputStream;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,258 +29,281 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.hash.PrimitiveSink;
+import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
+import org.apache.tools.ant.filters.StringInputStream;
+import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
+
 public final class Cache {
-    private final Logger logger;
-    private final Path basePath;
-    // todo global download path
-    private final Path downloadPath;
+	private final Logger logger;
+	private final Project project;
+	private final Path basePath;
+	// todo global download path
+	private final Path downloadPath;
 
-    public Cache(Logger logger, Path basePath, Path downloadPath) throws IOException {
-        this.logger = logger;
-        this.basePath = basePath;
-        this.downloadPath = downloadPath;
-        Files.createDirectories(downloadPath);
-        Files.createDirectories(basePath);
-    }
+	public Cache(Logger logger, Path basePath, Project project) throws IOException {
+		this(logger, project, basePath, basePath.resolve("downloads"));
+	}
 
-    public Cache(Logger logger, Path basePath) throws IOException {
-        this(logger, basePath, basePath.resolve("downloads"));
-    }
+	public Cache(Logger logger, Project project, Path basePath, Path downloadPath) throws IOException {
+		this.logger = logger;
+		this.project = project;
+		this.basePath = basePath;
+		this.downloadPath = downloadPath;
+		Files.createDirectories(downloadPath);
+		Files.createDirectories(basePath);
+	}
 
-    private String hash(UnsafeConsumer<PrimitiveSink> sink) {
-        Hasher hasher = Hashing.sha256().newHasher();
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+	public static Cache of(Project project) throws IOException {
+		return new Cache(project.getLogger(), project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("cache"), project);
+	}
 
-        try (PrintStream printStream = new PrintStream(stream)) {
-            try {
-                sink.accept(new LoggingSink(hasher, printStream));
-            } catch (Throwable throwable) {
-                throw new RuntimeException(throwable);
-            }
-        }
+	public static Cache globalCache(Project project) throws IOException {
+		return new Cache(project.getLogger(), project.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation"),
+                project);
+	}
 
-        return hasher.hash().toString();
-    }
+	/**
+	 * @param output the output file name
+	 * @param sink the sink to put the parts to hash
+	 * @param populator write the contents to the path
+	 */
+	public Path computeIfAbsent(String output, UnsafeConsumer<PrimitiveSink> sink, UnsafeConsumer<Path> populator) {
+		Path path = basePath.resolve(this.hash(sink));
+		Path out = path.resolve(output);
+		Path ok = path.resolve("ok");
 
-    /**
-     * @param output the output file name
-     * @param sink the sink to put the parts to hash
-     * @param populator write the contents to the path
-     */
-    public Path computeIfAbsent(String output, UnsafeConsumer<PrimitiveSink> sink, UnsafeConsumer<Path> populator) {
-        Path path = basePath.resolve(this.hash(sink));
-        Path out = path.resolve(output);
-        Path ok = path.resolve("ok");
+		// OK marker
+		if (!Files.exists(ok)) {
+			try {
+				Files.createDirectories(path);
+				populator.accept(out);
+				Files.write(ok, new byte[0]);
+			} catch (Throwable throwable) {
+				throw new RuntimeException(throwable);
+			}
+		}
 
-        // OK marker
-        if (!Files.exists(ok)) {
-            try {
-                Files.createDirectories(path);
-                populator.accept(out);
-                Files.write(ok, new byte[0]);
-            } catch (Throwable throwable) {
-                throw new RuntimeException(throwable);
-            }
-        }
+		return out;
+	}
 
-        return out;
-    }
+	private String hash(UnsafeConsumer<PrimitiveSink> sink) {
+		Hasher hasher = Hashing.sha256().newHasher();
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-    public Path download(String output, URL url, UnsafeConsumer<PrimitiveSink> sink) {
-        Path path = this.downloadPath.resolve(this.hash(sink)).resolve(output);
-        this.downloadIfChanged(url, path, this.logger, false);
-        return path;
-    }
+		try (PrintStream printStream = new PrintStream(stream)) {
+			try {
+				sink.accept(new LoggingSink(hasher, printStream));
+			} catch (Throwable throwable) {
+				throw new RuntimeException(throwable);
+			}
+		}
 
-    // todo add proper url caching go steal from loom or smth
-    public Path download(String output, URL url) {
-        Path path = this.downloadPath.resolve(output);
-        this.downloadIfChanged(url, path, this.logger, false);
-        return path;
-    }
+		return hasher.hash().toString();
+	}
 
-    public static Cache of(Project project) throws IOException {
-        return new Cache(project.getLogger(), project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("cache"));
-    }
+	public Path download(String output, URL url, UnsafeConsumer<PrimitiveSink> sink) {
+		Path path = this.downloadPath.resolve(this.hash(sink)).resolve(output);
+		this.downloadIfChanged(url, path, this.logger, false);
+		return path;
+	}
 
-    public static Cache globalCache(Project project) throws IOException {
-        return new Cache(project.getLogger(), project.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation"));
-    }
-
-
-    // taken from Loom (MIT)
-    // https://github.com/FabricMC/fabric-loom/blob/dev/0.6/src/main/java/net/fabricmc/loom/LoomGradlePlugin.java
-    // FabricMC
-
-    /**
-     * Download from the given {@link URL} to the given {@link Path} so long as there are differences between them.
-     *
-     * @param from The URL of the file to be downloaded
-     * @param to The destination to be saved to, and compared against if it exists
-     * @param logger The logger to print information to, typically from {@link Project#getLogger()}
-     * @param quiet Whether to only print warnings (when <code>true</code>) or everything
-     */
-    private void downloadIfChanged(URL from, Path to, Logger logger, boolean quiet) {
-        try {
-            HttpURLConnection connection = (HttpURLConnection) from.openConnection();
-
-            if (BaseAmalgamationGradlePlugin.refreshDependencies) {
-                logger.info("deleting " + to);
-                delete(to);
-            }
-
-            // If the output already exists we'll use it's last modified time
-            if (Files.exists(to)) {
-                connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
-            }
-
-            //Try use the ETag if there's one for the file we're downloading
-            String etag = loadETag(to, logger);
-
-            if (etag != null) {
-                connection.setRequestProperty("If-None-Match", etag);
-            }
-
-            // We want to download gzip compressed stuff
-            connection.setRequestProperty("Accept-Encoding", "gzip");
-
-            // Try make the connection, it will hang here if the connection is bad
-            connection.connect();
-
-            int code = connection.getResponseCode();
-
-            if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
-                //Didn't get what we expected
-                throw new IOException(connection.getResponseMessage() + " for " + from);
-            }
-
-            long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
-
-            if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to).toMillis() >= modifyTime)) {
-                if (!quiet) {
-                    logger.info("'{}' Not Modified, skipping.", to);
+	/**
+	 * Download from the given {@link URL} to the given {@link Path} so long as there are differences between them.
+	 *
+	 * @param from The URL of the file to be downloaded
+	 * @param to The destination to be saved to, and compared against if it exists
+	 * @param logger The logger to print information to, typically from {@link Project#getLogger()}
+	 * @param quiet Whether to only print warnings (when <code>true</code>) or everything
+	 */
+	private void downloadIfChanged(URL from, Path to, Logger logger, boolean quiet) {
+		try {
+			if (this.project.getGradle().getStartParameter().isOffline()) {
+				logger.lifecycle("offline mode, skipping checks for " + from);
+                if (Files.exists(to)) {
+                    return;
+                } else {
+                	logger.lifecycle("unable to download url to " + to);
+                    throw new IllegalStateException("no cached download for " + from);
                 }
+			}
 
-                return; //What we've got is already fine
-            }
+			HttpURLConnection connection = (HttpURLConnection) from.openConnection();
 
-            long contentLength = connection.getContentLengthLong();
+			if (BaseAmalgamationGradlePlugin.refreshDependencies) {
+				logger.lifecycle("deleting " + to);
+				delete(to);
+			}
 
-            if (!quiet && contentLength >= 0) {
-                logger.info("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
-            }
+			// If the output already exists we'll use it's last modified time
+			if (Files.exists(to)) {
+				connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
+			}
 
-            try { // Try download to the output
-                Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                Files.delete(to); // Probably isn't good if it fails to copy/save
-                throw e;
-            }
+			//Try use the ETag if there's one for the file we're downloading
+			String etag = loadETag(to, logger);
 
-            //Set the modify time to match the server's (if we know it)
-            if (modifyTime > 0) {
-                Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
-            }
+			if (etag != null) {
+				connection.setRequestProperty("If-None-Match", etag);
+			}
 
-            //Save the ETag (if we know it)
-            String eTag = connection.getHeaderField("ETag");
-            if (eTag != null) {
-                //Log if we get a weak ETag and we're not on quiet
-                if (!quiet && eTag.startsWith("W/")) {
-                    logger.warn("Weak ETag found.");
-                }
+			// We want to download gzip compressed stuff
+			connection.setRequestProperty("Accept-Encoding", "gzip");
 
-                saveETag(to, eTag, logger);
-            }
-        } catch (Exception e) {
-            try {
-                delete(to);
-            } catch (IOException ex) {
-                throw new IllegalStateException("unable to delete " + to + " and/or it's etag file!");
-            }
-        }
-    }
+			// Try make the connection, it will hang here if the connection is bad
+			connection.connect();
 
-    /**
-     * Creates a new file in the same directory as the given file with <code>.etag</code> on the end of the name.
-     *
-     * @param file The file to produce the ETag for
-     * @return The (uncreated) ETag file for the given file
-     */
-    private Path getETagPath(Path file) {
-        return file.getParent().resolve(file.getFileName() + ".etag");
-    }
+			int code = connection.getResponseCode();
 
-    /**
-     * Attempt to load an ETag for the given file, if it exists.
-     *
-     * @param to The file to load an ETag for
-     * @param logger The logger to print errors to if it goes wrong
-     * @return The ETag for the given file, or <code>null</code> if it doesn't exist
-     */
-    private String loadETag(Path to, Logger logger) {
-        Path eTagPath = getETagPath(to);
+			if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
+				//Didn't get what we expected
+				throw new IOException(connection.getResponseMessage() + " for " + from);
+			}
 
-        if (!Files.exists(eTagPath)) {
-            return null;
-        }
+			long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
 
-        try {
-            return String.join("\n", Files.readAllLines(eTagPath));
-        } catch (IOException e) {
-            logger.warn("Error reading ETag file '{}'.", eTagPath);
-            return null;
-        }
-    }
+			if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
+			                                                                                               .toMillis() >= modifyTime)) {
+				if (!quiet) {
+					logger.lifecycle("'{}' Not Modified, skipping.", to);
+				}
 
-    /**
-     * Saves the given ETag for the given file, replacing it if it already exists.
-     *
-     * @param to The file to save the ETag for
-     * @param eTag The ETag to be saved
-     * @param logger The logger to print errors to if it goes wrong
-     */
-    private void saveETag(Path to, String eTag, Logger logger) {
-        Path eTagPath = getETagPath(to);
+				return; //What we've got is already fine
+			}
 
-        try {
-            Files.copy(new StringInputStream(eTag), eTagPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            logger.warn("Error saving ETag file '{}'.", eTagPath, e);
-        }
-    }
+			long contentLength = connection.getContentLengthLong();
 
-    /**
-     * Format the given number of bytes as a more human readable string.
-     *
-     * @param bytes The number of bytes
-     * @return The given number of bytes formatted to kilobytes, megabytes or gigabytes if appropriate
-     */
-    public String toNiceSize(long bytes) {
-        if (bytes < 1024) {
-            return bytes + " B";
-        } else if (bytes < 1024 * 1024) {
-            return bytes / 1024 + " KB";
-        } else if (bytes < 1024 * 1024 * 1024) {
-            return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
-        } else {
-            return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
-        }
-    }
+			if (!quiet && contentLength >= 0) {
+				logger.lifecycle("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
+			}
 
-    /**
-     * Delete the file along with the corresponding ETag, if it exists.
-     *
-     * @param file The file to delete.
-     */
-    public void delete(Path file) throws IOException {
-        if (Files.exists(file)) {
-            Files.delete(file);
-        }
+			try { // Try download to the output
+				Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				Files.delete(to); // Probably isn't good if it fails to copy/save
+				throw e;
+			}
 
-        Path etagPath = getETagPath(file);
-        if (Files.exists(etagPath)) {
-            Files.delete(etagPath);
-        }
-    }
+			//Set the modify time to match the server's (if we know it)
+			if (modifyTime > 0) {
+				Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
+			}
+
+			//Save the ETag (if we know it)
+			String eTag = connection.getHeaderField("ETag");
+			if (eTag != null) {
+				//Log if we get a weak ETag and we're not on quiet
+				if (!quiet && eTag.startsWith("W/")) {
+					logger.warn("Weak ETag found.");
+				}
+
+				saveETag(to, eTag, logger);
+			}
+		} catch (Exception e) {
+			try {
+				delete(to);
+			} catch (IOException ex) {
+				throw new IllegalStateException("unable to delete " + to + " and/or it's etag file!");
+			}
+			throw new RuntimeException(e);
+		}
+	}
+
+
+	// taken from Loom (MIT)
+	// https://github.com/FabricMC/fabric-loom/blob/dev/0.6/src/main/java/net/fabricmc/loom/LoomGradlePlugin.java
+	// FabricMC
+
+	/**
+	 * Delete the file along with the corresponding ETag, if it exists.
+	 *
+	 * @param file The file to delete.
+	 */
+	public void delete(Path file) throws IOException {
+		if (Files.exists(file)) {
+			Files.delete(file);
+		}
+
+		Path etagPath = getETagPath(file);
+		if (Files.exists(etagPath)) {
+			Files.delete(etagPath);
+		}
+	}
+
+	/**
+	 * Attempt to load an ETag for the given file, if it exists.
+	 *
+	 * @param to The file to load an ETag for
+	 * @param logger The logger to print errors to if it goes wrong
+	 * @return The ETag for the given file, or <code>null</code> if it doesn't exist
+	 */
+	private String loadETag(Path to, Logger logger) {
+		Path eTagPath = getETagPath(to);
+
+		if (!Files.exists(eTagPath)) {
+			return null;
+		}
+
+		try {
+			return String.join("\n", Files.readAllLines(eTagPath));
+		} catch (IOException e) {
+			logger.warn("Error reading ETag file '{}'.", eTagPath);
+			return null;
+		}
+	}
+
+	/**
+	 * Format the given number of bytes as a more human readable string.
+	 *
+	 * @param bytes The number of bytes
+	 * @return The given number of bytes formatted to kilobytes, megabytes or gigabytes if appropriate
+	 */
+	public String toNiceSize(long bytes) {
+		if (bytes < 1024) {
+			return bytes + " B";
+		} else if (bytes < 1024 * 1024) {
+			return bytes / 1024 + " KB";
+		} else if (bytes < 1024 * 1024 * 1024) {
+			return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
+		} else {
+			return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+		}
+	}
+
+	/**
+	 * Saves the given ETag for the given file, replacing it if it already exists.
+	 *
+	 * @param to The file to save the ETag for
+	 * @param eTag The ETag to be saved
+	 * @param logger The logger to print errors to if it goes wrong
+	 */
+	private void saveETag(Path to, String eTag, Logger logger) {
+		Path eTagPath = getETagPath(to);
+
+		try {
+			Files.copy(new StringInputStream(eTag), eTagPath, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			logger.warn("Error saving ETag file '{}'.", eTagPath, e);
+		}
+	}
+
+	/**
+	 * Creates a new file in the same directory as the given file with <code>.etag</code> on the end of the name.
+	 *
+	 * @param file The file to produce the ETag for
+	 * @return The (uncreated) ETag file for the given file
+	 */
+	private Path getETagPath(Path file) {
+		return file.getParent().resolve(file.getFileName() + ".etag");
+	}
+
+	// todo add proper url caching go steal from loom or smth
+	public Path download(String output, URL url) {
+		Path path = this.downloadPath.resolve(output);
+		this.downloadIfChanged(url, path, this.logger, false);
+		return path;
+	}
 }

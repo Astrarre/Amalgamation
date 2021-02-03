@@ -2,7 +2,8 @@ package me.ramidzkh.concern;
 
 import io.github.f2bb.amalgamation.Platform;
 
-import net.minecraft.screen.ScreenHandler;
+
+import net.minecraft.client.MinecraftClient;
 
 import net.fabricmc.api.ClientModInitializer;
 

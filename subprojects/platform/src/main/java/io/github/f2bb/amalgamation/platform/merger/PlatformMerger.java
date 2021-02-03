@@ -21,6 +21,7 @@ package io.github.f2bb.amalgamation.platform.merger;
 
 import io.github.f2bb.amalgamation.Platform;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
+import io.github.f2bb.amalgamation.platform.merger.impl.MergerContext;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -87,9 +88,9 @@ public class PlatformMerger {
 					infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
 				}
 
-				ClassNode merged = new ClassNode();
-				Merger.MERGER.merge(merged, infos, availablePlatforms);
-				mergeContext.accept(merged);
+				MergerContext context = new MergerContext(infos, availablePlatforms, mergeContext::versionIndex);
+				Merger.MERGER.merge(context);
+				mergeContext.accept(context.getNode());
 			}
 		}, mergeContext.getExecutor())));
 

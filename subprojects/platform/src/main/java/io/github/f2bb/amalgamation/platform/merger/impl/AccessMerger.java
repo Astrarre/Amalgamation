@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Access;
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
@@ -90,21 +89,21 @@ public class AccessMerger implements Merger {
 	}
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
+	public void merge(MergerContext mergerContext) {
 		Map<Integer, List<ClassInfo>> accessFlags = new HashMap<>();
-		for (ClassInfo info : infos) {
+		for (ClassInfo info : mergerContext.getInfos()) {
 			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
 		}
 
 		int widest = getWidest(accessFlags);
 		accessFlags.remove(widest);
-		node.access = widest;
+		mergerContext.getNode().access = widest;
 
 		if (!accessFlags.isEmpty()) {
-			if (node.visibleAnnotations == null) {
-				node.visibleAnnotations = new ArrayList<>();
+			if (mergerContext.getNode().visibleAnnotations == null) {
+				mergerContext.getNode().visibleAnnotations = new ArrayList<>();
 			}
-			node.visibleAnnotations.addAll(visit(accessFlags));
+			mergerContext.getNode().visibleAnnotations.addAll(visit(accessFlags));
 		}
 	}
 

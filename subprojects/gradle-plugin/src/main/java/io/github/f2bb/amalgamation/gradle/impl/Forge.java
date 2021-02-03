@@ -31,13 +31,13 @@ class Forge {
 
     private final Project project;
     final String minecraftVersion;
-    final Dependency dependency;
+    final Dependency installer;
     final MinecraftPlatformSpec forge;
 
-    public Forge(Project project, String minecraftVersion, Dependency dependency, MinecraftPlatformSpec forge) {
+    public Forge(Project project, String minecraftVersion, Dependency installer, MinecraftPlatformSpec forge) {
         this.project = project;
         this.minecraftVersion = minecraftVersion;
-        this.dependency = dependency;
+        this.installer = installer;
         this.forge = forge;
     }
 

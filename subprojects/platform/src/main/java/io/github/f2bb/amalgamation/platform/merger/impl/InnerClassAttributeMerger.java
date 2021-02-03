@@ -19,7 +19,6 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
@@ -30,15 +29,15 @@ import java.util.Set;
 class InnerClassAttributeMerger implements Merger {
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
-		infos.stream()
-				.map(ClassInfo::getNode)
-				.map(c -> c.innerClasses)
-				.flatMap(List::stream)
-				.map(InnerClassNodeWrapper::new)
-				.distinct()
-				.map(InnerClassNodeWrapper::getNode)
-				.forEach(n -> node.innerClasses.add(n));
+	public void merge(MergerContext mergerContext) {
+		mergerContext.getInfos().stream()
+		             .map(ClassInfo::getNode)
+		             .map(c -> c.innerClasses)
+		             .flatMap(List::stream)
+		             .map(InnerClassNodeWrapper::new)
+		             .distinct()
+		             .map(InnerClassNodeWrapper::getNode)
+		             .forEach(n -> mergerContext.getNode().innerClasses.add(n));
 	}
 
 	@Override

@@ -36,7 +36,6 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
         try {
             target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, Cache.globalCache(target), target);
         } catch (IOException e) {
-            System.out.println("FAIL!!!!");
             throw new RuntimeException(e);
         }
     }

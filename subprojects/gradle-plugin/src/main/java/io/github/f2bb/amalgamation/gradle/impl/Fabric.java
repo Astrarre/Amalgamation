@@ -58,8 +58,6 @@ import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
 class Fabric {
-
-	private static final Gson GSON = new Gson();
 	final String minecraftVersion;
 	final MinecraftPlatformSpec fabric;
 	private final Project project;
@@ -115,13 +113,13 @@ class Fabric {
 		// todo what if intermediary re-releases or smth, this needs better caching
 		// todo use the same TinyRemapper instance
 		project.getLogger().lifecycle("getting intermediary client . . .");
-		Path intermediaryClientJar = remap(cache,
+		Path intermediaryClientJar = mapToIntermediary(cache,
 				this.minecraftVersion + "-intermediary-client.jar",
 				officialToIntermediary.left,
 				clientJar,
 				officialToIntermediary.right);
 		project.getLogger().lifecycle("getting intermediary server . . .");
-		Path intermediaryServerJar = remap(cache,
+		Path intermediaryServerJar = mapToIntermediary(cache,
 				this.minecraftVersion + "-intermediary-server.jar",
 				officialToIntermediary.left,
 				serverJar,
@@ -162,7 +160,7 @@ class Fabric {
 		}
 	}
 
-	private Path remap(Cache cache, String output, MappingSet officialToIntermediary, Path jar, Collection<File> files) {
+	private Path mapToIntermediary(Cache cache, String output, MappingSet officialToIntermediary, Path jar, Collection<File> files) {
 		return cache.computeIfAbsent(output, sink -> {
 			sink.putUnencodedChars("Remap official to intermediary");
 			sink.putLong(Files.getLastModifiedTime(jar).toMillis());

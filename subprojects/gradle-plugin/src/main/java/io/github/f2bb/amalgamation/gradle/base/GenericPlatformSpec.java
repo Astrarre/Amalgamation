@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class GenericPlatformSpec {
-
     protected final Project project;
     private final Set<String> names = new LinkedHashSet<>();
     private final Configuration dependencies;

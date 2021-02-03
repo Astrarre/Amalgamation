@@ -20,7 +20,6 @@
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import io.github.f2bb.amalgamation.Parent;
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.AnnotationVisitor;
@@ -33,9 +32,9 @@ import java.util.*;
 class SuperclassMerger implements Merger {
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
+	public void merge(MergerContext mergerContext) {
 		Map<String, List<ClassInfo>> supers = new HashMap<>();
-		for (ClassInfo info : infos) {
+		for (ClassInfo info : mergerContext.getInfos()) {
 			supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);
 		}
 
@@ -54,12 +53,12 @@ class SuperclassMerger implements Merger {
 			throw new IllegalStateException("no classes! " + supers);
 		}
 
-		node.superName = mostCommon;
+		mergerContext.getNode().superName = mostCommon;
 
 		supers.remove(mostCommon);
 		if (!supers.isEmpty()) {
 			supers.forEach((s, i) -> {
-				AnnotationVisitor n = node.visitAnnotation(Type.getDescriptor(Parent.class), true);
+				AnnotationVisitor n = mergerContext.getNode().visitAnnotation(Type.getDescriptor(Parent.class), true);
 				AnnotationVisitor visitor = n.visitArray("platform");
 				for (ClassInfo info : i) {
 					visitor.visit("platform", info.createPlatformAnnotation());

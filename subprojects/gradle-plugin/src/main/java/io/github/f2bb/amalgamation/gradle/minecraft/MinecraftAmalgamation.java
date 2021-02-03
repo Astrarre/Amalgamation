@@ -82,6 +82,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
     /**
      * Collects the mapped dependencies which are available for the provided platforms
+     * todo this doesn't actually work, these are the unmapped dependencies
      *
      * @param platforms The platforms to filter by
      * @return A collection of dependencies

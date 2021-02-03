@@ -19,8 +19,8 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
+import io.github.f2bb.amalgamation.platform.merger.impl.MergerContext;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -32,9 +32,9 @@ import java.util.*;
 public class MethodMerger implements Merger {
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
+	public void merge(MergerContext mergerContext) {
 		Map<MethodKey, List<ClassInfo>> toMerge = new HashMap<>();
-		for (ClassInfo info : infos) {
+		for (ClassInfo info : mergerContext.getInfos()) {
 			for (MethodNode method : info.node.methods) {
 				toMerge.computeIfAbsent(new MethodKey(method), c -> new ArrayList<>()).add(info);
 			}
@@ -49,7 +49,7 @@ public class MethodMerger implements Merger {
 		toMerge.forEach((key, info) -> {
 			MethodNode clone = new MethodNode(key.node.access, key.node.name, key.node.desc, key.node.signature, null);
 			key.node.accept(clone);
-			if (this.hasMethod(node, key)) {
+			if (this.hasMethod(mergerContext.getNode(), key)) {
 				String name = clone.name;
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
@@ -65,7 +65,7 @@ public class MethodMerger implements Merger {
 
 			}
 
-			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && infos.size() != info.size()) {
+			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && mergerContext.getInfos().size() != info.size()) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -75,7 +75,7 @@ public class MethodMerger implements Merger {
 				}
 			}
 
-			node.methods.add(clone);
+			mergerContext.getNode().methods.add(clone);
 		});
 	}
 

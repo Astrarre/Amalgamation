@@ -19,7 +19,6 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -27,7 +26,6 @@ import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 class SignatureMerger extends SignatureWriter implements Merger {
@@ -47,9 +45,9 @@ class SignatureMerger extends SignatureWriter implements Merger {
 	}
 
 	@Override
-	public void merge(ClassNode node, List<ClassInfo> infos, Set<PlatformData> available) {
-		SignatureMerger writer = new SignatureMerger(node);
-		for (ClassInfo info : infos) {
+	public void merge(MergerContext mergerContext) {
+		SignatureMerger writer = new SignatureMerger(mergerContext.getNode());
+		for (ClassInfo info : mergerContext.getInfos()) {
 			String sign = info.node.signature;
 			if (sign != null) {
 				// todo implement formal type parameters
@@ -89,7 +87,7 @@ class SignatureMerger extends SignatureWriter implements Merger {
 		}
 
 		if (special) {
-			node.signature = sign.toString();
+			mergerContext.getNode().signature = sign.toString();
 		}
 	}
 

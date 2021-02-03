@@ -18,6 +18,8 @@ import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import org.gradle.api.Project;
 
 public class LauncherMeta {
+	public static final LauncherMeta EMPTY = new LauncherMeta();
+	public static final Version EMPTY_VERSION = EMPTY.new Version(-1, "empty", "empty");
 	public final Project project;
 
 	/**
@@ -25,12 +27,13 @@ public class LauncherMeta {
 	 */
 	public final Map<String, Version> versions;
 
-	/**
-	 * version names in order from earliest -> oldest
-	 */
-	public final List<String> orderedVersions;
-
 	private final Cache cache;
+
+	private LauncherMeta() {
+		this.versions = Collections.emptyMap();
+		this.cache = null;
+		this.project = null;
+	}
 
 	public LauncherMeta(Cache cache, Project project) throws IOException {
 		this.cache = cache;
@@ -42,14 +45,15 @@ public class LauncherMeta {
 
 		project.getLogger().lifecycle("downloading manifest . . .");
 		JsonObject object = this.read(cache, "version_manifest.json", "https://launchermeta.mojang.com/mc/game/version_manifest.json");
+
+		int index = 0;
 		for (JsonElement version : object.getAsJsonArray("versions")) {
 			JsonObject obj = (JsonObject) version;
 			String versionName = obj.get("id").getAsString();
 			String versionJsonURL = obj.get("url").getAsString();
-			versions.put(versionName, new Version(versionName, versionJsonURL));
+			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
 			orderedVersions.add(versionName);
 		}
-		this.orderedVersions = Collections.unmodifiableList(orderedVersions);
 		this.versions = Collections.unmodifiableMap(versions);
 	}
 
@@ -62,18 +66,19 @@ public class LauncherMeta {
 	}
 
 	public final class Version {
-		private final String version, manifestUrl;
+		/**
+		 * 0 = latest version, 1 = next latest version, etc.
+		 */
+		public final int index;
+		public final String version, manifestUrl;
 		private boolean initialized;
 		private String clientJar, serverJar;
 		private List<String> libraries;
 
-		public Version(String version, String manifestUrl) {
+		public Version(int index, String version, String manifestUrl) {
+			this.index = index;
 			this.version = Objects.requireNonNull(version, "version");
 			this.manifestUrl = Objects.requireNonNull(manifestUrl, "manifestUrl");
-		}
-
-		public String getVersion() {
-			return this.version;
 		}
 
 		public String getClientJar() {

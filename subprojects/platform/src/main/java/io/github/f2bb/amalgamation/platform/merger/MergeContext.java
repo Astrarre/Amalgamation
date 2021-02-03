@@ -21,7 +21,10 @@ package io.github.f2bb.amalgamation.platform.merger;
 
 import org.objectweb.asm.tree.ClassNode;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.ToIntFunction;
 
 /**
  * All methods in this class must be thread safe
@@ -57,4 +60,10 @@ public interface MergeContext {
 	 * @return Should the class be merged
 	 */
 	boolean shouldAttemptMerge(PlatformData platform, String name);
+
+	/**
+	 * @return version -> int id, 0 = latest, -1 if string is not a version (this is cached)
+	 */
+	int versionIndex(String string);
+
 }

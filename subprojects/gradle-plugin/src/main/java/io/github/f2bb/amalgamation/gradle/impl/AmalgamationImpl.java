@@ -22,9 +22,10 @@ package io.github.f2bb.amalgamation.gradle.impl;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
-import io.github.f2bb.amalgamation.platform.merger.SimpleMergeContext;
+import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
 import net.fabricmc.lorenztiny.TinyMappingsReader;
 import net.fabricmc.mapping.tree.TinyMappingFactory;
 import org.cadixdev.lorenz.MappingSet;
@@ -68,13 +69,13 @@ public class AmalgamationImpl {
         Path file = getJarCoordinates(project, hash);
 
         if (!Files.exists(file)) {
-            processInternal(file, mappings, forgeSpecs, fabricSpecs, genericSpecs);
+            processInternal(project, file, mappings, forgeSpecs, fabricSpecs, genericSpecs);
         }
 
         return project.getDependencies().create(GROUP + ":" + hash + ":" + VERSION);
     }
 
-    private static void processInternal(Path outputFile, Configuration mappingsDependencies, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
+    private static void processInternal(Project project, Path outputFile, Configuration mappingsDependencies, Set<Forge> forgeSpecs, Set<Fabric> fabricSpecs, Set<GenericPlatformSpec> genericSpecs) throws IOException {
         Set<PlatformData> platforms = new HashSet<>();
 
         for (GenericPlatformSpec spec : genericSpecs) {
@@ -151,7 +152,14 @@ public class AmalgamationImpl {
         try (FileSystem fileSystem = FileSystems.newFileSystem(URI.create("jar:" + outputFile.toUri()), new HashMap<String, Object>() {{
             put("create", "true");
         }})) {
-            PlatformMerger.merge(new SimpleMergeContext(fileSystem.getPath("/")), platforms);
+
+            PlatformMerger.merge(new AbstractMergeContext(fileSystem.getPath("/")) {
+                private final LauncherMeta meta = project.getExtensions().getByType(LauncherMeta.class);
+                @Override
+                public int versionIndex(String string) {
+                    return this.meta.versions.getOrDefault(string, LauncherMeta.EMPTY_VERSION).index;
+                }
+            }, platforms);
         } catch (Throwable throwable) {
             Files.deleteIfExists(outputFile);
             throw throwable;
@@ -181,7 +189,7 @@ public class AmalgamationImpl {
 
         for (Forge spec : sortedForgeSpecs) {
             hasher.putUnencodedChars(spec.minecraftVersion);
-            put(hasher, resolve(project, spec.dependency));
+            put(hasher, resolve(project, spec.installer));
             put(hasher, spec.forge.getDependencies().resolve());
             put(hasher, spec.forge.getRemap().resolve());
         }
@@ -209,7 +217,7 @@ public class AmalgamationImpl {
         return a.toString().compareTo(b.toString());
     }
 
-    private static void put(Hasher hasher, Set<File> files) throws IOException {
+    private static void put(Hasher hasher, Set<File> files) {
         List<File> sorted = new ArrayList<>(files);
         sorted.sort(null);
 

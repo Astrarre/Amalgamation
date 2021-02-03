@@ -28,16 +28,15 @@ import java.nio.file.Path;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class SimpleMergeContext implements MergeContext {
-
+public abstract class AbstractMergeContext implements MergeContext {
 	private final Path root;
 	private final Executor executor;
 
-	public SimpleMergeContext(Path root) {
+	public AbstractMergeContext(Path root) {
 		this(root, Executors.newWorkStealingPool());
 	}
 
-	public SimpleMergeContext(Path root, Executor executor) {
+	public AbstractMergeContext(Path root, Executor executor) {
 		this.root = root;
 		this.executor = executor;
 	}
