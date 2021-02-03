@@ -17,32 +17,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft;
+package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
-import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
+import io.github.f2bb.amalgamation.gradle.config.RemappingConfiguration;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
+import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 
-public class MinecraftPlatformSpec extends GenericPlatformSpec {
-	private final Configuration remap;
+public interface MinecraftAmalgamation extends BaseAmalgamation {
+    /**
+     * @return a dependency for the obfuscated client jar
+     */
+    Dependency client(String version);
 
-	public MinecraftPlatformSpec(Project project) {
-		super(project);
-		remap = project.getConfigurations().detachedConfiguration();
-	}
+    /**
+     * @return a dependency for the obfuscated server jar (dependencies stripped)
+     */
+    Dependency server(String version);
 
-	/**
-	 * Adds a dependency which should be remapped
-	 *
-	 * @param dependencyNotation The dependency. See {@link DependencyHandler#create(Object)}
-	 */
-	public void remap(Object dependencyNotation) {
-		remap.getDependencies().add(project.getDependencies().create(dependencyNotation));
-	}
-
-	public Configuration getRemap() {
-		return remap;
-	}
+    /**
+     * @return a list of the remapped dependencies
+     */
+    Dependency map(Action<RemappingConfiguration> mappings);
 }

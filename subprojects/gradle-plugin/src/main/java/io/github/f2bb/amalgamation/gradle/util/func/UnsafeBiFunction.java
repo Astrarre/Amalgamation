@@ -17,11 +17,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft;
+package io.github.f2bb.amalgamation.gradle.util.func;
 
-public enum MappingTarget {
+public interface UnsafeBiFunction<A, B, R> {
+    R apply(A a, B b) throws Throwable;
 
-    INTERMEDIARY,
-    SEARGE,
-    SPIGOT
+    default R applyFailException(A a, B b) {
+        try {
+            return this.apply(a, b);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
 }

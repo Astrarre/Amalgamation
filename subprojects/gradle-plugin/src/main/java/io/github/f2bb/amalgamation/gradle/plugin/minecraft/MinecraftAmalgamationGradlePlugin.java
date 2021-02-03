@@ -17,9 +17,9 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.minecraft;
+package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
-import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import org.gradle.api.Plugin;

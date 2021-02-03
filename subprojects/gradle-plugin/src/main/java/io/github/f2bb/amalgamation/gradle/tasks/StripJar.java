@@ -32,9 +32,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class StripJar extends Jar {
-
     private final Set<String> platforms = new HashSet<>();
-
     public StripJar() {
         getMainSpec().appendCachingSafeCopyAction(fileCopyDetails -> {
             if (!fileCopyDetails.getName().endsWith(".class")) {
@@ -57,7 +55,7 @@ public class StripJar extends Jar {
 
                 Map<String, Object> properties = new HashMap<>();
                 properties.put("data", new InputStreamReader(new ByteArrayInputStream(writer.toByteArray())));
-                fileCopyDetails.filter(properties, ByteReading.class);
+                fileCopyDetails.filter(properties, DelegatedFilterReader.class);
             }
         });
     }

@@ -1,9 +1,8 @@
 package io.github.f2bb.amalgamation.gradle.extensions;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
+import java.io.Reader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,47 +12,45 @@ import java.util.Objects;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
-import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
-import org.gradle.api.Project;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
+import io.github.f2bb.amalgamation.gradle.util.CachedFile;
+import org.gradle.api.invocation.Gradle;
+import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {
-	public static final LauncherMeta EMPTY = new LauncherMeta();
-	public static final Version EMPTY_VERSION = EMPTY.new Version(-1, "empty", "empty");
-	public final Project project;
-
 	/**
 	 * versionName -> Version
 	 */
 	public final Map<String, Version> versions;
-	public final Cache cache;
+	private final Path globalCache;
+	private final Logger logger;
 
-	private LauncherMeta() {
-		this.versions = Collections.emptyMap();
-		this.cache = null;
-		this.project = null;
-	}
-
-	public LauncherMeta(Cache cache, Project project) {
-		this.cache = cache;
+	public LauncherMeta(Gradle gradle, Logger logger) {
+		this.globalCache = CachedFile.globalCache(gradle);
+		this.logger = logger;
 		Map<String, Version> versions = new HashMap<>();
-		this.project = project;
-
-		project.getLogger().lifecycle("downloading manifest . . .");
-		JsonObject object = this.read(cache, "version_manifest.json", "https://launchermeta.mojang.com/mc/game/version_manifest.json");
-
-		int index = 0;
-		for (JsonElement version : object.getAsJsonArray("versions")) {
-			JsonObject obj = (JsonObject) version;
-			String versionName = obj.get("id").getAsString();
-			String versionJsonURL = obj.get("url").getAsString();
-			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+		logger.lifecycle("downloading manifest . . .");
+		CachedFile<?> cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
+				this.globalCache.resolve("version_manifest.json"),
+				logger);
+		try (Reader reader = cache.getReader()) {
+			JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
+			int index = 0;
+			for (JsonElement version : object.getAsJsonArray("versions")) {
+				JsonObject obj = (JsonObject) version;
+				String versionName = obj.get("id").getAsString();
+				String versionJsonURL = obj.get("url").getAsString();
+				versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+			}
+			this.versions = Collections.unmodifiableMap(versions);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		this.versions = Collections.unmodifiableMap(versions);
 	}
 
-	public JsonObject read(Cache cache, String output, String url) {
-		try (BufferedReader reader = Files.newBufferedReader(cache.download(output, new URL(url)))) {
+	public JsonObject read(String output, String url) {
+		CachedFile<?> cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger);
+		try (Reader reader = cache.getReader()) {
 			return BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -83,12 +80,10 @@ public class LauncherMeta {
 
 		private void init() {
 			if (!this.initialized) {
-				JsonObject versionJson = LauncherMeta.this.read(LauncherMeta.this.cache, this.version + "-downloads.json", this.manifestUrl);
-
+				JsonObject versionJson = LauncherMeta.this.read(this.version + "-downloads.json", this.manifestUrl);
 				JsonObject downloads = versionJson.getAsJsonObject("downloads");
 				this.clientJar = downloads.getAsJsonObject("client").get("url").getAsString();
 				this.serverJar = downloads.getAsJsonObject("server").get("url").getAsString();
-
 				List<String> libraries = new ArrayList<>();
 				for (JsonElement element : versionJson.getAsJsonArray("libraries")) {
 					libraries.add(element.getAsJsonObject().get("name").getAsString());

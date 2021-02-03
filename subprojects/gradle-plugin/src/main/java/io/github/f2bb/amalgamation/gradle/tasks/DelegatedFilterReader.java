@@ -26,11 +26,11 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
 
-public class ByteReading extends FilterReader {
+public class DelegatedFilterReader extends FilterReader {
 
     public Reader data;
 
-    public ByteReading(Reader in) {
+    public DelegatedFilterReader(Reader in) {
         super(in);
     }
 

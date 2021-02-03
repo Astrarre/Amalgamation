@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import io.github.f2bb.amalgamation.gradle.minecraft.MappingTarget
+import io.github.f2bb.amalgamation.gradle.plugin.minecraft.MappingTarget
 import io.github.f2bb.amalgamation.gradle.tasks.RemapJar
 import io.github.f2bb.amalgamation.gradle.tasks.StripJar
 
@@ -85,7 +85,7 @@ task fabric_1_16(type: RemapJar) {
 }
 
 
-//using amalgamation for it's intended purpose
+//using amalgamation for it'etag intended purpose
 
 dependencies {
     // merge all together

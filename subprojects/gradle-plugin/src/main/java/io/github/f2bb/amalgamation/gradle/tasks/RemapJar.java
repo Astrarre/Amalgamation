@@ -33,9 +33,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class RemapJar extends Jar {
-
     private FileCollection classpath;
-
     private MappingSet mappings;
 
     @InputFiles

@@ -17,19 +17,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.impl;
+package io.github.f2bb.amalgamation.gradle.plugin.base;
 
-import java.nio.file.Path;
-import java.util.Set;
+import io.github.f2bb.amalgamation.gradle.config.MergerConfiguration;
+import org.gradle.api.Action;
+import org.gradle.api.artifacts.Dependency;
 
-class ClientServer {
-    final Set<Path> temporaries;
-    final Set<Path> client;
-    final Set<Path> server;
-
-    ClientServer(Set<Path> dir, Set<Path> client, Set<Path> server) {
-        this.temporaries = dir;
-        this.client = client;
-        this.server = server;
-    }
+public interface BaseAmalgamation {
+    Dependency merge(Action<MergerConfiguration> configuration);
 }

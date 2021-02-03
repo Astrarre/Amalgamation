@@ -17,31 +17,25 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.impl;
+package io.github.f2bb.amalgamation.gradle.plugin.base;
 
-import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
-import org.cadixdev.lorenz.MappingSet;
+import com.google.gson.Gson;
+import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
+import org.gradle.StartParameter;
+import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
+import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.util.List;
+public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
+	public static final Gson GSON = new Gson();
+	public static boolean refreshDependencies, offlineMode;
 
-class Forge {
+	@Override
+	public void apply(@NotNull Project target) {
+		StartParameter parameter = target.getGradle().getStartParameter();
+		refreshDependencies = parameter.isRefreshDependencies();
+		offlineMode = parameter.isOffline();
 
-    private final Project project;
-    final String minecraftVersion;
-    final Dependency installer;
-    final MinecraftPlatformSpec forge;
-
-    public Forge(Project project, String minecraftVersion, Dependency installer, MinecraftPlatformSpec forge) {
-        this.project = project;
-        this.minecraftVersion = minecraftVersion;
-        this.installer = installer;
-        this.forge = forge;
-    }
-
-    public List<Path> getFiles(MappingSet mappings) {
-        throw new UnsupportedOperationException();
-    }
+		target.getExtensions().create(BaseAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
+	}
 }
