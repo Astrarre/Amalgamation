@@ -27,8 +27,9 @@ import java.util.Objects;
 import java.util.Set;
 
 import groovy.lang.Closure;
-import io.github.f2bb.amalgamation.gradle.CachedSelfResolvingDependency;
+import io.github.f2bb.amalgamation.gradle.dependencies.CachedSelfResolvingDependency;
 import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
+import io.github.f2bb.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import io.github.f2bb.amalgamation.gradle.minecraft.MappingTarget;
@@ -58,72 +59,62 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 
 	public AmalgamationGradleExtension(Project project) {
 		this.project = project;
-		mappings = project.getConfigurations().detachedConfiguration();
-		globalCache = Cache.globalCache(project);
-		meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
+		this.mappings = project.getConfigurations().detachedConfiguration();
+		this.globalCache = Cache.globalCache(project);
+		this.meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 	}
 
 	@Override
 	public Dependency client(String version) {
-		return new CachedSelfResolvingDependency(project, "net.minecraft",
-				version,
-				"client.jar",
-				this.globalCache,
-				(cache1, output) -> cache1.download(output,
-						new URL(Objects.requireNonNull(this.meta.versions.get(version), "invalid version: " + version).getClientJar())));
+		return new MinecraftDependency(this.project, this.meta, version, this.globalCache, true);
 	}
 
 	@Override
 	public Dependency server(String version) {
-		return new CachedSelfResolvingDependency(project, "net.minecraft",
-				version,
-				"server.jar",
-				this.globalCache,
-				(cache1, output) -> cache1.download(output,
-						new URL(Objects.requireNonNull(this.meta.versions.get(version), "invalid version: " + version).getServerJar())));
+		return new MinecraftDependency(this.project, this.meta, version, this.globalCache, false);
 	}
 
 	@Override
 	public void mappings(Object dependencyNotation) {
-		mappings.getDependencies().add(project.getDependencies().create(dependencyNotation));
+		this.mappings.getDependencies().add(this.project.getDependencies().create(dependencyNotation));
 	}
 
 	@Override
 	public void forge(String minecraftVersion, Object dependency, Closure configureClosure) {
-		forgeAction(minecraftVersion, dependency, spec -> {
+		this.forgeAction(minecraftVersion, dependency, spec -> {
 			ConfigureUtil.configure(configureClosure, spec);
 		});
 	}
 
 	@Override
 	public void forgeAction(String minecraftVersion, Object dependency, Action<MinecraftPlatformSpec> configureAction) {
-		assertMutable();
+		this.assertMutable();
 
-		MinecraftPlatformSpec forge = new MinecraftPlatformSpec(project);
+		MinecraftPlatformSpec forge = new MinecraftPlatformSpec(this.project);
 		forge.name("forge");
 		forge.name(minecraftVersion);
 		configureAction.execute(forge);
 
-		forgeSpecs.add(new Forge(project, minecraftVersion, project.getDependencies().create(dependency), forge));
+		this.forgeSpecs.add(new Forge(this.project, minecraftVersion, this.project.getDependencies().create(dependency), forge));
 	}
 
 	@Override
 	public void fabric(String minecraftVersion, Closure configureClosure) {
-		fabricAction(minecraftVersion, spec -> {
+		this.fabricAction(minecraftVersion, spec -> {
 			ConfigureUtil.configure(configureClosure, spec);
 		});
 	}
 
 	@Override
 	public void fabricAction(String minecraftVersion, Action<MinecraftPlatformSpec> configureAction) {
-		assertMutable();
+		this.assertMutable();
 
-		MinecraftPlatformSpec fabric = new MinecraftPlatformSpec(project);
+		MinecraftPlatformSpec fabric = new MinecraftPlatformSpec(this.project);
 		fabric.name("fabric");
 		fabric.name(minecraftVersion);
 		configureAction.execute(fabric);
 
-		fabricSpecs.add(new Fabric(project, minecraftVersion, fabric));
+		this.fabricSpecs.add(new Fabric(this.project, minecraftVersion, fabric));
 	}
 
 	@Override
@@ -133,27 +124,27 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 
 	@Override
 	public FileCollection getMappedClasspath(Collection<String> platforms) {
-		return getClasspath(platforms);
+		return this.getClasspath(platforms);
 	}
 
 	protected void assertMutable() {
-		if (myDependency != null) {
+		if (this.myDependency != null) {
 			throw new IllegalStateException("Dependency matrix is frozen");
 		}
 	}
 
 	@Override
 	public void generic(Closure configureClosure) {
-		genericAction(spec -> {
+		this.genericAction(spec -> {
 			ConfigureUtil.configure(configureClosure, spec);
 		});
 	}
 
 	@Override
 	public void genericAction(Action<GenericPlatformSpec> configureAction) {
-		assertMutable();
+		this.assertMutable();
 
-		GenericPlatformSpec spec = new GenericPlatformSpec(project);
+		GenericPlatformSpec spec = new GenericPlatformSpec(this.project);
 		configureAction.execute(spec);
 
 		if (spec.getNames().isEmpty()) {
@@ -164,37 +155,37 @@ public class AmalgamationGradleExtension implements MinecraftAmalgamation {
 			throw new IllegalStateException("No dependencies were given to this platform");
 		}
 
-		genericSpecs.add(spec);
+		this.genericSpecs.add(spec);
 	}
 
 	@Override
 	public Dependency create() throws IOException {
-		if (myDependency != null) {
-			return myDependency;
+		if (this.myDependency != null) {
+			return this.myDependency;
 		}
 
-		return myDependency = AmalgamationImpl.createDependencyFromMatrix(project, mappings, forgeSpecs, fabricSpecs, genericSpecs);
+		return this.myDependency = AmalgamationImpl.createDependencyFromMatrix(this.project, this.mappings, this.forgeSpecs, this.fabricSpecs, this.genericSpecs);
 	}
 
 	@Override
 	public FileCollection getClasspath(Collection<String> platforms) {
-		Configuration classpath = project.getConfigurations().detachedConfiguration();
+		Configuration classpath = this.project.getConfigurations().detachedConfiguration();
 
-		for (Forge spec : forgeSpecs) {
+		for (Forge spec : this.forgeSpecs) {
 			if (spec.forge.getNames().containsAll(platforms)) {
 				classpath.extendsFrom(spec.forge.getDependencies());
 				classpath.extendsFrom(spec.forge.getRemap());
 			}
 		}
 
-		for (Fabric spec : fabricSpecs) {
+		for (Fabric spec : this.fabricSpecs) {
 			if (spec.fabric.getNames().containsAll(platforms)) {
 				classpath.extendsFrom(spec.fabric.getDependencies());
 				classpath.extendsFrom(spec.fabric.getRemap());
 			}
 		}
 
-		for (GenericPlatformSpec spec : genericSpecs) {
+		for (GenericPlatformSpec spec : this.genericSpecs) {
 			if (spec.getNames().containsAll(platforms)) {
 				classpath.extendsFrom(spec.getDependencies());
 			}

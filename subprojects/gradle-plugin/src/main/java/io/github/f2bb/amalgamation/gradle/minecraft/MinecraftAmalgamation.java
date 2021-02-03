@@ -30,7 +30,6 @@ import org.gradle.api.file.FileCollection;
 import java.util.Collection;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
-
     Dependency client(String version);
 
     Dependency server(String version);
