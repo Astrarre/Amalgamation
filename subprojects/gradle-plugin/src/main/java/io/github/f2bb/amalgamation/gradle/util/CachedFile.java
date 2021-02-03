@@ -10,11 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.function.Supplier;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
 import com.google.gson.Gson;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.func.UnsafeConsumer;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
@@ -22,24 +24,35 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CachedFile<T> {
 	private static final Gson GSON = new Gson();
-	private final Path file;
+	private final Supplier<Path> file;
 	private final Class<T> value;
 
 	/**
 	 * @param file the location of the file
 	 */
 	public CachedFile(Path file, Class<T> value) {
+		this(() -> file, value);
 		try {
 			Files.createDirectories(file.getParent());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		this.file = file;
-		this.value = value;
 	}
 
-	@Nullable
-	protected abstract T writeFile(Path path, @Nullable T currentData) throws Throwable;
+	public CachedFile(Supplier<Path> file, Class<T> value) {
+		this.file = new Supplier<Path>() {
+			Path lazy;
+			@Override
+			public Path get() {
+				Path lazy = this.lazy;
+				if (lazy == null) {
+					lazy = this.lazy = file.get();
+				}
+				return lazy;
+			}
+		};
+		this.value = value;
+	}
 
 	public static Path globalCache(Gradle gradle) {
 		return gradle.getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation");
@@ -118,45 +131,6 @@ public abstract class CachedFile<T> {
 		};
 	}
 
-	public Path getPath() {
-		try {
-			T data = this.writeFile(this.file, this.getData());
-			if (data != null) {
-				this.setData(data);
-			}
-			return this.file;
-		} catch (Throwable throwable) {
-			throw new RuntimeException(throwable);
-		}
-	}
-
-	public T getData() {
-		try {
-			Path path = this.file.getParent().resolve(this.file.getFileName() + ".data");
-			if (Files.exists(path)) {
-				return GSON.fromJson(Files.newBufferedReader(path), this.value);
-			} else {
-				return null;
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public void setData(T data) {
-		try {
-			Path path = this.file.getParent().resolve(this.file.getFileName() + ".data");
-			GSON.toJson(data, Files.newBufferedWriter(path));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public void delete() throws IOException {
-		Files.deleteIfExists(this.file.getParent().resolve(this.file.getFileName() + ".data"));
-		Files.deleteIfExists(this.file);
-	}
-
 	/**
 	 * Format the given number of bytes as a more human readable string.
 	 *
@@ -175,9 +149,56 @@ public abstract class CachedFile<T> {
 		}
 	}
 
+	public Path getPath() {
+		try {
+			if(BaseAmalgamationGradlePlugin.refreshDependencies) {
+				Files.deleteIfExists(this.file.get());
+			}
+
+			T data = this.writeFile(this.file.get(), this.getData());
+			if (data != null) {
+				this.setData(data);
+			}
+			return this.file.get();
+		} catch (Throwable throwable) {
+			throw new RuntimeException(throwable);
+		}
+	}
+
+	@Nullable
+	protected abstract T writeFile(Path path, @Nullable T currentData) throws Throwable;
+
+	public T getData() {
+		try {
+			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
+			if (Files.exists(path)) {
+				return GSON.fromJson(Files.newBufferedReader(path), this.value);
+			} else {
+				return null;
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void setData(T data) {
+		try {
+			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
+			GSON.toJson(data, Files.newBufferedWriter(path));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void delete() throws IOException {
+		Files.deleteIfExists(this.file.get().getParent().resolve(this.file.get().getFileName() + ".data"));
+		Files.deleteIfExists(this.file.get());
+	}
+
 	public Reader getReader() {
 		try {
-			return Files.newBufferedReader(this.file);
+			this.getPath();
+			return Files.newBufferedReader(this.file.get());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -185,7 +206,8 @@ public abstract class CachedFile<T> {
 
 	public InputStream getInputStream() {
 		try {
-			return Files.newInputStream(this.file);
+			this.getPath();
+			return Files.newInputStream(this.file.get());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

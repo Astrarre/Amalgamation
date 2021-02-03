@@ -3,12 +3,16 @@ package io.github.f2bb.amalgamation.gradle.dependencies;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -103,7 +107,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@NotNull
 	@Override
 	public String toString() {
-		return this.group + ':' + this.name + ':' + this.version;
+		return this.getGroup() + ':' + this.getName() + ':' + this.getVersion();
 	}
 
 	@Override
@@ -140,5 +144,26 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		result = 31 * result + (this.version != null ? this.version.hashCode() : 0);
 		result = 31 * result + (this.resolved != null ? this.resolved.hashCode() : 0);
 		return result;
+	}
+
+	public Set<File> resolve(Iterable<Dependency> dependencies) {
+		Configuration configuration = this.project.getConfigurations().detachedConfiguration();
+		for (Dependency dependency : dependencies) {
+			configuration.getDependencies().add(dependency);
+		}
+		return configuration.resolve();
+	}
+
+	protected static void hash(Hasher hasher, Iterable<File> files) {
+		for (File file : files) {
+			hasher.putUnencodedChars(file.getAbsolutePath());
+			hasher.putLong(file.lastModified());
+		}
+	}
+
+	public static String hash(Iterable<File> files) {
+		Hasher hasher = Hashing.sha256().newHasher();
+		hash(hasher, files);
+		return hasher.hash().toString();
 	}
 }

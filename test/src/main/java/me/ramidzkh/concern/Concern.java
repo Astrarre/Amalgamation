@@ -1,12 +1,10 @@
 package me.ramidzkh.concern;
 
-import io.github.f2bb.amalgamation.Platform;
 
+import com.google.gson.JsonPrimitive;
 
-import net.fabricmc.api.ClientModInitializer;
-
-public class Concern implements @Platform("client") ClientModInitializer {
-    @Override
+public class Concern {
     public void onInitializeClient() {
+        JsonPrimitive a;
     }
 }

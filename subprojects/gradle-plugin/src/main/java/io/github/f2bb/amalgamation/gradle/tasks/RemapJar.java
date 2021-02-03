@@ -19,9 +19,9 @@
 
 package io.github.f2bb.amalgamation.gradle.tasks;
 
-import io.github.f2bb.amalgamation.gradle.impl.MappingUtils;
-import net.fabricmc.tinyremapper.OutputConsumerPath;
-import net.fabricmc.tinyremapper.TinyRemapper;
+import java.io.File;
+import java.io.IOException;
+
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
@@ -29,8 +29,8 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 
-import java.io.File;
-import java.io.IOException;
+import net.fabricmc.tinyremapper.OutputConsumerPath;
+import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemapJar extends Jar {
     private FileCollection classpath;
@@ -57,7 +57,7 @@ public class RemapJar extends Jar {
     @TaskAction
     public void remap() throws IOException {
         TinyRemapper remapper = TinyRemapper.newRemapper()
-                .withMappings(MappingUtils.createMappingProvider(mappings))
+                //todo .withMappings(MappingUtils.createMappingProvider(mappings))
                 .build();
 
         FileCollection inputs = getInputs().getFiles();

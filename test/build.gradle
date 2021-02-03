@@ -17,7 +17,6 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import io.github.f2bb.amalgamation.gradle.plugin.minecraft.MappingTarget
 import io.github.f2bb.amalgamation.gradle.tasks.RemapJar
 import io.github.f2bb.amalgamation.gradle.tasks.StripJar
 
@@ -52,25 +51,14 @@ repositories {
 
 println sourceSets.main.runtimeClasspath.getClass()
 
-/*amalgamation {
-    mappings "net.fabricmc:yarn:1.16.5+build.1"
-
-    fabric('1.16.5') {
-    }
-
-    fabric('1.15.2') {
-    }
-}*/
-
 dependencies {
-    compileOnly(amalgamation.client("1.16.4")) {
-        println it.attributes
+    compileOnly ag.merge {
+        include('com.google.code.gson:gson:2.8.6', 'gson', '2.8.6')
+        include('com.google.code.gson:gson:2.2', 'gson', '2.2')
     }
-    //compileOnly(amalgamation.create())
-    println compileOnly("net.fabricmc:fabric-loader:0.11.0")
-    compileOnly("io.github.f2bb.amalgamation:api")
 }
 
+/*
 task stripFabric_1_16(type: StripJar) {
     with jar
     archivesBaseName = 'fabric-1.16-dev'
@@ -82,68 +70,4 @@ task fabric_1_16(type: RemapJar) {
     archivesBaseName = 'fabric-1.16'
     classpath = configurations.compileClasspath
     mappings = amalgamation.createMappings(MappingTarget.INTERMEDIARY, '1.16')
-}
-
-
-//using amalgamation for it'etag intended purpose
-
-dependencies {
-    // merge all together
-    compile ag.merge {
-        // non-remapped dependencies
-        add ("net.devtech:fast-util-2:0.0.1", ['fabric'])
-
-        // the 'unique' tells merger that the dependency does not overlap any mc classes
-        // in that case, merge will simply convert @Environment annotations and add it to the compileOnly classpath
-        // and then use the original jar and add it to the runtime classpath
-        addUnique(ag.map {
-            // 1.16 mappings
-            mappings ag.tiny("net.fabricmc:yarn:1.16.5+build.5")
-            // 1.16 mods
-            addUnique "net.devtech:arrp:0.3.6"
-        }, ['fabric', '1.16.5'])
-        // 1.16.5
-        //noinspection GroovyAssignabilityCheck
-        add(ag.map {
-            // 1.16 mappings
-            mappings ag.tiny("net.fabricmc:yarn:1.16.5+build.5")
-            // merge client and server
-            //noinspection GroovyAssignabilityCheck
-            add ag.merge {
-                // map client
-                //noinspection GroovyAssignabilityCheck
-                add(ag.map {
-                    mappings ag.tiny("net.fabricmc:intermediary:1.16.5")
-                    add "net.minecraft:minecraft-client:1.16.5"
-                }, 'client')
-                // map server
-                add ag.map {
-                    mappings ag.tiny("net.fabricmc:intermediary:1.16.5")
-                    add "net.minecraft:minecraft-client:1.16.5"
-                }, 'server')
-            }
-        }, ['fabric', '1.16.5'])
-
-        add(ag.map {
-            // yarn mapped dependencies
-            mappings ag.tiny("net.fabricmc:yarn:1.16.2+build.18")
-            mappings ag.tiny("net.fabricmc:yarn:1.16.5+build.5")
-            add ag.merge {
-                add(ag.map {
-                    mappings ag.tiny("net.fabricmc:intermediary:1.15.2")
-                    add "net.minecraft:minecraft-client:1.15.2"
-                }, 'client')
-                add ag.map {
-                    mappings ag.tiny("net.fabricmc:intermediary:1.15.2")
-                    add "net.minecraft:minecraft-client:1.15.2"
-                }, 'server')
-            }
-        }, ['fabric', '1.16.5'])
-    }
-}
-
-task floaderTask(FabricLoaderExecTask) {
-    // I think we can optimise this to just use the individual jars
-    // like we don't need to strip arrp cus flodaer does it at runtime
-    classpath = ag.strip(sourceSets.main.runtimeClasspath, 'fabric', 'client');
-}
+}*/

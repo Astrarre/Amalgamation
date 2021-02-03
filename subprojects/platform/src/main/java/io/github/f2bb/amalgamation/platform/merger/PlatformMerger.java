@@ -36,7 +36,7 @@ public class PlatformMerger {
 
 	private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
-	public static void merge(MergeContext mergeContext, Set<PlatformData> platforms) {
+	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms) {
 		Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
 
 		for (PlatformData platform : platforms) {
@@ -54,7 +54,7 @@ public class PlatformMerger {
 
 	private static void mergeClasses(MergeContext mergeContext,
 									 Map<String, Set<PlatformData>> classes,
-									 Set<PlatformData> availablePlatforms) {
+			Collection<PlatformData> availablePlatforms) {
 		// TODO: I'm going to say the n-way
 		Set<CompletableFuture<?>> futures = new HashSet<>();
 

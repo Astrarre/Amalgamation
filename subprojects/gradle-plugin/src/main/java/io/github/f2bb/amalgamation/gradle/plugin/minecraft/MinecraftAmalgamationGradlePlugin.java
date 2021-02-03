@@ -19,9 +19,8 @@
 
 package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
-import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 
 	@Override
 	public void apply(@NotNull Project target) {
-		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, Cache.globalCache(target), target);
+		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, target.getGradle(), target.getLogger());
 		super.apply(target);
 	}
 }

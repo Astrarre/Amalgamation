@@ -25,17 +25,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Information about the platform, such as its name(s) and files
  */
 public class PlatformData {
-	final Set<String> name;
+	final Collection<String> name;
 	final Map<String, byte[]> files;
 
-	public PlatformData(Set<String> name, Map<String, byte[]> files) {
+	public PlatformData(Collection<String> name, Map<String, byte[]> files) {
 		this.name = name;
 		this.files = files;
 	}
@@ -55,5 +58,29 @@ public class PlatformData {
 		return "PlatformData{" +
 				"name=" + name +
 				'}';
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+		if (!(object instanceof PlatformData)) {
+			return false;
+		}
+
+		PlatformData data = (PlatformData) object;
+
+		if (!Objects.equals(this.name, data.name)) {
+			return false;
+		}
+		return Objects.equals(this.files, data.files);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = this.name != null ? this.name.hashCode() : 0;
+		result = 31 * result + (this.files != null ? this.files.hashCode() : 0);
+		return result;
 	}
 }

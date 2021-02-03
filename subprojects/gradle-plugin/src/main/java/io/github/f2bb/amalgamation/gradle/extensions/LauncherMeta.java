@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
+import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
+import io.github.f2bb.amalgamation.platform.merger.MergeContext;
+import io.github.f2bb.amalgamation.platform.merger.impl.MergerContext;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 
@@ -46,6 +50,20 @@ public class LauncherMeta {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public MergeContext createContext(Iterable<Path> output) {
+		return new AbstractMergeContext(output) {
+			@Override
+			public int versionIndex(String string) {
+				LauncherMeta.Version version = LauncherMeta.this.versions.get(string);
+				if (version == null) {
+					return -1;
+				} else {
+					return version.index;
+				}
+			}
+		};
 	}
 
 	public JsonObject read(String output, String url) {

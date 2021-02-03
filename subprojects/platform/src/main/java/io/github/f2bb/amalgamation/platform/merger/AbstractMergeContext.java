@@ -29,21 +29,21 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public abstract class AbstractMergeContext implements MergeContext {
-	private final Path root;
+	private final Iterable<Path> mergedJarRoots;
 	private final Executor executor;
 
-	public AbstractMergeContext(Path root) {
-		this(root, Executors.newWorkStealingPool());
+	public AbstractMergeContext(Iterable<Path> mergedJarRoots) {
+		this(mergedJarRoots, Executors.newWorkStealingPool());
 	}
 
-	public AbstractMergeContext(Path root, Executor executor) {
-		this.root = root;
+	public AbstractMergeContext(Iterable<Path> mergedJarRoots, Executor executor) {
+		this.mergedJarRoots = mergedJarRoots;
 		this.executor = executor;
 	}
 
 	@Override
 	public Executor getExecutor() {
-		return executor;
+		return this.executor;
 	}
 
 	@Override
@@ -52,14 +52,16 @@ public abstract class AbstractMergeContext implements MergeContext {
 		node.accept(writer);
 
 		try {
-			Path path = root.resolve(node.name + ".class");
-
-			if (!Files.exists(path)) {
-				Files.createDirectories(path.getParent());
-				Files.write(path, writer.toByteArray());
-			} else {
-				// TODO: Warn about dupe files
+			for (Path mergedJarRoot : this.mergedJarRoots) {
+				Path path = mergedJarRoot.resolve(node.name + ".class");
+				if (!Files.exists(path)) {
+					Files.createDirectories(path.getParent());
+					Files.write(path, writer.toByteArray());
+				} else {
+					System.err.println(path + " is duplicated!");
+				}
 			}
+
 		} catch (IOException exception) {
 			throw new RuntimeException(exception);
 		}
@@ -68,13 +70,14 @@ public abstract class AbstractMergeContext implements MergeContext {
 	@Override
 	public void acceptResource(PlatformData platform, String name, byte[] bytes) {
 		try {
-			Path path = root.resolve(name);
-
-			if (!Files.exists(path)) {
-				Files.createDirectories(path.getParent());
-				Files.write(path, bytes);
-			} else {
-				// TODO: Warn about dupe files
+			for (Path root : this.mergedJarRoots) {
+				Path path = root.resolve(name);
+				if (!Files.exists(path)) {
+					Files.createDirectories(path.getParent());
+					Files.write(path, bytes);
+				} else {
+					System.err.println(path + " is duplicated!");
+				}
 			}
 		} catch (IOException exception) {
 			throw new RuntimeException(exception);

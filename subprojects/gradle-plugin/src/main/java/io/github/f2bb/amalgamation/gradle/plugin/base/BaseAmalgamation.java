@@ -19,10 +19,10 @@
 
 package io.github.f2bb.amalgamation.gradle.plugin.base;
 
-import io.github.f2bb.amalgamation.gradle.config.MergerConfiguration;
+import io.github.f2bb.amalgamation.gradle.dependencies.MergerDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 
 public interface BaseAmalgamation {
-    Dependency merge(Action<MergerConfiguration> configuration);
+    Dependency merge(Action<MergerDependency> configuration);
 }

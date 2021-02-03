@@ -20,7 +20,6 @@
 package io.github.f2bb.amalgamation.gradle.plugin.base;
 
 import com.google.gson.Gson;
-import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -36,6 +35,6 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		refreshDependencies = parameter.isRefreshDependencies();
 		offlineMode = parameter.isOffline();
 
-		target.getExtensions().create(BaseAmalgamation.class, "amalgamation", AmalgamationGradleExtension.class, target);
+		target.getExtensions().create(BaseAmalgamation.class, "ag", BaseAmalgamationImpl.class, target);
 	}
 }

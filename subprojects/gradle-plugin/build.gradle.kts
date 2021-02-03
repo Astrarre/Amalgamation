@@ -50,12 +50,12 @@ gradlePlugin {
     plugins {
         create("base") {
             id = "io.github.f2bb.amalgamation.base"
-            implementationClass = "io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin"
+            implementationClass = "io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin"
         }
 
         create("minecraft") {
             id = "io.github.f2bb.amalgamation.minecraft"
-            implementationClass = "io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamationGradlePlugin"
+            implementationClass = "io.github.f2bb.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin"
         }
     }
 }
