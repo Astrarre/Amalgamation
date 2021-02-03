@@ -13,9 +13,12 @@ import java.util.Objects;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.f2bb.amalgamation.gradle.CachedSelfResolvingDependency;
 import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.DependencySubstitution;
+import org.gradle.api.artifacts.component.LibraryComponentSelector;
 
 public class LauncherMeta {
 	public static final LauncherMeta EMPTY = new LauncherMeta();
@@ -26,8 +29,7 @@ public class LauncherMeta {
 	 * versionName -> Version
 	 */
 	public final Map<String, Version> versions;
-
-	private final Cache cache;
+	public final Cache cache;
 
 	private LauncherMeta() {
 		this.versions = Collections.emptyMap();

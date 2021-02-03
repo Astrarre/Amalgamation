@@ -44,6 +44,7 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.impl.cache.Cache;
+import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftPlatformSpec;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
@@ -77,7 +78,7 @@ class Fabric {
 		Path serverJar;
 		List<String> libraries = new ArrayList<>();
 
-		LauncherMeta meta = project.getExtensions().getByType(LauncherMeta.class);
+		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 
 		LauncherMeta.Version version = meta.versions.get(this.minecraftVersion);
 

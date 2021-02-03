@@ -23,6 +23,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.base.GenericPlatformSpec;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
+import io.github.f2bb.amalgamation.gradle.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
@@ -154,7 +155,7 @@ public class AmalgamationImpl {
         }})) {
 
             PlatformMerger.merge(new AbstractMergeContext(fileSystem.getPath("/")) {
-                private final LauncherMeta meta = project.getExtensions().getByType(LauncherMeta.class);
+                private final LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
                 @Override
                 public int versionIndex(String string) {
                     return this.meta.versions.getOrDefault(string, LauncherMeta.EMPTY_VERSION).index;

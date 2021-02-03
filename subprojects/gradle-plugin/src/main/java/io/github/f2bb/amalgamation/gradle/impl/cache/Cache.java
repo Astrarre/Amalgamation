@@ -36,6 +36,7 @@ import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamationGradlePlugin;
 import org.apache.tools.ant.filters.StringInputStream;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
+import org.gradle.internal.Pair;
 
 public final class Cache {
 	private final Logger logger;
@@ -61,18 +62,21 @@ public final class Cache {
 		return new Cache(project.getLogger(), project.getRootDir().toPath().resolve(".gradle").resolve("amalgamation").resolve("cache"), project);
 	}
 
-	public static Cache globalCache(Project project) throws IOException {
-		return new Cache(project.getLogger(), project.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation"),
-                project);
+	public static Cache globalCache(Project project) {
+		try {
+			return new Cache(project.getLogger(), project.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation"),
+	                project);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
-	 * @param output the output file name
-	 * @param sink the sink to put the parts to hash
-	 * @param populator write the contents to the path
+	 * @return the path and its hashcode
 	 */
-	public Path computeIfAbsent(String output, UnsafeConsumer<PrimitiveSink> sink, UnsafeConsumer<Path> populator) {
-		Path path = basePath.resolve(this.hash(sink));
+	public Pair<Path, String> computeIfAbsentHash(String output, UnsafeConsumer<PrimitiveSink> sink, UnsafeConsumer<Path> populator) {
+		String hash = this.hash(sink);
+		Path path = basePath.resolve(hash);
 		Path out = path.resolve(output);
 		Path ok = path.resolve("ok");
 
@@ -87,10 +91,19 @@ public final class Cache {
 			}
 		}
 
-		return out;
+		return Pair.of(out, hash);
 	}
 
-	private String hash(UnsafeConsumer<PrimitiveSink> sink) {
+	/**
+	 * @param output the output file name
+	 * @param sink the sink to put the parts to hash
+	 * @param populator write the contents to the path
+	 */
+	public Path computeIfAbsent(String output, UnsafeConsumer<PrimitiveSink> sink, UnsafeConsumer<Path> populator) {
+		return this.computeIfAbsentHash(output, sink, populator).left;
+	}
+
+	public static String hash(UnsafeConsumer<PrimitiveSink> sink) {
 		Hasher hasher = Hashing.sha256().newHasher();
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 

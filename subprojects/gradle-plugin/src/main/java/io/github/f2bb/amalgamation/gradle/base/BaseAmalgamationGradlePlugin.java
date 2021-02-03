@@ -19,13 +19,19 @@
 
 package io.github.f2bb.amalgamation.gradle.base;
 
+import javax.annotation.Nullable;
+
 import com.google.gson.Gson;
 import io.github.f2bb.amalgamation.gradle.impl.AmalgamationGradleExtension;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.DependencyArtifactSelector;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.artifacts.repositories.RepositoryContentDescriptor;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.AbstractFileCollection;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {

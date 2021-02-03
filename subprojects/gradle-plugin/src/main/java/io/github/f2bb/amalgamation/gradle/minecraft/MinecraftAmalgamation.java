@@ -23,12 +23,17 @@ import groovy.lang.Closure;
 import io.github.f2bb.amalgamation.gradle.base.BaseAmalgamation;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Action;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.FileCollection;
 
 import java.util.Collection;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
+
+    Dependency client(String version);
+
+    Dependency server(String version);
 
     /**
      * Adds a mappings dependency to use

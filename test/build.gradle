@@ -50,7 +50,7 @@ repositories {
     maven { url 'https://files.minecraftforge.net/maven/' }
 }
 
-amalgamation {
+/*amalgamation {
     mappings "net.fabricmc:yarn:1.16.5+build.1"
 
     fabric('1.16.5') {
@@ -58,10 +58,11 @@ amalgamation {
 
     fabric('1.15.2') {
     }
-}
+}*/
 
 dependencies {
-    compileOnly(amalgamation.create())
+    compileOnly amalgamation.client("1.16.4")
+    //compileOnly(amalgamation.create())
     compileOnly("net.fabricmc:fabric-loader:0.11.0")
     compileOnly("io.github.f2bb.amalgamation:api")
 }
