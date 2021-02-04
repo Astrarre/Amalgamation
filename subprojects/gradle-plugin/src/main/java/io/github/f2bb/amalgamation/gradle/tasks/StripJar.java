@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.gradle.tasks;
 
+import io.github.f2bb.amalgamation.gradle.util.DelegatedFilterReader;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;

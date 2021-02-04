@@ -5,16 +5,17 @@ import java.util.Objects;
 
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.jars.StrippedServerJarCachedFile;
+import io.github.f2bb.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
-public class MinecraftDependency extends AbstractSelfResolvingDependency {
+public class MinecraftDependency extends AbstractSingleFileSelfResolvingDependency {
 	private final CachedFile<?> jar;
 
-	public MinecraftDependency(Project project, LauncherMeta meta, String version, boolean isClient) {
+	public MinecraftDependency(Project project, String version, boolean isClient) {
 		super(project, "net.minecraft", version, isClient ? "minecraft-client" : "minecraft-server");
-		LauncherMeta.Version v = Objects.requireNonNull(meta.versions.get(version), "invalid version: " + version);
+		LauncherMeta.Version v = Objects.requireNonNull(MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).versions.get(version), "invalid version: " + version);
 		Path jar = CachedFile.globalCache(project.getGradle()).resolve(this.getVersion() + "-" + this.getName() + ".jar");
 		if (isClient) {
 			this.jar = CachedFile.forUrl(v.getClientJar(), jar, project.getLogger());

@@ -20,13 +20,16 @@
 package io.github.f2bb.amalgamation.gradle.plugin.base;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
-	public static final Gson GSON = new Gson();
+	public static final Gson GSON = new GsonBuilder()
+											// todo custom Dependencies serializer
+			.create();
 	public static boolean refreshDependencies, offlineMode;
 
 	@Override
@@ -35,6 +38,9 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		refreshDependencies = parameter.isRefreshDependencies();
 		offlineMode = parameter.isOffline();
 
+	}
+
+	protected void registerProvider(Project target) {
 		target.getExtensions().create(BaseAmalgamation.class, "ag", BaseAmalgamationImpl.class, target);
 	}
 }

@@ -19,7 +19,7 @@
 
 package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
-import io.github.f2bb.amalgamation.gradle.config.RemappingConfiguration;
+import io.github.f2bb.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
@@ -38,5 +38,5 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
     /**
      * @return a list of the remapped dependencies
      */
-    Dependency map(Action<RemappingConfiguration> mappings);
+    Dependency map(Action<RemappingDependency> mappings);
 }

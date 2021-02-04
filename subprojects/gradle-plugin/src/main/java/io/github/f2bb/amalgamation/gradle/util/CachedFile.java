@@ -16,6 +16,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
 import com.google.gson.Gson;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.func.UnsafeConsumer;
 import org.gradle.api.invocation.Gradle;
@@ -23,7 +24,7 @@ import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CachedFile<T> {
-	private static final Gson GSON = new Gson();
+	private static final Gson GSON = BaseAmalgamationGradlePlugin.GSON;
 	private final Supplier<Path> file;
 	private final Class<T> value;
 

@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.gradle.tasks;
+package io.github.f2bb.amalgamation.gradle.util;
 
 import org.jetbrains.annotations.NotNull;
 

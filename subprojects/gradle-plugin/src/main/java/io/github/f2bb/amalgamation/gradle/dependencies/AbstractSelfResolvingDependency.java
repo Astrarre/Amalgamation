@@ -2,8 +2,9 @@ package io.github.f2bb.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -24,11 +25,10 @@ import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.tasks.TaskDependency;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractSelfResolvingDependency extends AbstractDependency
-		implements FileCollectionDependency, SelfResolvingDependencyInternal {
+public abstract class AbstractSelfResolvingDependency extends AbstractDependency implements FileCollectionDependency, SelfResolvingDependencyInternal {
 	protected final Project project;
 	protected final String group, name, version;
-	protected Path resolved;
+	protected Set<File> resolved;
 
 	public AbstractSelfResolvingDependency(Project project, String group, String name, String version) {
 		this.project = project;
@@ -62,18 +62,22 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.resolve(true);
 	}
 
-	private Path path() {
+	private Set<File> path() {
 		if (this.resolved == null) {
-			this.resolved = this.resolvePath();
+			Set<File> files = new HashSet<>();
+			for (Path path : this.resolvePaths()) {
+				files.add(path.toFile());
+			}
+			this.resolved = files;
 		}
 		return this.resolved;
 	}
 
-	protected abstract Path resolvePath();
+	protected abstract Iterable<Path> resolvePaths();
 
 	@Override
 	public Set<File> resolve(boolean b) {
-		return Collections.singleton(this.path().toFile());
+		return this.path();
 	}
 
 	@Nullable
@@ -95,7 +99,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 
 	@Override
 	public FileCollection getFiles() {
-		return this.project.files(this.path().toFile());
+		return this.project.files(this.path());
 	}
 
 	@Nullable
@@ -115,11 +119,11 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		if (this == object) {
 			return true;
 		}
-		if (!(object instanceof AbstractSelfResolvingDependency)) {
+		if (!(object instanceof AbstractSingleFileSelfResolvingDependency)) {
 			return false;
 		}
 
-		AbstractSelfResolvingDependency that = (AbstractSelfResolvingDependency) object;
+		AbstractSingleFileSelfResolvingDependency that = (AbstractSingleFileSelfResolvingDependency) object;
 
 		if (!Objects.equals(this.project, that.project)) {
 			return false;
