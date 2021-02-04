@@ -62,7 +62,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.resolve(true);
 	}
 
-	private Set<File> path() {
+	protected Set<File> path() {
 		if (this.resolved == null) {
 			Set<File> files = new HashSet<>();
 			for (Path path : this.resolvePaths()) {

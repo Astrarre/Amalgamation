@@ -41,5 +41,9 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	@Override
 	protected void registerProvider(Project target) {
 		target.getExtensions().create(MinecraftAmalgamation.class, "ag", MinecraftAmalgamationImpl.class, target);
+		target.getRepositories().maven(repository -> {
+			repository.setName("Minecraft Libraries");
+			repository.setUrl("https://libraries.minecraft.net/");
+		});
 	}
 }

@@ -22,6 +22,7 @@ package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 import io.github.f2bb.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.Action;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
@@ -34,6 +35,8 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
      * @return a dependency for the obfuscated server jar (dependencies stripped)
      */
     Dependency server(String version);
+
+    Configuration libraries(String version);
 
     /**
      * @return a list of the remapped dependencies

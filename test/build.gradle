@@ -16,10 +16,6 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
-import io.github.f2bb.amalgamation.gradle.tasks.RemapJar
-import io.github.f2bb.amalgamation.gradle.tasks.StripJar
-
 buildscript {
     repositories {
         mavenCentral()
@@ -49,23 +45,22 @@ repositories {
     maven { url 'https://files.minecraftforge.net/maven/' }
 }
 
-println sourceSets.main.runtimeClasspath.getClass()
-
 dependencies {
+    compile ag.libraries("1.16.5")
     compile ag.map {
-        mappings ("net.fabricmc:yarn:1.16.5+build.3", "intermediary", "named")
+        mappings("net.fabricmc:yarn:1.16.5+build.3", "intermediary", "named")
         remap ag.merge {
-            include (ag.map {
+            compareInstructions = false
+            include(ag.map {
                 mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
                 remap ag.client("1.16.5")
             }, 'fabric', 'client')
-            include (ag.map {
+            include(ag.map {
                 mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
                 remap ag.server("1.16.5")
             }, 'fabric', 'server')
         }
     }
-
 }
 
 /*
