@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,7 +53,6 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				for (MappingsDependency mapping : RemappingDependency.this.mappings) {
 					Configuration configuration = project.getConfigurations().detachedConfiguration(mapping.dependency);
 					loadMappings(mappings, configuration.resolve(), mapping.from, mapping.to);
-					configuration.getDependencies().add(mapping.dependency);
 				}
 
 				TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
@@ -130,7 +130,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	protected Iterable<Path> resolvePaths() {
 		return () -> {
 			try {
-				return Files.walk(this.remapper.getPath()).iterator();
+				return Files.walk(this.remapper.getPath()).filter(Files::isRegularFile).iterator();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

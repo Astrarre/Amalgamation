@@ -52,10 +52,20 @@ repositories {
 println sourceSets.main.runtimeClasspath.getClass()
 
 dependencies {
-    compileOnly ag.merge {
-        include('com.google.code.gson:gson:2.8.6', 'gson', '2.8.6')
-        include('com.google.code.gson:gson:2.2', 'gson', '2.2')
+    compile ag.map {
+        mappings ("net.fabricmc:yarn:1.16.5+build.3", "intermediary", "named")
+        remap ag.merge {
+            include (ag.map {
+                mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
+                remap ag.client("1.16.5")
+            }, 'fabric', 'client')
+            include (ag.map {
+                mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
+                remap ag.server("1.16.5")
+            }, 'fabric', 'server')
+        }
     }
+
 }
 
 /*

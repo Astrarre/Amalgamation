@@ -76,7 +76,7 @@ public abstract class AbstractMergeContext implements MergeContext {
 					Files.createDirectories(path.getParent());
 					Files.write(path, bytes);
 				} else {
-					System.err.println(path + " is duplicated!");
+					// todo warn dupes
 				}
 			}
 		} catch (IOException exception) {

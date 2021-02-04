@@ -20,7 +20,7 @@ public class MinecraftDependency extends AbstractSingleFileSelfResolvingDependen
 		if (isClient) {
 			this.jar = CachedFile.forUrl(v.getClientJar(), jar, project.getLogger());
 		} else {
-			CachedFile<?> serverJar = CachedFile.forUrl(v.getClientJar(), jar, project.getLogger());
+			CachedFile<?> serverJar = CachedFile.forUrl(v.getServerJar(), jar, project.getLogger());
 			project.getLogger().lifecycle("getting server without libraries . . .");
 			this.jar = new StrippedServerJarCachedFile(jar, serverJar);
 		}

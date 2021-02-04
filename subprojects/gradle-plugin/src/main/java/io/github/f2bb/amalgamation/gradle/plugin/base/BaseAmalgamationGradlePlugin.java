@@ -37,7 +37,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		StartParameter parameter = target.getGradle().getStartParameter();
 		refreshDependencies = parameter.isRefreshDependencies();
 		offlineMode = parameter.isOffline();
-
+		this.registerProvider(target);
 	}
 
 	protected void registerProvider(Project target) {
