@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +16,6 @@ import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlug
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
 import io.github.f2bb.amalgamation.platform.merger.MergeContext;
-import io.github.f2bb.amalgamation.platform.merger.impl.MergerContext;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 

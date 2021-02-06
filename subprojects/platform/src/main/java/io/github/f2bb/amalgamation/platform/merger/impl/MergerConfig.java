@@ -9,13 +9,13 @@ import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.tree.ClassNode;
 
-public class MergerContext {
+public class MergerConfig {
 	private final ClassNode node = new ClassNode();
 	private final List<ClassInfo> infos;
 	private final Collection<PlatformData> available;
 	private final ToIntFunction<String> versionIndex;
 
-	public MergerContext(List<ClassInfo> infos, Collection<PlatformData> available, ToIntFunction<String> index) {
+	public MergerConfig(List<ClassInfo> infos, Collection<PlatformData> available, ToIntFunction<String> index) {
 		this.infos = infos;
 		this.available = available;
 		this.versionIndex = index;

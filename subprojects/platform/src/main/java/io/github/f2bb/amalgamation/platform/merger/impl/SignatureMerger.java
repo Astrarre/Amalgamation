@@ -45,9 +45,9 @@ class SignatureMerger extends SignatureWriter implements Merger {
 	}
 
 	@Override
-	public void merge(MergerContext mergerContext) {
-		SignatureMerger writer = new SignatureMerger(mergerContext.getNode());
-		for (ClassInfo info : mergerContext.getInfos()) {
+	public void merge(MergerConfig mergerConfig) {
+		SignatureMerger writer = new SignatureMerger(mergerConfig.getNode());
+		for (ClassInfo info : mergerConfig.getInfos()) {
 			String sign = info.node.signature;
 			if (sign != null) {
 				// todo implement formal type parameters
@@ -87,7 +87,7 @@ class SignatureMerger extends SignatureWriter implements Merger {
 		}
 
 		if (special) {
-			mergerContext.getNode().signature = sign.toString();
+			mergerConfig.getNode().signature = sign.toString();
 		}
 	}
 

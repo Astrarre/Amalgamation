@@ -32,9 +32,9 @@ import java.util.*;
 class SuperclassMerger implements Merger {
 
 	@Override
-	public void merge(MergerContext mergerContext) {
+	public void merge(MergerConfig mergerConfig) {
 		Map<String, List<ClassInfo>> supers = new HashMap<>();
-		for (ClassInfo info : mergerContext.getInfos()) {
+		for (ClassInfo info : mergerConfig.getInfos()) {
 			supers.computeIfAbsent(info.node.superName, s -> new ArrayList<>()).add(info);
 		}
 
@@ -53,12 +53,12 @@ class SuperclassMerger implements Merger {
 			throw new IllegalStateException("no classes! " + supers);
 		}
 
-		mergerContext.getNode().superName = mostCommon;
+		mergerConfig.getNode().superName = mostCommon;
 
 		supers.remove(mostCommon);
 		if (!supers.isEmpty()) {
 			supers.forEach((s, i) -> {
-				AnnotationVisitor n = mergerContext.getNode().visitAnnotation(Type.getDescriptor(Parent.class), true);
+				AnnotationVisitor n = mergerConfig.getNode().visitAnnotation(Type.getDescriptor(Parent.class), true);
 				AnnotationVisitor visitor = n.visitArray("platform");
 				for (ClassInfo info : i) {
 					visitor.visit("platform", info.createPlatformAnnotation());

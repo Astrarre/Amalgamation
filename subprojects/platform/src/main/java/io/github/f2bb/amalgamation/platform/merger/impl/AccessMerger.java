@@ -89,21 +89,21 @@ public class AccessMerger implements Merger {
 	}
 
 	@Override
-	public void merge(MergerContext mergerContext) {
+	public void merge(MergerConfig mergerConfig) {
 		Map<Integer, List<ClassInfo>> accessFlags = new HashMap<>();
-		for (ClassInfo info : mergerContext.getInfos()) {
+		for (ClassInfo info : mergerConfig.getInfos()) {
 			accessFlags.computeIfAbsent(info.node.access, s -> new ArrayList<>()).add(info);
 		}
 
 		int widest = getWidest(accessFlags);
 		accessFlags.remove(widest);
-		mergerContext.getNode().access = widest;
+		mergerConfig.getNode().access = widest;
 
 		if (!accessFlags.isEmpty()) {
-			if (mergerContext.getNode().visibleAnnotations == null) {
-				mergerContext.getNode().visibleAnnotations = new ArrayList<>();
+			if (mergerConfig.getNode().visibleAnnotations == null) {
+				mergerConfig.getNode().visibleAnnotations = new ArrayList<>();
 			}
-			mergerContext.getNode().visibleAnnotations.addAll(visit(accessFlags));
+			mergerConfig.getNode().visibleAnnotations.addAll(visit(accessFlags));
 		}
 	}
 

@@ -20,7 +20,7 @@
 package io.github.f2bb.amalgamation.platform.merger.impl.field;
 
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
-import io.github.f2bb.amalgamation.platform.merger.impl.MergerContext;
+import io.github.f2bb.amalgamation.platform.merger.impl.MergerConfig;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
 import org.objectweb.asm.ClassVisitor;
@@ -34,9 +34,9 @@ import java.util.*;
 public class FieldMerger implements Merger {
 
 	@Override
-	public void merge(MergerContext mergerContext) {
+	public void merge(MergerConfig mergerConfig) {
 		Map<FieldKey, List<ClassInfo>> toMerge = new HashMap<>();
-		for (ClassInfo info : mergerContext.getInfos()) {
+		for (ClassInfo info : mergerConfig.getInfos()) {
 			for (FieldNode method : info.node.fields) {
 				toMerge.computeIfAbsent(new FieldKey(method), c -> new ArrayList<>()).add(info);
 			}
@@ -52,7 +52,7 @@ public class FieldMerger implements Merger {
 				}
 			});
 
-			if (this.hasField(mergerContext.getNode(), key)) {
+			if (this.hasField(mergerConfig.getNode(), key)) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -61,7 +61,7 @@ public class FieldMerger implements Merger {
 				clone.name += "_" + counter[0]++;
 			}
 
-			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && mergerContext.getInfos().size() != info.size()) {
+			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && mergerConfig.getInfos().size() != info.size()) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -71,7 +71,7 @@ public class FieldMerger implements Merger {
 				}
 			}
 
-			mergerContext.getNode().fields.add(clone);
+			mergerConfig.getNode().fields.add(clone);
 		});
 	}
 

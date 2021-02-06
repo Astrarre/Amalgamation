@@ -46,20 +46,48 @@ repositories {
 }
 
 dependencies {
-    compile ag.libraries("1.16.5")
-    compile ag.map {
-        mappings("net.fabricmc:yarn:1.16.5+build.3", "intermediary", "named")
-        remap ag.merge {
-            compareInstructions = false
-            include(ag.map {
+    implementation ag.merge {
+        include(ag.map {
+            // fill in any removed method names with their old yarn names
+            mappings("net.fabricmc:yarn:1.15.2+build.17", 'intermediary', 'named')
+            remap ag.map {
+                // first map to 1.16
+                mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
+                remap ag.map {
+                    mappings("net.fabricmc:intermediary:1.15.2", "official", "intermediary")
+                    remap ag.client("1.15.2")
+                }
+            }
+        }, 'fabric', 'client', '1.15.2')
+
+        include(ag.map {
+            // fill in any removed method names with their old yarn names
+            mappings("net.fabricmc:yarn:1.15.2+build.17", 'intermediary', 'named')
+            remap ag.map {
+                // first map to 1.16
+                mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
+                remap ag.map {
+                    mappings("net.fabricmc:intermediary:1.15.2", "official", "intermediary")
+                    remap ag.server("1.15.2")
+                }
+            }
+        }, 'fabric', 'server', '1.15.2')
+
+        include(ag.map {
+            mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
+            remap ag.map {
                 mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
                 remap ag.client("1.16.5")
-            }, 'fabric', 'client')
-            include(ag.map {
+            }
+        }, 'fabric', 'client', '1.16.5')
+
+        include(ag.map {
+            mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
+            remap ag.map {
                 mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
                 remap ag.server("1.16.5")
-            }, 'fabric', 'server')
-        }
+            }
+        }, 'fabric', 'server', '1.16.5')
     }
 }
 

@@ -11,16 +11,16 @@ import org.objectweb.asm.tree.ClassNode;
 
 public class HeaderMerger implements Merger {
 	@Override
-	public void merge(MergerContext mergerContext) {
-		ClassNode root = mergerContext.getInfos().get(0).node;
-		mergerContext.getNode().name = root.name;
-		mergerContext.getNode().version = root.version;
-		if (mergerContext.getInfos().size() != mergerContext.getAvailable().size()) {
-			for (ClassInfo info : mergerContext.getInfos()) {
-				if (mergerContext.getNode().visibleAnnotations == null) {
-					mergerContext.getNode().visibleAnnotations = new ArrayList<>();
+	public void merge(MergerConfig mergerConfig) {
+		ClassNode root = mergerConfig.getInfos().get(0).node;
+		mergerConfig.getNode().name = root.name;
+		mergerConfig.getNode().version = root.version;
+		if (mergerConfig.getInfos().size() != mergerConfig.getAvailable().size()) {
+			for (ClassInfo info : mergerConfig.getInfos()) {
+				if (mergerConfig.getNode().visibleAnnotations == null) {
+					mergerConfig.getNode().visibleAnnotations = new ArrayList<>();
 				}
-				mergerContext.getNode().visibleAnnotations.add(info.createPlatformAnnotation());
+				mergerConfig.getNode().visibleAnnotations.add(info.createPlatformAnnotation());
 			}
 		}
 	}

@@ -2,8 +2,6 @@ package io.github.f2bb.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;

@@ -38,7 +38,7 @@ public interface Merger extends Opcodes {
 			.andThen(new FieldMerger())
 			.andThen(new InnerClassAttributeMerger());
 
-	void merge(MergerContext mergerContext);
+	void merge(MergerConfig mergerConfig);
 
 	/**
 	 * Strips the class by filtering out unavailable platforms
@@ -73,9 +73,9 @@ public interface Merger extends Opcodes {
 	default Merger andThen(Merger merger) {
 		return new Merger() {
 			@Override
-			public void merge(MergerContext mergerContext) {
-				Merger.this.merge(mergerContext);
-				merger.merge(mergerContext);
+			public void merge(MergerConfig mergerConfig) {
+				Merger.this.merge(mergerConfig);
+				merger.merge(mergerConfig);
 			}
 
 			@Override

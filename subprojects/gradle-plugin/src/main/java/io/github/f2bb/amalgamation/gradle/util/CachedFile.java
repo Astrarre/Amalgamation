@@ -16,7 +16,6 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
 import com.google.gson.Gson;
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.func.UnsafeConsumer;
 import org.gradle.api.invocation.Gradle;
