@@ -25,9 +25,11 @@ import org.objectweb.asm.tree.*;
 import java.util.Objects;
 
 public class MethodKey {
+	public final boolean compareInstructions;
 	public final MethodNode node;
 
-	public MethodKey(MethodNode node) {
+	public MethodKey(boolean instructions, MethodNode node) {
+		this.compareInstructions = instructions;
 		this.node = node;
 	}
 
@@ -131,6 +133,6 @@ public class MethodKey {
 		MethodKey key = (MethodKey) object;
 		MethodNode a = this.node, b = key.node;
 
-		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature) && areInstructionsEqual(a, b);
+		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature) && (!compareInstructions || areInstructionsEqual(a, b));
 	}
 }

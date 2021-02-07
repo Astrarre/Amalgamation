@@ -2,7 +2,6 @@ package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.ToIntFunction;
 
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
@@ -14,11 +13,13 @@ public class MergerConfig {
 	private final List<ClassInfo> infos;
 	private final Collection<PlatformData> available;
 	private final ToIntFunction<String> versionIndex;
+	public final boolean compareInstructions;
 
-	public MergerConfig(List<ClassInfo> infos, Collection<PlatformData> available, ToIntFunction<String> index) {
+	public MergerConfig(List<ClassInfo> infos, Collection<PlatformData> available, ToIntFunction<String> index, boolean instructions) {
 		this.infos = infos;
 		this.available = available;
 		this.versionIndex = index;
+		this.compareInstructions = instructions;
 	}
 
 	public ClassNode getNode() {

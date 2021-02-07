@@ -36,7 +36,7 @@ public class PlatformMerger {
 
 	private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
-	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms) {
+	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms, boolean compareInstructions) {
 		Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
 
 		for (PlatformData platform : platforms) {
@@ -49,12 +49,12 @@ public class PlatformMerger {
 			});
 		}
 
-		mergeClasses(mergeContext, mergeClasses, platforms);
+		mergeClasses(mergeContext, mergeClasses, platforms, compareInstructions);
 	}
 
 	private static void mergeClasses(MergeContext mergeContext,
 									 Map<String, Set<PlatformData>> classes,
-			Collection<PlatformData> availablePlatforms) {
+			Collection<PlatformData> availablePlatforms, boolean compareInstructions) {
 		// TODO: I'm going to say the n-way
 		Set<CompletableFuture<?>> futures = new HashSet<>();
 
@@ -88,7 +88,7 @@ public class PlatformMerger {
 					infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
 				}
 
-				MergerConfig context = new MergerConfig(infos, availablePlatforms, mergeContext::versionIndex);
+				MergerConfig context = new MergerConfig(infos, availablePlatforms, mergeContext::versionIndex, compareInstructions);
 				Merger.MERGER.merge(context);
 				mergeContext.accept(context.getNode());
 			}

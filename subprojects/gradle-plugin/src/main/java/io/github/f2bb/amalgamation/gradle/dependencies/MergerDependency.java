@@ -61,7 +61,7 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 
 				Files.createDirectories(path.getParent());
 				try (FileSystem system = FileSystems.newFileSystem(new URI("jar:" + path.toUri()), CREATE_ZIP)) {
-					PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data);
+					PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data, MergerDependency.this.compareInstructions);
 				}
 				return null;
 			}

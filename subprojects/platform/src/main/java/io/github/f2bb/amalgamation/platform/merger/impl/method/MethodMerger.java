@@ -36,7 +36,7 @@ public class MethodMerger implements Merger {
 		Map<MethodKey, List<ClassInfo>> toMerge = new HashMap<>();
 		for (ClassInfo info : mergerConfig.getInfos()) {
 			for (MethodNode method : info.node.methods) {
-				toMerge.computeIfAbsent(new MethodKey(method), c -> new ArrayList<>()).add(info);
+				toMerge.computeIfAbsent(new MethodKey(mergerConfig.compareInstructions, method), c -> new ArrayList<>()).add(info);
 			}
 		}
 
