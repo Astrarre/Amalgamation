@@ -5,18 +5,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
+import io.github.f2bb.amalgamation.gradle.util.Clock;
+import io.github.f2bb.amalgamation.gradle.util.LazySet;
 import io.github.f2bb.amalgamation.gradle.util.Mappings;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
@@ -33,12 +38,12 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemappingDependency extends AbstractSelfResolvingDependency {
 	public final CachedFile<?> remapper;
-	private final List<MappingsDependency> mappings;
 	private final List<Dependency> inputs, classpath;
+	private Dependency mappings;
+	private String from, to;
 
 	public RemappingDependency(Project project) {
 		super(project, "io.github.amalgamation", null, "0.0.0");
-		this.mappings = new ArrayList<>();
 		this.inputs = new ArrayList<>();
 		this.classpath = new ArrayList<>();
 		this.remapper = new CachedFile<Void>(() -> CachedFile.globalCache(this.project.getGradle()).resolve(this.getName()), Void.class) {
@@ -49,11 +54,11 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 					return null;
 				}
 
+				project.getLogger().lifecycle("Remapping " + inputs.size() + " dependencies");
+				Clock clock = new Clock("Remapped " + RemappingDependency.this.inputs.size() + " dependencies in %dms", project.getLogger());
 				MappingSet mappings = MappingSet.create();
-				for (MappingsDependency mapping : RemappingDependency.this.mappings) {
-					Configuration configuration = project.getConfigurations().detachedConfiguration(mapping.dependency);
-					loadMappings(mappings, configuration.resolve(), mapping.from, mapping.to);
-				}
+
+				loadMappings(mappings, RemappingDependency.this.resolvedMappings, RemappingDependency.this.from, RemappingDependency.this.to);
 
 				TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
 
@@ -78,12 +83,13 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				}
 
 				remapper.finish();
+				clock.end();
 				return null;
 			}
 		};
 	}
 
-	private static void loadMappings(MappingSet mappings, Set<File> files, String from, String to) throws IOException {
+	private static void loadMappings(MappingSet mappings, Iterable<File> files, String from, String to) throws IOException {
 		for (File file : files) {
 			try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(),
 					null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
@@ -97,12 +103,16 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			String name,
 			String version,
 			CachedFile<?> remapper,
-			List<MappingsDependency> mappings,
+			Dependency mappings,
+			String from,
+			String to,
 			List<Dependency> inputs,
 			List<Dependency> classpath) {
 		super(project, group, name, version);
 		this.remapper = remapper;
 		this.mappings = mappings;
+		this.from = from;
+		this.to = to;
 		this.inputs = inputs;
 		this.classpath = classpath;
 	}
@@ -115,7 +125,13 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	 * @param to the destination namespace
 	 */
 	public void mappings(Object object, String from, String to) {
-		this.mappings.add(new MappingsDependency(this.project.getDependencies().create(object), from, to));
+		if (this.mappings == null) {
+			this.mappings = this.project.getDependencies().create(object);
+			this.from = from;
+			this.to = to;
+			return;
+		}
+		throw new IllegalStateException("cannot layer mappings like that yet");
 	}
 
 	public void remap(Object object) {
@@ -126,30 +142,40 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		this.inputs.add(this.project.getDependencies().create(object));
 	}
 
+	private Iterable<File> resolvedMappings, resolvedDependencies, resolvedClasspath;
+	@Override
+	protected Set<File> path() {
+		if (this.resolved == null) {
+			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
+			this.resolvedMappings = configuration.resolve();
+			this.resolvedDependencies = this.resolve(this.inputs);
+			this.resolvedClasspath = this.resolve(this.classpath);
+
+			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> {
+				try {
+					return Files.walk(this.remapper.getPath()).filter(Files::isRegularFile).map(Path::toFile).collect(Collectors.toSet());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}));
+		}
+		return this.resolved;
+	}
+
 	@Override
 	protected Iterable<Path> resolvePaths() {
-		return () -> {
-			try {
-				return Files.walk(this.remapper.getPath()).filter(Files::isRegularFile).iterator();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		};
+		throw new IllegalStateException("wat");
 	}
 
 	@Override
 	public String getName() {
 		Hasher hasher = Hashing.sha256().newHasher();
-		Configuration configuration = this.project.getConfigurations().detachedConfiguration();
-		for (MappingsDependency mapping : this.mappings) {
-			hasher.putUnencodedChars(mapping.from);
-			hasher.putUnencodedChars(mapping.to);
-			configuration.getDependencies().add(mapping.dependency);
-		}
-		hash(hasher, configuration.resolve());
+		hasher.putUnencodedChars(this.from);
+		hasher.putUnencodedChars(this.to);
+		hash(hasher, this.resolvedMappings);
+		hash(hasher, this.resolvedDependencies);
+		hash(hasher, this.resolvedClasspath);
 
-		hash(hasher, this.resolve(this.inputs));
-		hash(hasher, this.resolve(this.classpath));
 		return hasher.hash().toString();
 	}
 
@@ -160,19 +186,10 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				this.name,
 				this.version,
 				this.remapper,
-				new ArrayList<>(this.mappings),
+				this.mappings,
+				this.from,
+				this.to,
 				new ArrayList<>(this.inputs),
 				new ArrayList<>(this.classpath));
-	}
-
-	static class MappingsDependency {
-		final Dependency dependency;
-		final String from, to;
-
-		MappingsDependency(Dependency dependency, String from, String to) {
-			this.dependency = dependency;
-			this.from = from;
-			this.to = to;
-		}
 	}
 }

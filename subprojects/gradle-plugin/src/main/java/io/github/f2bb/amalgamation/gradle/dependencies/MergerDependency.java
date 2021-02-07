@@ -9,16 +9,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
+import io.github.f2bb.amalgamation.gradle.util.Clock;
+import io.github.f2bb.amalgamation.gradle.util.LazySet;
 import io.github.f2bb.amalgamation.platform.merger.PlatformData;
 import io.github.f2bb.amalgamation.platform.merger.PlatformMerger;
 import org.gradle.api.Project;
@@ -41,16 +47,18 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 				if (Files.exists(path)) {
 					return null;
 				}
+				project.getLogger().lifecycle("Merging " + (unique.size() + merge.size()) + " dependencies");
+				Clock clock = new Clock("Merged " + (unique.size() + merge.size()) + " dependencies in %dms", project.getLogger());
 				// todo seperate out unique files or just optimize it
 				LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 				Collection<PlatformData> data = new ArrayList<>();
 				try {
-					for (Map.Entry<Collection<String>, Collection<Dependency>> entry : Iterables.concat(unique.entrySet(), merge.entrySet())) {
+					for (Map.Entry<Collection<String>, Iterable<File>> entry : Iterables.concat(uniqueResolved.entrySet(), mergeResolved.entrySet())) {
 						Collection<String> names = entry.getKey();
-						Collection<Dependency> dependency = entry.getValue();
+						Iterable<File> dependency = entry.getValue();
 
 						PlatformData platform = new PlatformData(names, new ArrayList<>());
-						for (File file : MergerDependency.this.resolve(dependency)) {
+						for (File file : dependency) {
 							FileSystem system = FileSystems.newFileSystem(file.toPath(), null);
 							for (Path directory : system.getRootDirectories()) {
 								platform.paths.add(directory);
@@ -72,9 +80,38 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 					}
 				}
 
+				clock.end();
 				return null;
 			}
 		};
+	}
+
+	@Override
+	public String getName() {
+		Hasher hasher = Hashing.sha256().newHasher();
+		this.mergeResolved.forEach((strings, dependencies) -> {
+			strings.forEach(hasher::putUnencodedChars);
+			hash(hasher, dependencies);
+		});
+		this.uniqueResolved.forEach((strings, dependencies) -> {
+			strings.forEach(hasher::putUnencodedChars);
+			hash(hasher, dependencies);
+		});
+
+		hasher.putBoolean(this.compareInstructions);
+		return hasher.hash().toString();
+	}
+
+	private final Map<Collection<String>, Iterable<File>> uniqueResolved = new HashMap<>(), mergeResolved = new HashMap<>();
+	@Override
+	protected Set<File> path() {
+		if (this.resolved == null) {
+			this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, this.resolve(dependencies)));
+			this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, this.resolve(dependencies)));
+			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> Collections.singleton(this.merger.getPath().toFile()),
+					BaseAmalgamationImpl.SERVICE));
+		}
+		return this.resolved;
 	}
 
 	public void include(Object object, String... platforms) {
@@ -91,20 +128,11 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 	}
 
 	@Override
-	public String getName() {
-		Hasher hasher = Hashing.sha256().newHasher();
-		hash(hasher, this.resolve(Iterables.concat(this.unique.values())));
-		hash(hasher, this.resolve(Iterables.concat(this.merge.values())));
-		hasher.putBoolean(this.compareInstructions);
-		return hasher.hash().toString();
-	}
-
-	@Override
 	public Dependency copy() {
 		return new MergerDependency(this.project);
 	}
 
-	private String toString(Dependency dependency) {
-		return dependency.getGroup() + ':' + dependency.getName() + ':' + dependency.getVersion();
+	public static String toString(Dependency dependency) {
+		return dependency.getGroup() + ':' + dependency.getName() + ':' + dependency.getVersion() + ':' + dependency.getReason() + ':' + dependency.getClass();
 	}
 }

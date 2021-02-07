@@ -19,6 +19,9 @@
 
 package io.github.f2bb.amalgamation.platform.util;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import io.github.f2bb.amalgamation.Displace;
 import io.github.f2bb.amalgamation.Parent;
 import io.github.f2bb.amalgamation.Platform;
@@ -46,13 +49,17 @@ public class ClassInfo {
 		return node;
 	}
 
-	public AnnotationNode createPlatformAnnotation() {
+	public static AnnotationNode createPlatformAnnotation(Iterable<String> names) {
 		AnnotationNode node = new AnnotationNode(PLATFORM);
 		AnnotationVisitor array = node.visitArray("value");
-		for (String s : this.names) {
+		for (String s : names) {
 			array.visit("value", s);
 		}
 		return node;
+	}
+
+	public AnnotationNode createPlatformAnnotation() {
+		return createPlatformAnnotation(Arrays.asList(this.names));
 	}
 
 	public ClassNode getNode() {

@@ -2,18 +2,21 @@ package io.github.f2bb.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
+import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.dependencies.AbstractDependency;
@@ -23,7 +26,8 @@ import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.tasks.TaskDependency;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractSelfResolvingDependency extends AbstractDependency implements FileCollectionDependency, SelfResolvingDependencyInternal {
+public abstract class AbstractSelfResolvingDependency extends AbstractDependency
+		implements FileCollectionDependency, SelfResolvingDependencyInternal {
 	protected final Project project;
 	protected final String group, name, version;
 	protected Set<File> resolved;
@@ -35,9 +39,17 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		this.version = version;
 	}
 
-	@Override
-	public boolean contentEquals(@NotNull Dependency dependency) {
-		return this.equals(dependency);
+	public static String hash(Iterable<File> files) {
+		Hasher hasher = Hashing.sha256().newHasher();
+		hash(hasher, files);
+		return hasher.hash().toString();
+	}
+
+	protected static void hash(Hasher hasher, Iterable<File> files) {
+		for (File file : files) {
+			hasher.putUnencodedChars(file.getAbsolutePath());
+			hasher.putLong(file.lastModified());
+		}
 	}
 
 	@Override
@@ -53,6 +65,28 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 				context.add(AbstractSelfResolvingDependency.this);
 			}
 		};
+	}
+
+	@Nullable
+	@Override
+	public String getGroup() {
+		return this.group;
+	}
+
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	@Nullable
+	@Override
+	public String getVersion() {
+		return this.version;
+	}
+
+	@Override
+	public boolean contentEquals(@NotNull Dependency dependency) {
+		return this.equals(dependency);
 	}
 
 	@Override
@@ -78,23 +112,6 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.path();
 	}
 
-	@Nullable
-	@Override
-	public String getGroup() {
-		return this.group;
-	}
-
-	@Override
-	public String getName() {
-		return this.name;
-	}
-
-	@Nullable
-	@Override
-	public String getVersion() {
-		return this.version;
-	}
-
 	@Override
 	public FileCollection getFiles() {
 		return this.project.files(this.path());
@@ -106,10 +123,14 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this::toString;
 	}
 
-	@NotNull
 	@Override
-	public String toString() {
-		return this.getGroup() + ':' + this.getName() + ':' + this.getVersion();
+	public int hashCode() {
+		int result = this.project != null ? this.project.hashCode() : 0;
+		result = 31 * result + (this.group != null ? this.group.hashCode() : 0);
+		result = 31 * result + (this.name != null ? this.name.hashCode() : 0);
+		result = 31 * result + (this.version != null ? this.version.hashCode() : 0);
+		result = 31 * result + (this.resolved != null ? this.resolved.hashCode() : 0);
+		return result;
 	}
 
 	@Override
@@ -138,34 +159,43 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return Objects.equals(this.resolved, that.resolved);
 	}
 
+	@NotNull
 	@Override
-	public int hashCode() {
-		int result = this.project != null ? this.project.hashCode() : 0;
-		result = 31 * result + (this.group != null ? this.group.hashCode() : 0);
-		result = 31 * result + (this.name != null ? this.name.hashCode() : 0);
-		result = 31 * result + (this.version != null ? this.version.hashCode() : 0);
-		result = 31 * result + (this.resolved != null ? this.resolved.hashCode() : 0);
-		return result;
+	public String toString() {
+		return this.getGroup() + ':' + this.getName() + ':' + this.getVersion();
 	}
 
-	public Set<File> resolve(Iterable<Dependency> dependencies) {
-		Configuration configuration = this.project.getConfigurations().detachedConfiguration();
+	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
+		Configuration configuration = null;
+		Iterable<File> selfResolving = null;
 		for (Dependency dependency : dependencies) {
-			configuration.getDependencies().add(dependency);
+			if (dependency instanceof SelfResolvingDependency) {
+				if (selfResolving == null) {
+					selfResolving = ((SelfResolvingDependency) dependency).resolve();
+				} else {
+					selfResolving = Iterables.concat(((SelfResolvingDependency) dependency).resolve(), selfResolving);
+				}
+			} else {
+				if (configuration == null) {
+					configuration = this.project.getConfigurations().detachedConfiguration(dependency);
+				} else {
+					configuration.getDependencies().add(dependency);
+				}
+			}
 		}
-		return configuration.resolve();
-	}
 
-	protected static void hash(Hasher hasher, Iterable<File> files) {
-		for (File file : files) {
-			hasher.putUnencodedChars(file.getAbsolutePath());
-			hasher.putLong(file.lastModified());
+		if (configuration == null) {
+			if (selfResolving == null) {
+				return Collections.emptyList();
+			} else {
+				return selfResolving;
+			}
+		} else {
+			if(selfResolving == null) {
+				return configuration;
+			} else {
+				return Iterables.concat(configuration.resolve(), selfResolving);
+			}
 		}
-	}
-
-	public static String hash(Iterable<File> files) {
-		Hasher hasher = Hashing.sha256().newHasher();
-		hash(hasher, files);
-		return hasher.hash().toString();
 	}
 }

@@ -46,22 +46,13 @@ repositories {
 }
 
 dependencies {
-    implementation ag.merge {
-        include(ag.map {
-            mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
-            remap ag.map {
-                mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
-                remap ag.client("1.16.5")
-            }
-        }, 'fabric', 'client', '1.16.5')
-
-        include(ag.map {
-            mappings("net.fabricmc:yarn:1.16.5+build.1", 'intermediary', 'named')
-            remap ag.map {
-                mappings("net.fabricmc:intermediary:1.16.5", "official", "intermediary")
-                remap ag.server("1.16.5")
-            }
-        }, 'fabric', 'server', '1.16.5')
+    implementation ag.map {
+        mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
+        remap ag.merge {
+            compareInstructions = false
+            include(ag.client('1.16.5'), 'client')
+            include(ag.server('1.16.5'), 'server')
+        }
     }
 }
 

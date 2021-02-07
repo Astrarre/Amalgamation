@@ -21,10 +21,22 @@ package io.github.f2bb.amalgamation.platform.util;
 
 import org.objectweb.asm.tree.AnnotationNode;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public class SplitterUtil {
+	public static Collection<Collection<String>> getPlatforms(List<AnnotationNode> nodes) {
+		Collection<Collection<String>> matrix = new ArrayList<>();
+		for (AnnotationNode node : nodes) {
+			if(ClassInfo.PLATFORM.equals(node.desc)) {
+				matrix.add((List<String>) node.values.get(1));
+			}
+		}
+		return matrix;
+	}
+
 	public static boolean matches(AnnotationNode node, Set<String> platforms) {
 		if (ClassInfo.PLATFORM.equals(node.desc)) {
 			return platforms.containsAll((List<String>) node.values.get(1));

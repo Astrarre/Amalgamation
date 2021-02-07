@@ -80,6 +80,10 @@ public abstract class CachedFile<T> {
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				// If the output already exists we'll use it's last modified time
 				if (Files.exists(to)) {
+					if(BaseAmalgamationGradlePlugin.offlineMode) {
+						return etag;
+					}
+
 					connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
 				}
 
