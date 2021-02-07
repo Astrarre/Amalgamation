@@ -19,12 +19,10 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
-import org.objectweb.asm.tree.ClassNode;
-
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Path;
 import java.util.concurrent.Executor;
-import java.util.function.ToIntFunction;
+
+import org.objectweb.asm.tree.ClassNode;
 
 /**
  * All methods in this class must be thread safe
@@ -50,7 +48,7 @@ public interface MergeContext {
 	 * @param name     The name of this resource
 	 * @param bytes    The content of this resource
 	 */
-	void acceptResource(PlatformData platform, String name, byte[] bytes);
+	void acceptResource(PlatformData platform, String name, Path bytes);
 
 	/**
 	 * Should an attempt be made to merge the class. Otherwise, the class will be treated as a resource

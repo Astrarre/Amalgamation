@@ -68,13 +68,13 @@ public abstract class AbstractMergeContext implements MergeContext {
 	}
 
 	@Override
-	public void acceptResource(PlatformData platform, String name, byte[] bytes) {
+	public void acceptResource(PlatformData platform, String name, Path input) {
 		try {
 			for (Path root : this.mergedJarRoots) {
 				Path path = root.resolve(name);
 				if (!Files.exists(path)) {
 					Files.createDirectories(path.getParent());
-					Files.write(path, bytes);
+					Files.copy(input, path);
 				} else {
 					// todo warn dupes
 				}

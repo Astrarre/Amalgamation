@@ -44,25 +44,34 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 				// todo seperate out unique files or just optimize it
 				LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 				Collection<PlatformData> data = new ArrayList<>();
-				for (Map.Entry<Collection<String>, Collection<Dependency>> entry : Iterables.concat(unique.entrySet(), merge.entrySet())) {
-					Collection<String> names = entry.getKey();
-					Collection<Dependency> dependency = entry.getValue();
-					Map<String, byte[]> map = new HashMap<>();
-					for (File file : MergerDependency.this.resolve(dependency)) {
-						try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
+				try {
+					for (Map.Entry<Collection<String>, Collection<Dependency>> entry : Iterables.concat(unique.entrySet(), merge.entrySet())) {
+						Collection<String> names = entry.getKey();
+						Collection<Dependency> dependency = entry.getValue();
+
+						PlatformData platform = new PlatformData(names, new ArrayList<>());
+						for (File file : MergerDependency.this.resolve(dependency)) {
+							FileSystem system = FileSystems.newFileSystem(file.toPath(), null);
 							for (Path directory : system.getRootDirectories()) {
-								PlatformData.readFiles(map, directory);
+								platform.paths.add(directory);
 							}
+							platform.addCloseAction(system);
 						}
+						data.add(platform);
 					}
-					data.add(new PlatformData(names, map));
-				}
 
 
-				Files.createDirectories(path.getParent());
-				try (FileSystem system = FileSystems.newFileSystem(new URI("jar:" + path.toUri()), CREATE_ZIP)) {
-					PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data, MergerDependency.this.compareInstructions);
+					Files.createDirectories(path.getParent());
+					try (FileSystem system = FileSystems.newFileSystem(new URI("jar:" + path.toUri()), CREATE_ZIP)) {
+						PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data, MergerDependency.this.compareInstructions);
+					}
+
+				} finally {
+					for (PlatformData datum : data) {
+						datum.close();
+					}
 				}
+
 				return null;
 			}
 		};

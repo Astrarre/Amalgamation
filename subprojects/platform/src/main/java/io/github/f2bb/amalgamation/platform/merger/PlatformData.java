@@ -19,6 +19,8 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
+import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -26,61 +28,68 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
  * Information about the platform, such as its name(s) and files
  */
-public class PlatformData {
-	final Collection<String> name;
-	final Map<String, byte[]> files;
+public class PlatformData implements Closeable {
+	public final Collection<String> name;
+	public final List<Path> paths;
+	private Closeable current;
 
-	public PlatformData(Collection<String> name, Map<String, byte[]> files) {
+	public PlatformData(Collection<String> name, List<Path> paths) {
 		this.name = name;
-		this.files = files;
+		this.paths = paths;
 	}
 
-	public static void readFiles(Map<String, byte[]> files, Path root) throws IOException {
-		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				files.put(root.relativize(file).toString(), Files.readAllBytes(file));
-				return FileVisitResult.CONTINUE;
+	public void addCloseAction(Closeable closeable) {
+		if (this.current == null) {
+			this.current = closeable;
+		} else {
+			Closeable current = this.current;
+			this.current = () -> {
+				current.close();
+				closeable.close();
+			};
+		}
+	}
+
+	public byte[] get(String string) {
+		try {
+			for (Path path : this.paths) {
+				Path resolved = path.resolve(string);
+				if (Files.exists(resolved)) {
+					return Files.readAllBytes(resolved);
+				}
 			}
-		});
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		throw new RuntimeException(new FileNotFoundException(string));
+	}
+
+	public void forEach(BiConsumer<String, Path> files) throws IOException {
+		for (Path path : paths) {
+			Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					files.accept(path.relativize(file).toString(), file);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		}
 	}
 
 	@Override
 	public String toString() {
-		return "PlatformData{" +
-				"name=" + name +
-				'}';
+		return "PlatformData{" + "name=" + name + '}';
 	}
 
 	@Override
-	public boolean equals(Object object) {
-		if (this == object) {
-			return true;
-		}
-		if (!(object instanceof PlatformData)) {
-			return false;
-		}
-
-		PlatformData data = (PlatformData) object;
-
-		if (!Objects.equals(this.name, data.name)) {
-			return false;
-		}
-		return Objects.equals(this.files, data.files);
-	}
-
-	@Override
-	public int hashCode() {
-		int result = this.name != null ? this.name.hashCode() : 0;
-		result = 31 * result + (this.files != null ? this.files.hashCode() : 0);
-		return result;
+	public void close() throws IOException {
+		this.current.close();
 	}
 }

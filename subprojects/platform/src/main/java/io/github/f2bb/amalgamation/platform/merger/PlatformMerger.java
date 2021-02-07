@@ -19,6 +19,16 @@
 
 package io.github.f2bb.amalgamation.platform.merger;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
 import io.github.f2bb.amalgamation.Platform;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import io.github.f2bb.amalgamation.platform.merger.impl.MergerConfig;
@@ -29,22 +39,19 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
 public class PlatformMerger {
 
 	private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
-	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms, boolean compareInstructions) {
-		Map<String, Set<PlatformData>> mergeClasses = new HashMap<>();
+	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms, boolean compareInstructions) throws IOException {
+		Map<String, List<PlatformData>> mergeClasses = new HashMap<>();
 
 		for (PlatformData platform : platforms) {
-			platform.files.forEach((name, bytes) -> {
+			platform.forEach((name, path) -> {
 				if (name.endsWith(".class") && mergeContext.shouldAttemptMerge(platform, name)) {
-					mergeClasses.computeIfAbsent(name, $ -> new HashSet<>()).add(platform);
+					mergeClasses.computeIfAbsent(name, $ -> new ArrayList<>()).add(platform);
 				} else {
-					mergeContext.acceptResource(platform, name, bytes);
+					mergeContext.acceptResource(platform, name, path);
 				}
 			});
 		}
@@ -53,9 +60,9 @@ public class PlatformMerger {
 	}
 
 	private static void mergeClasses(MergeContext mergeContext,
-									 Map<String, Set<PlatformData>> classes,
-			Collection<PlatformData> availablePlatforms, boolean compareInstructions) {
-		// TODO: I'm going to say the n-way
+			Map<String, List<PlatformData>> classes,
+			Collection<PlatformData> availablePlatforms,
+			boolean compareInstructions) {
 		Set<CompletableFuture<?>> futures = new HashSet<>();
 
 		classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
@@ -64,7 +71,7 @@ public class PlatformMerger {
 				// This is really a specialisation and optimisation of what would be the n-way algorithm
 
 				PlatformData platform = platforms.iterator().next();
-				ClassNode node = read(platform.files.get(file));
+				ClassNode node = read(platform.get(file));
 
 				if (availablePlatforms.size() > 1) {
 					// There are multiple platforms
@@ -85,7 +92,7 @@ public class PlatformMerger {
 				List<ClassInfo> infos = new ArrayList<>();
 
 				for (PlatformData platform : platforms) {
-					infos.add(new ClassInfo(read(platform.files.get(file)), platform.name.toArray(new String[0])));
+					infos.add(new ClassInfo(read(platform.get(file)), platform.name.toArray(new String[0])));
 				}
 
 				MergerConfig context = new MergerConfig(infos, availablePlatforms, mergeContext::versionIndex, compareInstructions);
