@@ -29,44 +29,6 @@ public class LauncherMeta {
 		this.logger = logger;
 	}
 
-	private void init(String lookingFor) {
-		if(this.versions == null) {
-			this.logger.lifecycle("downloading manifest . . .");
-			CachedFile<?> cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
-					this.globalCache.resolve("version_manifest.json"),
-					this.logger);
-			if(!BaseAmalgamationGradlePlugin.refreshDependencies) {
-				try (Reader reader = cache.getOutdatedReader()) {
-					Map<String, Version> versions = this.read(reader);
-					if (versions.containsKey(lookingFor)) {
-						this.versions = versions;
-					}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-
-				try (Reader reader = cache.getReader()) {
-					this.versions = this.read(reader);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-	}
-
-	protected Map<String, Version> read(Reader reader) {
-		Map<String, Version> versions = new HashMap<>();
-		JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
-		int index = 0;
-		for (JsonElement version : object.getAsJsonArray("versions")) {
-			JsonObject obj = (JsonObject) version;
-			String versionName = obj.get("id").getAsString();
-			String versionJsonURL = obj.get("url").getAsString();
-			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
-		}
-		return Collections.unmodifiableMap(versions);
-	}
-
 	public MergeContext createContext(Iterable<Path> output) {
 		return new AbstractMergeContext(output) {
 			@Override
@@ -84,6 +46,54 @@ public class LauncherMeta {
 	public Version getVersion(String version) {
 		this.init(version);
 		return this.versions.get(version);
+	}
+
+	private void init(String lookingFor) {
+		Map<String, Version> vers = this.versions;
+		CachedFile<?> cache = null;
+		if (vers == null) {
+			this.logger.lifecycle("downloading manifest . . .");
+			cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
+					this.globalCache.resolve("version_manifest.json"),
+					this.logger);
+			if (!BaseAmalgamationGradlePlugin.refreshDependencies) {
+				try (Reader reader = cache.getOutdatedReader()) {
+					Map<String, Version> versions = this.read(reader);
+					if (versions.containsKey(lookingFor)) {
+						vers = this.versions = versions;
+					}
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		if (vers == null || !vers.containsKey(lookingFor)) {
+			if (cache == null) {
+				cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
+						this.globalCache.resolve("version_manifest.json"),
+						this.logger);
+			}
+			try (Reader reader = cache.getReader()) {
+				this.versions = this.read(reader);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	protected Map<String, Version> read(Reader reader) {
+		Map<String, Version> versions = new HashMap<>();
+		// todo stop using gson, use a visitor based parser since 99% of the time you don't need to parse the entire damn thing
+		JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
+		int index = 0;
+		for (JsonElement version : object.getAsJsonArray("versions")) {
+			JsonObject obj = (JsonObject) version;
+			String versionName = obj.get("id").getAsString();
+			String versionJsonURL = obj.get("url").getAsString();
+			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+		}
+		return Collections.unmodifiableMap(versions);
 	}
 
 	public JsonObject read(String output, String url) {
