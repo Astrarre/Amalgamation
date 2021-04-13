@@ -29,27 +29,42 @@ public class LauncherMeta {
 		this.logger = logger;
 	}
 
-	private void init() {
+	private void init(String lookingFor) {
 		if(this.versions == null) {
-			Map<String, Version> versions = new HashMap<>();
 			this.logger.lifecycle("downloading manifest . . .");
 			CachedFile<?> cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
 					this.globalCache.resolve("version_manifest.json"),
 					this.logger);
-			try (Reader reader = cache.getReader()) {
-				JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
-				int index = 0;
-				for (JsonElement version : object.getAsJsonArray("versions")) {
-					JsonObject obj = (JsonObject) version;
-					String versionName = obj.get("id").getAsString();
-					String versionJsonURL = obj.get("url").getAsString();
-					versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+			if(!BaseAmalgamationGradlePlugin.refreshDependencies) {
+				try (Reader reader = cache.getOutdatedReader()) {
+					Map<String, Version> versions = this.read(reader);
+					if (versions.containsKey(lookingFor)) {
+						this.versions = versions;
+					}
+				} catch (IOException e) {
+					throw new RuntimeException(e);
 				}
-				this.versions = Collections.unmodifiableMap(versions);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
+
+				try (Reader reader = cache.getReader()) {
+					this.versions = this.read(reader);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		}
+	}
+
+	protected Map<String, Version> read(Reader reader) {
+		Map<String, Version> versions = new HashMap<>();
+		JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
+		int index = 0;
+		for (JsonElement version : object.getAsJsonArray("versions")) {
+			JsonObject obj = (JsonObject) version;
+			String versionName = obj.get("id").getAsString();
+			String versionJsonURL = obj.get("url").getAsString();
+			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+		}
+		return Collections.unmodifiableMap(versions);
 	}
 
 	public MergeContext createContext(Iterable<Path> output) {
@@ -67,7 +82,7 @@ public class LauncherMeta {
 	}
 
 	public Version getVersion(String version) {
-		this.init();
+		this.init(version);
 		return this.versions.get(version);
 	}
 

@@ -42,6 +42,7 @@ public abstract class CachedFile<T> {
 	public CachedFile(Supplier<Path> file, Class<T> value) {
 		this.file = new Supplier<Path>() {
 			Path lazy;
+
 			@Override
 			public Path get() {
 				Path lazy = this.lazy;
@@ -76,11 +77,11 @@ public abstract class CachedFile<T> {
 		return new CachedFile<String>(path, String.class) {
 			@Nullable
 			@Override
-			protected String writeFile(Path to, @Nullable String etag) throws IOException {
+			protected String writeIfOutdated(Path to, @Nullable String etag) throws IOException {
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				// If the output already exists we'll use it's last modified time
 				if (Files.exists(to)) {
-					if(BaseAmalgamationGradlePlugin.offlineMode) {
+					if (BaseAmalgamationGradlePlugin.offlineMode) {
 						return etag;
 					}
 
@@ -153,13 +154,27 @@ public abstract class CachedFile<T> {
 		}
 	}
 
+	public void delete() throws IOException {
+		Files.deleteIfExists(this.file.get().getParent().resolve(this.file.get().getFileName() + ".data"));
+		Files.deleteIfExists(this.file.get());
+	}
+
+	public Reader getReader() {
+		try {
+			this.getPath();
+			return Files.newBufferedReader(this.file.get());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public Path getPath() {
 		try {
-			if(BaseAmalgamationGradlePlugin.refreshDependencies) {
+			if (BaseAmalgamationGradlePlugin.refreshDependencies) {
 				Files.deleteIfExists(this.file.get());
 			}
 
-			T data = this.writeFile(this.file.get(), this.getData());
+			T data = this.writeIfOutdated(this.file.get(), this.getData());
 			if (data != null) {
 				this.setData(data);
 			}
@@ -170,7 +185,7 @@ public abstract class CachedFile<T> {
 	}
 
 	@Nullable
-	protected abstract T writeFile(Path path, @Nullable T currentData) throws Throwable;
+	protected abstract T writeIfOutdated(Path path, @Nullable T currentData) throws Throwable;
 
 	public T getData() {
 		try {
@@ -194,15 +209,16 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public void delete() throws IOException {
-		Files.deleteIfExists(this.file.get().getParent().resolve(this.file.get().getFileName() + ".data"));
-		Files.deleteIfExists(this.file.get());
-	}
-
-	public Reader getReader() {
+	/**
+	 * if the file exists, it will return the reader, else it will update the file and get the reader
+	 */
+	public Reader getOutdatedReader() {
 		try {
-			this.getPath();
-			return Files.newBufferedReader(this.file.get());
+			Path path = this.file.get();
+			if (!Files.exists(path)) {
+				this.getPath();
+			}
+			return Files.newBufferedReader(path);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

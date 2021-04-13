@@ -49,7 +49,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		this.remapper = new CachedFile<Void>(() -> CachedFile.globalCache(this.project.getGradle()).resolve(this.getName()), Void.class) {
 			@Nullable
 			@Override
-			protected Void writeFile(Path path, @Nullable Void currentData) throws IOException {
+			protected Void writeIfOutdated(Path path, @Nullable Void currentData) throws IOException {
 				if (Files.exists(path)) {
 					return null;
 				}
