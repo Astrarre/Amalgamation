@@ -11,12 +11,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public class MergerDependency extends AbstractSingleFileSelfResolvingDependency {
 	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
 	public final CachedFile<?> merger;
-	private final Map<Collection<String>, Collection<Dependency>> unique = new HashMap<>(), merge = new HashMap<>();
+	private final Map<Set<String>, Collection<Dependency>> unique = new HashMap<>(), merge = new HashMap<>();
 	public boolean compareInstructions = true;
 
 	public MergerDependency(Project project) {
@@ -53,8 +55,8 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 				LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 				Collection<PlatformData> data = new ArrayList<>();
 				try {
-					for (Map.Entry<Collection<String>, Iterable<File>> entry : Iterables.concat(uniqueResolved.entrySet(), mergeResolved.entrySet())) {
-						Collection<String> names = entry.getKey();
+					for (Map.Entry<Set<String>, Iterable<File>> entry : Iterables.concat(uniqueResolved.entrySet(), mergeResolved.entrySet())) {
+						Set<String> names = entry.getKey();
 						Iterable<File> dependency = entry.getValue();
 
 						PlatformData platform = new PlatformData(names, new ArrayList<>());
@@ -102,7 +104,7 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 		return hasher.hash().toString();
 	}
 
-	private final Map<Collection<String>, Iterable<File>> uniqueResolved = new HashMap<>(), mergeResolved = new HashMap<>();
+	private final Map<Set<String>, Iterable<File>> uniqueResolved = new HashMap<>(), mergeResolved = new HashMap<>();
 	@Override
 	protected Set<File> path() {
 		if (this.resolved == null) {
@@ -115,11 +117,11 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 	}
 
 	public void include(Object object, String... platforms) {
-		this.merge.computeIfAbsent(Arrays.asList(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
+		this.merge.computeIfAbsent(Sets.newHashSet(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
 	}
 
 	public void addUnique(Object object, String... platforms) {
-		this.unique.computeIfAbsent(Arrays.asList(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
+		this.unique.computeIfAbsent(Sets.newHashSet(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
 	}
 
 	@Override

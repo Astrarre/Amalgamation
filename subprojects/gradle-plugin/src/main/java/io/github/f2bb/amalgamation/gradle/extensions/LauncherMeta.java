@@ -20,33 +20,35 @@ import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {
-	/**
-	 * versionName -> Version
-	 */
-	public final Map<String, Version> versions;
 	private final Path globalCache;
 	private final Logger logger;
+	private Map<String, Version> versions;
 
 	public LauncherMeta(Gradle gradle, Logger logger) {
 		this.globalCache = CachedFile.globalCache(gradle);
 		this.logger = logger;
-		Map<String, Version> versions = new HashMap<>();
-		logger.lifecycle("downloading manifest . . .");
-		CachedFile<?> cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
-				this.globalCache.resolve("version_manifest.json"),
-				logger);
-		try (Reader reader = cache.getReader()) {
-			JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
-			int index = 0;
-			for (JsonElement version : object.getAsJsonArray("versions")) {
-				JsonObject obj = (JsonObject) version;
-				String versionName = obj.get("id").getAsString();
-				String versionJsonURL = obj.get("url").getAsString();
-				versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+	}
+
+	private void init() {
+		if(this.versions == null) {
+			Map<String, Version> versions = new HashMap<>();
+			this.logger.lifecycle("downloading manifest . . .");
+			CachedFile<?> cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
+					this.globalCache.resolve("version_manifest.json"),
+					this.logger);
+			try (Reader reader = cache.getReader()) {
+				JsonObject object = BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
+				int index = 0;
+				for (JsonElement version : object.getAsJsonArray("versions")) {
+					JsonObject obj = (JsonObject) version;
+					String versionName = obj.get("id").getAsString();
+					String versionJsonURL = obj.get("url").getAsString();
+					versions.put(versionName, new Version(index++, versionName, versionJsonURL));
+				}
+				this.versions = Collections.unmodifiableMap(versions);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
-			this.versions = Collections.unmodifiableMap(versions);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
@@ -54,7 +56,7 @@ public class LauncherMeta {
 		return new AbstractMergeContext(output) {
 			@Override
 			public int versionIndex(String string) {
-				LauncherMeta.Version version = LauncherMeta.this.versions.get(string);
+				LauncherMeta.Version version = LauncherMeta.this.getVersion(string);
 				if (version == null) {
 					return -1;
 				} else {
@@ -62,6 +64,11 @@ public class LauncherMeta {
 				}
 			}
 		};
+	}
+
+	public Version getVersion(String version) {
+		this.init();
+		return this.versions.get(version);
 	}
 
 	public JsonObject read(String output, String url) {

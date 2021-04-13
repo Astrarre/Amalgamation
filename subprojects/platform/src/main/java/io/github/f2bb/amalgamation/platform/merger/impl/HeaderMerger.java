@@ -1,26 +1,25 @@
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import io.github.f2bb.amalgamation.platform.util.SplitterUtil;
-import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class HeaderMerger implements Merger {
 	@Override
-	public void merge(MergerConfig mergerConfig) {
-		ClassNode root = mergerConfig.getInfos().get(0).node;
-		mergerConfig.getNode().name = root.name;
-		mergerConfig.getNode().version = root.version;
-		if (mergerConfig.getInfos().size() != mergerConfig.getAvailable().size()) {
-			for (ClassInfo info : mergerConfig.getInfos()) {
-				if (mergerConfig.getNode().visibleAnnotations == null) {
-					mergerConfig.getNode().visibleAnnotations = new ArrayList<>();
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
+		ClassNode root = components.get(0).node;
+		merged.name = root.name;
+		merged.version = root.version;
+		if (components.size() != mergerConfig.getAvailable().size()) {
+			for (ClassInfo info : components) {
+				if (merged.visibleAnnotations == null) {
+					merged.visibleAnnotations = new ArrayList<>();
 				}
-				mergerConfig.getNode().visibleAnnotations.add(info.createPlatformAnnotation());
+				merged.visibleAnnotations.add(info.createPlatformAnnotation());
 			}
 		}
 	}
@@ -33,13 +32,7 @@ public class HeaderMerger implements Merger {
 
 		boolean notStripped = SplitterUtil.matches(in.visibleAnnotations, available);
 		if(notStripped) {
-			Iterator<AnnotationNode> iterator = in.visibleAnnotations.iterator();
-			while (iterator.hasNext()) {
-				AnnotationNode annotation = iterator.next();
-				if(ClassInfo.PLATFORM.equals(annotation.desc)) {
-					iterator.remove();
-				}
-			}
+			in.visibleAnnotations.removeIf(annotation -> ClassInfo.PLATFORM.equals(annotation.desc));
 		}
 		return !notStripped;
 	}

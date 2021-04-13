@@ -30,17 +30,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 /**
  * Information about the platform, such as its name(s) and files
  */
 public class PlatformData implements Closeable {
-	public final Collection<String> name;
+	public final Set<String> name;
 	public final List<Path> paths;
 	private Closeable current;
 
-	public PlatformData(Collection<String> name, List<Path> paths) {
+	public PlatformData(Set<String> name, List<Path> paths) {
 		this.name = name;
 		this.paths = paths;
 	}

@@ -92,12 +92,14 @@ public class PlatformMerger {
 				List<ClassInfo> infos = new ArrayList<>();
 
 				for (PlatformData platform : platforms) {
-					infos.add(new ClassInfo(read(platform.get(file)), platform.name.toArray(new String[0])));
+					infos.add(new ClassInfo(read(platform.get(file)), platform.name));
 				}
 
-				MergerConfig context = new MergerConfig(infos, availablePlatforms, mergeContext::versionIndex, compareInstructions);
-				Merger.MERGER.merge(context);
-				mergeContext.accept(context.getNode());
+				MergerConfig context = new MergerConfig(availablePlatforms, compareInstructions);
+				ClassNode node = new ClassNode();
+				Merger.MERGER.merge(context, node, infos);
+
+				mergeContext.accept(node);
 			}
 		}, mergeContext.getExecutor())));
 

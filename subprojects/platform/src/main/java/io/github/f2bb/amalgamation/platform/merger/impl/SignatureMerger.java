@@ -26,6 +26,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 class SignatureMerger extends SignatureWriter implements Merger {
@@ -45,9 +46,9 @@ class SignatureMerger extends SignatureWriter implements Merger {
 	}
 
 	@Override
-	public void merge(MergerConfig mergerConfig) {
-		SignatureMerger writer = new SignatureMerger(mergerConfig.getNode());
-		for (ClassInfo info : mergerConfig.getInfos()) {
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
+		SignatureMerger writer = new SignatureMerger(merged);
+		for (ClassInfo info : components) {
 			String sign = info.node.signature;
 			if (sign != null) {
 				// todo implement formal type parameters
@@ -87,7 +88,7 @@ class SignatureMerger extends SignatureWriter implements Merger {
 		}
 
 		if (special) {
-			mergerConfig.getNode().signature = sign.toString();
+			merged.signature = sign.toString();
 		}
 	}
 

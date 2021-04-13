@@ -19,8 +19,7 @@
 
 package io.github.f2bb.amalgamation.platform.util;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Set;
 
 import io.github.f2bb.amalgamation.Displace;
 import io.github.f2bb.amalgamation.Parent;
@@ -35,9 +34,9 @@ public class ClassInfo {
 	public static final String DISPLACE = Type.getDescriptor(Displace.class);
 	public static final String PARENT = Type.getDescriptor(Parent.class);
 	public final ClassNode node;
-	public final String[] names;
+	public final Set<String> names;
 
-	public ClassInfo(ClassNode node, String[] names) {
+	public ClassInfo(ClassNode node, Set<String> names) {
 		this.node = node;
 		this.names = names;
 	}
@@ -59,16 +58,10 @@ public class ClassInfo {
 	}
 
 	public AnnotationNode createPlatformAnnotation() {
-		return createPlatformAnnotation(Arrays.asList(this.names));
+		return createPlatformAnnotation(this.names);
 	}
 
 	public ClassNode getNode() {
 		return this.node;
 	}
-
-	public String[] getNames() {
-		return this.names;
-	}
-
-
 }

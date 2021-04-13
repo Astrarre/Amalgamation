@@ -32,9 +32,9 @@ import java.util.*;
 public class MethodMerger implements Merger {
 
 	@Override
-	public void merge(MergerConfig mergerConfig) {
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
 		Map<MethodKey, List<ClassInfo>> toMerge = new HashMap<>();
-		for (ClassInfo info : mergerConfig.getInfos()) {
+		for (ClassInfo info : components) {
 			for (MethodNode method : info.node.methods) {
 				toMerge.computeIfAbsent(new MethodKey(mergerConfig.compareInstructions, method), c -> new ArrayList<>()).add(info);
 			}
@@ -49,7 +49,7 @@ public class MethodMerger implements Merger {
 		toMerge.forEach((key, info) -> {
 			MethodNode clone = new MethodNode(key.node.access, key.node.name, key.node.desc, key.node.signature, null);
 			key.node.accept(clone);
-			if (this.hasMethod(mergerConfig.getNode(), key)) {
+			if (this.hasMethod(merged, key)) {
 				String name = clone.name;
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
@@ -65,7 +65,7 @@ public class MethodMerger implements Merger {
 
 			}
 
-			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && mergerConfig.getInfos().size() != info.size()) {
+			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && components.size() != info.size()) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -75,7 +75,7 @@ public class MethodMerger implements Merger {
 				}
 			}
 
-			mergerConfig.getNode().methods.add(clone);
+			merged.methods.add(clone);
 		});
 	}
 

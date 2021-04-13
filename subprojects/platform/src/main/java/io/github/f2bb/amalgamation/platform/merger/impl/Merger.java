@@ -19,11 +19,13 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl;
 
+import java.util.List;
 import java.util.Set;
 
 import io.github.f2bb.amalgamation.Platform;
 import io.github.f2bb.amalgamation.platform.merger.impl.field.FieldMerger;
 import io.github.f2bb.amalgamation.platform.merger.impl.method.MethodMerger;
+import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -38,7 +40,7 @@ public interface Merger extends Opcodes {
 			.andThen(new FieldMerger())
 			.andThen(new InnerClassAttributeMerger());
 
-	void merge(MergerConfig mergerConfig);
+	void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components);
 
 	/**
 	 * Strips the class by filtering out unavailable platforms
@@ -73,9 +75,9 @@ public interface Merger extends Opcodes {
 	default Merger andThen(Merger merger) {
 		return new Merger() {
 			@Override
-			public void merge(MergerConfig mergerConfig) {
-				Merger.this.merge(mergerConfig);
-				merger.merge(mergerConfig);
+			public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
+				Merger.this.merge(mergerConfig, merged, components);
+				merger.merge(mergerConfig, merged, components);
 			}
 
 			@Override

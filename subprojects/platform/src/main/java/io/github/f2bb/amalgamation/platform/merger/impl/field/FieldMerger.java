@@ -34,9 +34,9 @@ import java.util.*;
 public class FieldMerger implements Merger {
 
 	@Override
-	public void merge(MergerConfig mergerConfig) {
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
 		Map<FieldKey, List<ClassInfo>> toMerge = new HashMap<>();
-		for (ClassInfo info : mergerConfig.getInfos()) {
+		for (ClassInfo info : components) {
 			for (FieldNode method : info.node.fields) {
 				toMerge.computeIfAbsent(new FieldKey(method), c -> new ArrayList<>()).add(info);
 			}
@@ -52,7 +52,7 @@ public class FieldMerger implements Merger {
 				}
 			});
 
-			if (this.hasField(mergerConfig.getNode(), key)) {
+			if (this.hasField(merged, key)) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -61,7 +61,7 @@ public class FieldMerger implements Merger {
 				clone.name += "_" + counter[0]++;
 			}
 
-			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && mergerConfig.getInfos().size() != info.size()) {
+			if ((clone.access & (ACC_BRIDGE | ACC_SYNTHETIC)) == 0 && components.size() != info.size()) {
 				if (clone.visibleAnnotations == null) {
 					clone.visibleAnnotations = new ArrayList<>();
 				}
@@ -71,7 +71,7 @@ public class FieldMerger implements Merger {
 				}
 			}
 
-			mergerConfig.getNode().fields.add(clone);
+			merged.fields.add(clone);
 		});
 	}
 

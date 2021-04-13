@@ -5,10 +5,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
 
-import com.google.common.hash.Hashing;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
-import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -24,7 +22,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 		if (this.resolved == null) {
 			LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
 			Configuration configuration = this.project.getConfigurations().detachedConfiguration();
-			for (String library : Objects.requireNonNull(meta.versions.get(this.version), "Invalid version: " + this.version).getLibraries()) {
+			for (String library : Objects.requireNonNull(meta.getVersion(this.version), "Invalid version: " + this.version).getLibraries()) {
 				configuration.getDependencies().add(this.project.getDependencies().create(library));
 			}
 			this.resolved = configuration.resolve();

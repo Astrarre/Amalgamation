@@ -40,21 +40,21 @@ class InterfaceMerger implements Merger {
 	public static final String INTERFACE = Type.getDescriptor(Interface.class);
 
 	@Override
-	public void merge(MergerConfig mergerConfig) {
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
 		Map<String, List<ClassInfo>> interfaces = new HashMap<>();
-		for (ClassInfo info : mergerConfig.getInfos()) {
+		for (ClassInfo info : components) {
 			for (String anInterface : info.node.interfaces) {
 				interfaces.computeIfAbsent(anInterface, s -> new ArrayList<>()).add(info);
 			}
 		}
 
 		interfaces.forEach((s, i) -> {
-			mergerConfig.getNode().interfaces.add(s);
-			if (i.size() == mergerConfig.getInfos().size()) {
+			merged.interfaces.add(s);
+			if (i.size() == components.size()) {
 				return;
 			}
 
-			AnnotationVisitor n = mergerConfig.getNode().visitAnnotation(INTERFACE, true);
+			AnnotationVisitor n = merged.visitAnnotation(INTERFACE, true);
 			AnnotationVisitor visitor = n.visitArray("platform");
 			for (ClassInfo info : i) {
 				visitor.visit("platform", info.createPlatformAnnotation());

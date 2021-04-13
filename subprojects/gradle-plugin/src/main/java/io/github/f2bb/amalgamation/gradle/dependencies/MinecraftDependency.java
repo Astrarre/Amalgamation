@@ -21,7 +21,7 @@ public class MinecraftDependency extends AbstractSingleFileSelfResolvingDependen
 
 	public MinecraftDependency(Project project, String version, boolean isClient) {
 		super(project, "net.minecraft", version, isClient ? "minecraft-client" : "minecraft-server");
-		LauncherMeta.Version v = Objects.requireNonNull(MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).versions.get(version),
+		LauncherMeta.Version v = Objects.requireNonNull(MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version),
 				"invalid version: " + version);
 		Path jar = CachedFile.globalCache(project.getGradle()).resolve(this.getVersion() + "-" + this.getName() + ".jar");
 		if (isClient) {

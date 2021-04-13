@@ -29,15 +29,15 @@ import java.util.Set;
 class InnerClassAttributeMerger implements Merger {
 
 	@Override
-	public void merge(MergerConfig mergerConfig) {
-		mergerConfig.getInfos().stream()
+	public void merge(MergerConfig mergerConfig, ClassNode merged, List<ClassInfo> components) {
+		components.stream()
 		            .map(ClassInfo::getNode)
 		            .map(c -> c.innerClasses)
 		            .flatMap(List::stream)
 		            .map(InnerClassNodeWrapper::new)
 		            .distinct()
 		            .map(InnerClassNodeWrapper::getNode)
-		            .forEach(n -> mergerConfig.getNode().innerClasses.add(n));
+		            .forEach(n -> merged.innerClasses.add(n));
 	}
 
 	@Override
