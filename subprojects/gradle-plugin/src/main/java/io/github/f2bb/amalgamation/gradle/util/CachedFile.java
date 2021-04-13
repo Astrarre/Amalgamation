@@ -78,10 +78,12 @@ public abstract class CachedFile<T> {
 			@Nullable
 			@Override
 			protected String writeIfOutdated(Path to, @Nullable String etag) throws IOException {
+				Clock clock = new Clock("Validating " + url + " cache took %dms", logger);
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				// If the output already exists we'll use it's last modified time
 				if (Files.exists(to)) {
 					if (BaseAmalgamationGradlePlugin.offlineMode) {
+						clock.end();
 						return etag;
 					}
 
@@ -102,6 +104,7 @@ public abstract class CachedFile<T> {
 
 				if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
 					//Didn't get what we expected
+					clock.end();
 					throw new IOException(connection.getResponseMessage() + " for " + url);
 				}
 
@@ -110,6 +113,7 @@ public abstract class CachedFile<T> {
 				if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
 				                                                                                               .toMillis() >= modifyTime)) {
 					logger.lifecycle("'{}' Not Modified, skipping.", to);
+					clock.end();
 					return null; //What we've got is already fine
 				}
 
@@ -123,6 +127,7 @@ public abstract class CachedFile<T> {
 					Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
 				} catch (IOException e) {
 					Files.delete(to); // Probably isn't good if it fails to copy/save
+					clock.end();
 					throw e;
 				}
 
@@ -131,6 +136,7 @@ public abstract class CachedFile<T> {
 					Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
 				}
 
+				clock.end();
 				return connection.getHeaderField("ETag");
 			}
 		};
@@ -168,9 +174,26 @@ public abstract class CachedFile<T> {
 		}
 	}
 
+	public Path getOutdatedPath() {
+		try {
+			Path path = this.file.get();
+			if (BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
+				Files.deleteIfExists(path);
+			}
+
+			if (Files.exists(path)) {
+				return path;
+			}
+
+			return this.getPath();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public Path getPath() {
 		try {
-			if (BaseAmalgamationGradlePlugin.refreshDependencies) {
+			if (BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
 				Files.deleteIfExists(this.file.get());
 			}
 
@@ -210,12 +233,13 @@ public abstract class CachedFile<T> {
 	}
 
 	/**
-	 * if the file exists, it will return the reader, else it will update the file and get the reader
+	 * if the file exists, it will return the reader, else it will update the file and get the reader.
+	 * refresh dependencies overrides this behavior
 	 */
 	public Reader getOutdatedReader() {
 		try {
 			Path path = this.file.get();
-			if (!Files.exists(path)) {
+			if (!Files.exists(path) || BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
 				this.getPath();
 			}
 			return Files.newBufferedReader(path);

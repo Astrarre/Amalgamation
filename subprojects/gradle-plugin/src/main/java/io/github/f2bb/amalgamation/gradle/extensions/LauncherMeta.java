@@ -56,15 +56,13 @@ public class LauncherMeta {
 			cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
 					this.globalCache.resolve("version_manifest.json"),
 					this.logger);
-			if (!BaseAmalgamationGradlePlugin.refreshDependencies) {
-				try (Reader reader = cache.getOutdatedReader()) {
-					Map<String, Version> versions = this.read(reader);
-					if (versions.containsKey(lookingFor)) {
-						vers = this.versions = versions;
-					}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
+			try (Reader reader = cache.getOutdatedReader()) {
+				Map<String, Version> versions = this.read(reader);
+				if (versions.containsKey(lookingFor)) {
+					vers = this.versions = versions;
 				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
@@ -98,7 +96,7 @@ public class LauncherMeta {
 
 	public JsonObject read(String output, String url) {
 		CachedFile<?> cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger);
-		try (Reader reader = cache.getReader()) {
+		try (Reader reader = cache.getOutdatedReader()) {
 			return BaseAmalgamationGradlePlugin.GSON.fromJson(reader, JsonObject.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

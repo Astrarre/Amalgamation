@@ -30,12 +30,17 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 	public static final Gson GSON = new GsonBuilder()
 											// todo custom Dependencies serializer
 			.create();
-	public static boolean refreshDependencies, offlineMode;
+	public static boolean refreshDependencies, offlineMode, refreshAmalgamationCaches;
 
 	@Override
 	public void apply(@NotNull Project target) {
 		StartParameter parameter = target.getGradle().getStartParameter();
 		refreshDependencies = parameter.isRefreshDependencies();
+		if(refreshDependencies) {
+			refreshAmalgamationCaches = true;
+		} else {
+			refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
+		}
 		offlineMode = parameter.isOffline();
 		this.registerProvider(target);
 	}

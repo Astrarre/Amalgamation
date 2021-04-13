@@ -41,7 +41,7 @@ public class MinecraftDependency extends AbstractSingleFileSelfResolvingDependen
 	@Override
 	protected Set<File> path() {
 		if (this.resolved == null) {
-			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> Collections.singleton(this.jar.getPath().toFile()),
+			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> Collections.singleton(this.jar.getOutdatedPath().toFile()),
 					BaseAmalgamationImpl.SERVICE));
 		}
 		return this.resolved;
