@@ -29,7 +29,7 @@ import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 public interface BaseAmalgamation {
     Dependency merge(Action<MergerDependency> configuration);
 
-    void runConfig(RunConfigSettings settings);
+    //todo void runConfig(RunConfigSettings settings);
 
-    Iterable<RunConfigSettings> getRunConfigs();
+    //todo Iterable<RunConfigSettings> getRunConfigs();
 }

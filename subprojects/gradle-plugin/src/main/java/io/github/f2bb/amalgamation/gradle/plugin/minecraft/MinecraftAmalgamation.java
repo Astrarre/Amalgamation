@@ -25,6 +25,10 @@ import org.gradle.api.Action;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 
+// todo support looms caches
+// todo natives (dlls)
+// todo assets
+
 public interface MinecraftAmalgamation extends BaseAmalgamation {
     /**
      * @return a dependency for the obfuscated client jar

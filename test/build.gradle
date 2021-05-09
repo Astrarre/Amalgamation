@@ -54,6 +54,7 @@ dependencies {
             include(ag.server('1.16.5'), 'server')
         }
     }
+    implementation ag.libraries('1.16.5')
 }
 
 /*

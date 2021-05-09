@@ -45,11 +45,11 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		offlineMode = parameter.isOffline();
 		this.registerProvider(target);
 
-		IdeaModel ideaModel = (IdeaModel) target.getExtensions().getByName("idea");
+		/*IdeaModel ideaModel = (IdeaModel) target.getExtensions().getByName("idea");
 		ideaModel.getModule().getExcludeDirs().addAll(target.files(".gradle", "build", ".idea", "out").getFiles());
 		ideaModel.getModule().setDownloadJavadoc(true);
 		ideaModel.getModule().setDownloadSources(true);
-		ideaModel.getModule().setInheritOutputDirs(true);
+		ideaModel.getModule().setInheritOutputDirs(true);*/
 	}
 
 	protected void registerProvider(Project target) {

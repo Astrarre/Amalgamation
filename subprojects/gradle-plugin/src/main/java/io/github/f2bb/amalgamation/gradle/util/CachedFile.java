@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import com.google.common.hash.Hasher;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CachedFile<T> {
 	private static final Gson GSON = BaseAmalgamationGradlePlugin.GSON;
 	private final Supplier<Path> file;
+	private final Lock lock = new ReentrantLock();
 	private final Class<T> value;
 
 	/**
@@ -82,7 +85,7 @@ public abstract class CachedFile<T> {
 				if(url.hash.equals(hash)) {
 					return null;
 				}
-				Clock clock = new Clock("Validating " + url + " cache took %dms", logger);
+				Clock clock = new Clock("Validating/Downloading " + url + " cache took %dms", logger);
 				HttpURLConnection connection = (HttpURLConnection) url.getUrl().openConnection();
 				// If the output already exists we'll use it's last modified time
 				if (Files.exists(to)) {
@@ -264,11 +267,13 @@ public abstract class CachedFile<T> {
 				Files.deleteIfExists(this.file.get());
 			}
 
+			this.lock.lock();
 			T old = this.getData();
 			T data = this.writeIfOutdated(this.file.get(), old);
 			if (data != null) {
 				this.setData(data);
 			}
+			this.lock.unlock();
 			return this.file.get();
 		} catch (Throwable throwable) {
 			throw new RuntimeException(throwable);

@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
@@ -25,6 +28,7 @@ import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {
+	public static final Set<String> OS_CLASSIFIERS = ImmutableSet.of("natives-linux", "natives-windows", "natives-osx");
 	private final Path globalCache;
 	private final Logger logger;
 	private Map<String, Version> versions;
@@ -246,7 +250,7 @@ public class LauncherMeta {
 				}
 
 				this.classifierUrls.forEach((s, url) -> {
-					if(!this.nativesOsToClassifier.containsValue(s)) {
+					if(!this.nativesOsToClassifier.containsValue(s) && !OS_CLASSIFIERS.contains(s)) {
 						urls.add(url);
 					}
 				});
@@ -265,7 +269,17 @@ public class LauncherMeta {
 		}
 
 		public Rule(JsonObject object) {
-			this(RuleType.valueOf(object.getAsJsonPrimitive("action").getAsString().toLowerCase(Locale.ROOT)), object.getAsJsonObject("os").getAsJsonPrimitive("name").getAsString());
+			this.action = RuleType.valueOf(object.getAsJsonPrimitive("action").getAsString().toUpperCase(Locale.ROOT));
+			JsonObject os = object.getAsJsonObject("os");
+			if(os == null) {
+				this.osName = null;
+				return;
+			}
+			JsonPrimitive primitive = os.getAsJsonPrimitive("name");
+			if(primitive == null) {
+				this.osName = null;
+			} else
+				this.osName = primitive.getAsString();
 		}
 
 	}

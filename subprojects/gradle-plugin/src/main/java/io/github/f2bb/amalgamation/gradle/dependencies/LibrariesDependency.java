@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.collect.Iterables;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
@@ -40,6 +41,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 		if (!(file.isDirectory() && file.exists())) {
 			this.librariesDirectory = FALLBACK;
 		}
+
 	}
 
 	@Override
