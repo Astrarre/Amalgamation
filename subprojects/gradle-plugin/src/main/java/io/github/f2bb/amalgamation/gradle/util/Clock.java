@@ -2,7 +2,7 @@ package io.github.f2bb.amalgamation.gradle.util;
 
 import org.gradle.api.logging.Logger;
 
-public class Clock {
+public class Clock implements AutoCloseable {
 	private final String message;
 	private final Logger logger;
 	private final long start;
@@ -13,7 +13,8 @@ public class Clock {
 		this.start = System.currentTimeMillis();
 	}
 
-	public void end() {
+	@Override
+	public void close() {
 		this.logger.lifecycle(String.format(this.message, System.currentTimeMillis() - this.start));
 	}
 }

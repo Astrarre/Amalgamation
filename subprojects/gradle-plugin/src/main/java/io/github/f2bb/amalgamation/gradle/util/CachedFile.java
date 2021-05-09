@@ -78,65 +78,63 @@ public abstract class CachedFile<T> {
 			@Nullable
 			@Override
 			protected String writeIfOutdated(Path to, @Nullable String etag) throws IOException {
-				Clock clock = new Clock("Validating " + url + " cache took %dms", logger);
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				// If the output already exists we'll use it's last modified time
-				if (Files.exists(to)) {
-					if (BaseAmalgamationGradlePlugin.offlineMode) {
-						clock.end();
-						return etag;
+				HttpURLConnection connection;
+
+				try (Clock ignored = new Clock("Validating " + url + " cache took %dms", logger)) {
+					connection = (HttpURLConnection) url.openConnection();
+					// If the output already exists we'll use it's last modified time
+					if (Files.exists(to)) {
+						if (BaseAmalgamationGradlePlugin.offlineMode) {
+							return etag;
+						}
+
+						connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
 					}
 
-					connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
+					if (etag != null) {
+						connection.setRequestProperty("If-None-Match", etag);
+					}
+
+					// We want to download gzip compressed stuff
+					connection.setRequestProperty("Accept-Encoding", "gzip");
+
+					// Try make the connection, it will hang here if the connection is bad
+					connection.connect();
+
+					int code = connection.getResponseCode();
+
+					if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
+						//Didn't get what we expected
+						throw new IOException(connection.getResponseMessage() + " for " + url);
+					}
+
+					long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
+
+					if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
+							.toMillis() >= modifyTime)) {
+						logger.lifecycle("'{}' Not Modified, skipping.", to);
+						return null; //What we've got is already fine
+					}
+
+					long contentLength = connection.getContentLengthLong();
+
+					if (contentLength >= 0) {
+						logger.lifecycle("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
+					}
+
+					try { // Try download to the output
+						Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
+					} catch (IOException e) {
+						Files.delete(to); // Probably isn't good if it fails to copy/save
+						throw e;
+					}
+
+					//Set the modify time to match the server's (if we know it)
+					if (modifyTime > 0) {
+						Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
+					}
 				}
 
-				if (etag != null) {
-					connection.setRequestProperty("If-None-Match", etag);
-				}
-
-				// We want to download gzip compressed stuff
-				connection.setRequestProperty("Accept-Encoding", "gzip");
-
-				// Try make the connection, it will hang here if the connection is bad
-				connection.connect();
-
-				int code = connection.getResponseCode();
-
-				if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
-					//Didn't get what we expected
-					clock.end();
-					throw new IOException(connection.getResponseMessage() + " for " + url);
-				}
-
-				long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
-
-				if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
-				                                                                                               .toMillis() >= modifyTime)) {
-					logger.lifecycle("'{}' Not Modified, skipping.", to);
-					clock.end();
-					return null; //What we've got is already fine
-				}
-
-				long contentLength = connection.getContentLengthLong();
-
-				if (contentLength >= 0) {
-					logger.lifecycle("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
-				}
-
-				try { // Try download to the output
-					Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
-				} catch (IOException e) {
-					Files.delete(to); // Probably isn't good if it fails to copy/save
-					clock.end();
-					throw e;
-				}
-
-				//Set the modify time to match the server's (if we know it)
-				if (modifyTime > 0) {
-					Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
-				}
-
-				clock.end();
 				return connection.getHeaderField("ETag");
 			}
 		};

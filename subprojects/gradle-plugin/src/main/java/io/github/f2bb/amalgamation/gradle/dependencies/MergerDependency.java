@@ -7,11 +7,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -50,39 +48,40 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 					return null;
 				}
 				project.getLogger().lifecycle("Merging " + (unique.size() + merge.size()) + " dependencies");
-				Clock clock = new Clock("Merged " + (unique.size() + merge.size()) + " dependencies in %dms", project.getLogger());
-				// todo seperate out unique files or just optimize it
-				LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
-				Collection<PlatformData> data = new ArrayList<>();
-				try {
-					for (Map.Entry<Set<String>, Iterable<File>> entry : Iterables.concat(uniqueResolved.entrySet(), mergeResolved.entrySet())) {
-						Set<String> names = entry.getKey();
-						Iterable<File> dependency = entry.getValue();
 
-						PlatformData platform = new PlatformData(names, new ArrayList<>());
-						for (File file : dependency) {
-							FileSystem system = FileSystems.newFileSystem(file.toPath(), null);
-							for (Path directory : system.getRootDirectories()) {
-								platform.paths.add(directory);
+				try (Clock ignored = new Clock("Merged " + (unique.size() + merge.size()) + " dependencies in %dms", project.getLogger())) {
+					// todo seperate out unique files or just optimize it
+					LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
+					Collection<PlatformData> data = new ArrayList<>();
+					try {
+						for (Map.Entry<Set<String>, Iterable<File>> entry : Iterables.concat(uniqueResolved.entrySet(), mergeResolved.entrySet())) {
+							Set<String> names = entry.getKey();
+							Iterable<File> dependency = entry.getValue();
+
+							PlatformData platform = new PlatformData(names, new ArrayList<>());
+							for (File file : dependency) {
+								FileSystem system = FileSystems.newFileSystem(file.toPath(), null);
+								for (Path directory : system.getRootDirectories()) {
+									platform.paths.add(directory);
+								}
+								platform.addCloseAction(system);
 							}
-							platform.addCloseAction(system);
+							data.add(platform);
 						}
-						data.add(platform);
-					}
 
 
-					Files.createDirectories(path.getParent());
-					try (FileSystem system = FileSystems.newFileSystem(new URI("jar:" + path.toUri()), CREATE_ZIP)) {
-						PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data, MergerDependency.this.compareInstructions);
-					}
+						Files.createDirectories(path.getParent());
+						try (FileSystem system = FileSystems.newFileSystem(new URI("jar:" + path.toUri()), CREATE_ZIP)) {
+							PlatformMerger.merge(meta.createContext(system.getRootDirectories()), data, MergerDependency.this.compareInstructions);
+						}
 
-				} finally {
-					for (PlatformData datum : data) {
-						datum.close();
+					} finally {
+						for (PlatformData datum : data) {
+							datum.close();
+						}
 					}
 				}
 
-				clock.end();
 				return null;
 			}
 		};

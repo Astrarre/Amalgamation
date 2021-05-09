@@ -8,9 +8,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,35 +53,37 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				}
 
 				project.getLogger().lifecycle("Remapping " + inputs.size() + " dependencies");
-				Clock clock = new Clock("Remapped " + RemappingDependency.this.inputs.size() + " dependencies in %dms", project.getLogger());
-				MappingSet mappings = MappingSet.create();
 
-				loadMappings(mappings, RemappingDependency.this.resolvedMappings, RemappingDependency.this.from, RemappingDependency.this.to);
+				try (Clock ignored = new Clock("Remapped " + RemappingDependency.this.inputs.size() + " dependencies in %dms", project.getLogger())) {
+					MappingSet mappings = MappingSet.create();
 
-				TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
+					loadMappings(mappings, RemappingDependency.this.resolvedMappings, RemappingDependency.this.from, RemappingDependency.this.to);
 
-				Map<File, InputTag> tags = new HashMap<>();
-				for (File file : RemappingDependency.this.resolve(RemappingDependency.this.inputs)) {
-					InputTag tag = remapper.createInputTag();
-					tags.put(file, tag);
-					remapper.readInputsAsync(tag, file.toPath());
-				}
+					TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
 
-				for (File file : RemappingDependency.this.resolve(RemappingDependency.this.classpath)) {
-					remapper.readClassPathAsync(file.toPath());
-				}
-
-				for (Map.Entry<File, InputTag> entry : tags.entrySet()) {
-					InputTag tag = entry.getValue();
-					Path destination = path.resolve(Hashing.sha256().hashUnencodedChars(entry.getKey().getAbsolutePath()).toString() + ".jar");
-					try (OutputConsumerPath output = new OutputConsumerPath.Builder(destination).build()) {
-						output.addNonClassFiles(entry.getKey().toPath(), NonClassCopyMode.FIX_META_INF, remapper);
-						remapper.apply(output, tag);
+					Map<File, InputTag> tags = new HashMap<>();
+					for (File file : RemappingDependency.this.resolve(RemappingDependency.this.inputs)) {
+						InputTag tag = remapper.createInputTag();
+						tags.put(file, tag);
+						remapper.readInputsAsync(tag, file.toPath());
 					}
+
+					for (File file : RemappingDependency.this.resolve(RemappingDependency.this.classpath)) {
+						remapper.readClassPathAsync(file.toPath());
+					}
+
+					for (Map.Entry<File, InputTag> entry : tags.entrySet()) {
+						InputTag tag = entry.getValue();
+						Path destination = path.resolve(Hashing.sha256().hashUnencodedChars(entry.getKey().getAbsolutePath()).toString() + ".jar");
+						try (OutputConsumerPath output = new OutputConsumerPath.Builder(destination).build()) {
+							output.addNonClassFiles(entry.getKey().toPath(), NonClassCopyMode.FIX_META_INF, remapper);
+							remapper.apply(output, tag);
+						}
+					}
+
+					remapper.finish();
 				}
 
-				remapper.finish();
-				clock.end();
 				return null;
 			}
 		};
