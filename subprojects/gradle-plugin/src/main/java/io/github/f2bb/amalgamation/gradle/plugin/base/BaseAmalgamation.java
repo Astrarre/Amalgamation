@@ -23,6 +23,13 @@ import io.github.f2bb.amalgamation.gradle.dependencies.MergerDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 
+import net.fabricmc.loom.configuration.ide.RunConfig;
+import net.fabricmc.loom.configuration.ide.RunConfigSettings;
+
 public interface BaseAmalgamation {
     Dependency merge(Action<MergerDependency> configuration);
+
+    void runConfig(RunConfigSettings settings);
+
+    Iterable<RunConfigSettings> getRunConfigs();
 }

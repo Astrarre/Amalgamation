@@ -9,6 +9,17 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class BaseAmalgamationImpl implements BaseAmalgamation {
+	public static final String OPERATING_SYSTEM;
+	static {
+		String osName = System.getProperty("os.name").toLowerCase();
+		if (osName.contains("win")) {
+			OPERATING_SYSTEM = "windows";
+		} else if (osName.contains("mac")) {
+			OPERATING_SYSTEM = "osx";
+		} else {
+			OPERATING_SYSTEM = "linux";
+		}
+	}
 	public static final ExecutorService SERVICE = Executors.newWorkStealingPool();
 	protected final Project project;
 

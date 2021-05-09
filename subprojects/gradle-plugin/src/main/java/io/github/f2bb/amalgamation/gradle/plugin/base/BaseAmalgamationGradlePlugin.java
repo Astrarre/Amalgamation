@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
@@ -43,6 +44,12 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		}
 		offlineMode = parameter.isOffline();
 		this.registerProvider(target);
+
+		IdeaModel ideaModel = (IdeaModel) target.getExtensions().getByName("idea");
+		ideaModel.getModule().getExcludeDirs().addAll(target.files(".gradle", "build", ".idea", "out").getFiles());
+		ideaModel.getModule().setDownloadJavadoc(true);
+		ideaModel.getModule().setDownloadSources(true);
+		ideaModel.getModule().setInheritOutputDirs(true);
 	}
 
 	protected void registerProvider(Project target) {

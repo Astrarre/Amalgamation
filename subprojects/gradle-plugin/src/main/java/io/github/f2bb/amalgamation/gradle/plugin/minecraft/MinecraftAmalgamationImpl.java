@@ -2,6 +2,7 @@ package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
 import java.util.Objects;
 
+import io.github.f2bb.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.f2bb.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.f2bb.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
@@ -28,11 +29,8 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public Configuration libraries(String version) {
-		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
 		Configuration configuration = this.project.getConfigurations().create(version + "-libraries");
-		for (String library : Objects.requireNonNull(meta.getVersion(version), "Invalid version: " + version).getLibraries()) {
-			configuration.getDependencies().add(this.project.getDependencies().create(library));
-		}
+		configuration.getDependencies().add(new LibrariesDependency(this.project, version));
 		return configuration;
 	}
 

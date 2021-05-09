@@ -2,17 +2,22 @@ package io.github.f2bb.amalgamation.gradle.extensions;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
 import io.github.f2bb.amalgamation.platform.merger.MergeContext;
@@ -110,8 +115,9 @@ public class LauncherMeta {
 		public final int index;
 		public final String version, manifestUrl;
 		private boolean initialized;
-		private String clientJar, serverJar;
-		private List<String> libraries;
+		public String assetIndexUrl;
+		private HashedURL clientJar, serverJar;
+		private List<Library> libraries;
 
 		public Version(int index, String version, String manifestUrl) {
 			this.index = index;
@@ -119,7 +125,7 @@ public class LauncherMeta {
 			this.manifestUrl = Objects.requireNonNull(manifestUrl, "manifestUrl");
 		}
 
-		public String getClientJar() {
+		public HashedURL getClientJar() {
 			this.init();
 			return this.clientJar;
 		}
@@ -128,26 +134,169 @@ public class LauncherMeta {
 			if (!this.initialized) {
 				JsonObject versionJson = LauncherMeta.this.read(this.version + "-downloads.json", this.manifestUrl);
 				JsonObject downloads = versionJson.getAsJsonObject("downloads");
-				this.clientJar = downloads.getAsJsonObject("client").get("url").getAsString();
-				this.serverJar = downloads.getAsJsonObject("server").get("url").getAsString();
-				List<String> libraries = new ArrayList<>();
+				this.clientJar = new HashedURL(downloads.getAsJsonObject("client"), this.version + "-client.jar");
+				this.serverJar = new HashedURL(downloads.getAsJsonObject("server"), this.version + "-server.jar");
+
+				List<Library> libraries = new ArrayList<>();
 				for (JsonElement element : versionJson.getAsJsonArray("libraries")) {
-					libraries.add(element.getAsJsonObject().get("name").getAsString());
+					JsonObject object = element.getAsJsonObject();
+					JsonObject libraryDownloads = object.getAsJsonObject("downloads");
+					HashedURL mainArtifact = new HashedURL(libraryDownloads.getAsJsonObject("artifact"));
+					Map<String, HashedURL> classifiers;
+					JsonObject classifiersJson = libraryDownloads.getAsJsonObject("classifiers");
+
+					if(classifiersJson != null) {
+						classifiers = new HashMap<>();
+						for (String s : classifiersJson.keySet()) {
+							classifiers.put(s, new HashedURL(classifiersJson.getAsJsonObject(s)));
+						}
+						classifiers = Collections.unmodifiableMap(classifiers);
+					} else classifiers = Collections.emptyMap();
+
+					Map<String, String> natives;
+					JsonObject nativesJson = object.getAsJsonObject("natives");
+					if(nativesJson != null) {
+						natives = new HashMap<>();
+						for (String s : nativesJson.keySet()) {
+							natives.put(s, nativesJson.getAsJsonPrimitive(s).getAsString());
+						}
+						natives = Collections.unmodifiableMap(natives);
+					} else natives = Collections.emptyMap();
+
+					List<Rule> rules;
+					JsonArray rulesJson = object.getAsJsonArray("rules");
+					if(rulesJson != null) {
+						rules = new ArrayList<>();
+						for (JsonElement jsonElement : rulesJson) {
+							rules.add(new Rule(jsonElement.getAsJsonObject()));
+						}
+						rules = Collections.unmodifiableList(rules);
+					} else rules = Collections.emptyList();
+
+					Library library = new Library(mainArtifact, rules, classifiers, natives);
+					libraries.add(library);
 				}
 
 				this.libraries = Collections.unmodifiableList(libraries);
 				this.initialized = true;
+				this.assetIndexUrl = versionJson.getAsJsonObject("assetIndex").getAsJsonPrimitive("url").getAsString();
 			}
 		}
 
-		public String getServerJar() {
+		public HashedURL getServerJar() {
 			this.init();
 			return this.serverJar;
 		}
 
-		public List<String> getLibraries() {
+		public List<Library> getLibraries() {
 			this.init();
 			return this.libraries;
+		}
+	}
+
+	public static final class Library {
+		public final HashedURL mainDownloadUrl;
+		public final List<Rule> rules;
+		/**
+		 * classifier -> native jar url
+		 */
+		public final Map<String, HashedURL> classifierUrls;
+		public final Map<String, String> nativesOsToClassifier;
+		protected List<HashedURL> evaluatedDependencies;
+
+		public Library(HashedURL artifact, List<Rule> rules, Map<String, HashedURL> urls, Map<String, String> classifier) {
+			this.mainDownloadUrl = artifact;
+			this.rules = rules;
+			this.classifierUrls = urls;
+			this.nativesOsToClassifier = classifier;
+		}
+
+		public List<HashedURL> evaluateAllDependencies() {
+			if(this.evaluatedDependencies == null) {
+				List<HashedURL> urls = new ArrayList<>();
+				boolean includeMain = false;
+				for (Rule rule : this.rules) {
+					if(rule.action == RuleType.ALLOW) {
+						if(rule.osName == null) {
+							includeMain = true;
+						} else if(BaseAmalgamationImpl.OPERATING_SYSTEM.equals(rule.osName)) {
+							includeMain = true;
+							break;
+						}
+					} else {
+						if(rule.osName == null) {
+							includeMain = false;
+						} else if(BaseAmalgamationImpl.OPERATING_SYSTEM.equals(rule.osName)) {
+							includeMain = false;
+							break;
+						}
+					}
+				}
+
+				if(includeMain) {
+					urls.add(this.mainDownloadUrl);
+				}
+
+				String classifier = this.nativesOsToClassifier.get(BaseAmalgamationImpl.OPERATING_SYSTEM);
+				if(classifier != null) {
+					HashedURL url = this.classifierUrls.get(classifier);
+					if(url != null) {
+						urls.add(this.mainDownloadUrl);
+					}
+				}
+
+				this.classifierUrls.forEach((s, url) -> {
+					if(!this.nativesOsToClassifier.containsValue(s)) {
+						urls.add(url);
+					}
+				});
+				this.evaluatedDependencies = Collections.unmodifiableList(urls);
+			}
+			return this.evaluatedDependencies;
+		}
+	}
+
+	public static class Rule {
+		public final RuleType action;
+		public final String osName;
+		public Rule(RuleType action, String name) {
+			this.action = action;
+			this.osName = name;
+		}
+
+		public Rule(JsonObject object) {
+			this(RuleType.valueOf(object.getAsJsonPrimitive("action").getAsString().toLowerCase(Locale.ROOT)), object.getAsJsonObject("os").getAsJsonPrimitive("name").getAsString());
+		}
+
+	}
+
+	public enum RuleType {
+		ALLOW,
+		DISALLOW
+	}
+
+	public static final class HashedURL {
+		public final String hash, url, path;
+		public HashedURL(JsonObject artifact) {
+			this.hash = artifact.getAsJsonPrimitive("sha1").getAsString();
+			this.url = artifact.getAsJsonPrimitive("url").getAsString();
+			this.path = artifact.getAsJsonPrimitive("path").getAsString();
+		}
+
+		public HashedURL(JsonObject artifact, String path) {
+			this.hash = artifact.getAsJsonPrimitive("sha1").getAsString();
+			this.url = artifact.getAsJsonPrimitive("url").getAsString();
+			this.path = path;
+		}
+
+		public HashedURL(String hash, String url, String path) {
+			this.hash = hash;
+			this.url = url;
+			this.path = path;
+		}
+
+		public URL getUrl() throws MalformedURLException {
+			return new URL(this.url);
 		}
 	}
 }
