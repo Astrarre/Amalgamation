@@ -19,6 +19,7 @@
 
 package io.github.f2bb.amalgamation.platform.merger.impl.method;
 
+import io.github.astrarre.merger.impl.method.MethodKey;
 import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import io.github.f2bb.amalgamation.platform.merger.impl.MergerConfig;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;

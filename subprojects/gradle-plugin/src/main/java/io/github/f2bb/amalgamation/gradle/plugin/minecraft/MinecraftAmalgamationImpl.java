@@ -1,11 +1,8 @@
 package io.github.f2bb.amalgamation.gradle.plugin.minecraft;
 
-import java.util.Objects;
-
 import io.github.f2bb.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.f2bb.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.f2bb.amalgamation.gradle.dependencies.RemappingDependency;
-import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import org.gradle.api.Action;
 import org.gradle.api.Project;

@@ -312,5 +312,10 @@ public class LauncherMeta {
 		public URL getUrl() throws MalformedURLException {
 			return new URL(this.url);
 		}
+
+		@Override
+		public String toString() {
+			return "hashed " + this.url;
+		}
 	}
 }

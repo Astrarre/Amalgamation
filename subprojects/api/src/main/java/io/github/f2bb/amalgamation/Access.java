@@ -21,7 +21,7 @@ package io.github.f2bb.amalgamation;
 
 import java.lang.annotation.*;
 
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Repeatable(Access.Accesses.class)
 @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
 public @interface Access {

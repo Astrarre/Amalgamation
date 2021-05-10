@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.platform.merger.impl.method;
+package io.github.astrarre.merger.impl.method;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.tree.*;

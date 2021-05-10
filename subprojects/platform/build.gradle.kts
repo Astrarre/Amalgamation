@@ -34,10 +34,14 @@ tasks.processResources {
 
 repositories {
     mavenCentral()
-
     maven {
         name = "MinecraftForge"
         url = uri("https://files.minecraftforge.net/maven")
+    }
+
+    maven {
+        name = "HalfOf2"
+        url = uri("https://storage.googleapis.com/devan-maven/")
     }
 }
 
@@ -48,4 +52,23 @@ dependencies {
     implementation(project(":api"))
     implementation("org.ow2.asm:asm-commons:9.0")
     implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
+    implementation("org.apache.commons:commons-collections4:4.4")
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.5")
+    implementation("net.devtech:signutil:1.0.0")
+}
+
+tasks.register<Jar>("testJar") {
+    classifier = "tests"
+    from(sourceSets.test.get().output)
+}
+
+tasks.register<JavaExec>("testDiff") {
+    group = "tests"
+    description = "Test Diff:tm:"
+    classpath = sourceSets.test.get().runtimeClasspath
+    main = "io.github.astrarre.merger.test.MergeTest"
+    args(tasks.named("testJar").get().outputs.files.first())
+    workingDir("$rootDir/run")
+    dependsOn(tasks.named("testJar"))
 }

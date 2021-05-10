@@ -17,32 +17,36 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation;
+package io.github.astrarre.merger.impl.field;
 
-import java.lang.annotation.*;
+import java.util.Objects;
 
-/**
- * a sided platform
- *
- * example:
- * <code>
- *     public class Foo implements @Platform("forge") Runnable
- * </code>
- */
-@Retention(RetentionPolicy.CLASS)
-@Repeatable(Platform.Platforms.class)
-@Target({ElementType.TYPE_USE, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
-public @interface Platform {
+import org.objectweb.asm.tree.FieldNode;
 
-    /**
-     * @return the names of the platform. eg. ["fabric", "client"] or ["spigot"]
-     */
-    String[] value();
+public class FieldKey {
+	public final FieldNode node;
 
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.TYPE_USE, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
-    @interface Platforms {
+	public FieldKey(FieldNode node) {
+		this.node = node;
+	}
 
-        Platform[] value();
-    }
+	@Override
+	public int hashCode() {
+		return 0;
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+		if (!(object instanceof FieldKey)) {
+			return false;
+		}
+
+		FieldKey key = (FieldKey) object;
+		FieldNode a = this.node, b = key.node;
+
+		return a.access == b.access && a.name.equals(b.name) && a.desc.equals(b.desc) && Objects.equals(a.signature, b.signature);
+	}
 }
