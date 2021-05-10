@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.merger.api.PlatformId;
-import io.github.astrarre.merger.api.Platformed;
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.api.Platformed;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 

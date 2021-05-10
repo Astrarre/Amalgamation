@@ -1,4 +1,4 @@
-package io.github.astrarre.merger.api;
+package io.github.astrarre.api;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,7 +7,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import io.github.astrarre.merger.util.AsmUtil;
-import io.github.astrarre.merger.Classes;
+import io.github.astrarre.Classes;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class Platformed<T> implements Identified {

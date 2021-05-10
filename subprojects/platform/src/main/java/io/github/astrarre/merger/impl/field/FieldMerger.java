@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.merger.Classes;
+import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.merger.api.PlatformId;
-import io.github.astrarre.merger.api.Platformed;
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.api.Platformed;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.ClassVisitor;
@@ -54,16 +54,18 @@ public class FieldMerger extends Merger {
 			}
 
 			if(counter != 0) {
+				if(clone.invisibleAnnotations == null) clone.invisibleAnnotations = new ArrayList<>();
 				clone.invisibleAnnotations.add(displace(key.node.name));
+				clone.name = current;
 			}
 
 			if(ids.size() != all.size()) {
-				if (clone.visibleAnnotations == null) {
-					clone.visibleAnnotations = new ArrayList<>();
+				if (clone.invisibleAnnotations == null) {
+					clone.invisibleAnnotations = new ArrayList<>();
 				}
 
 				for (PlatformId classInfo : ids) {
-					clone.visibleAnnotations.add(classInfo.createAnnotation());
+					clone.invisibleAnnotations.add(classInfo.createAnnotation());
 				}
 			}
 

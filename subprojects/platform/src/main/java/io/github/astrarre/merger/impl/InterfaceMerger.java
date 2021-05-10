@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.astrarre.merger.util.AsmUtil;
-import io.github.astrarre.merger.Classes;
+import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.merger.api.PlatformId;
-import io.github.astrarre.merger.api.Platformed;
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.api.Platformed;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.Type;

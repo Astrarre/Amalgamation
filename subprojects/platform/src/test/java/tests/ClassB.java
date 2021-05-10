@@ -8,6 +8,9 @@ public abstract class ClassB implements Consumer<Integer> {
 
 	}
 
+	public void run() {
+	}
+
 	public class Inner {
 
 	}

@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.merger.Classes;
+import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.merger.api.PlatformId;
-import io.github.astrarre.merger.api.Platformed;
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.api.Platformed;
 import io.github.astrarre.merger.util.AsmUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;

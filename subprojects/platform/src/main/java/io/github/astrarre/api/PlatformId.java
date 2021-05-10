@@ -1,10 +1,10 @@
-package io.github.astrarre.merger.api;
+package io.github.astrarre.api;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.github.astrarre.merger.Classes;
+import io.github.astrarre.Classes;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class PlatformId implements Identified {

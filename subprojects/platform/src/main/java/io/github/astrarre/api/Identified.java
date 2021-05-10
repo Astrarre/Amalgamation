@@ -1,4 +1,4 @@
-package io.github.astrarre.merger.api;
+package io.github.astrarre.api;
 
 public interface Identified {
 	PlatformId get();

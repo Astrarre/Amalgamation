@@ -18,7 +18,6 @@ import io.github.f2bb.amalgamation.Platform;
 public class ClassA extends ArrayList implements Runnable, Function<Integer, String> {
 	@Override
 	public void run() {
-
 	}
 
 	@Override

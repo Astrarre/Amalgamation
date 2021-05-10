@@ -1,4 +1,4 @@
-package io.github.astrarre.merger;
+package io.github.astrarre;
 
 import io.github.f2bb.amalgamation.Access;
 import io.github.f2bb.amalgamation.Displace;
