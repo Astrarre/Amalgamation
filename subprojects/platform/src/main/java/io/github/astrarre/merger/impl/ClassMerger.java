@@ -12,7 +12,6 @@ import io.github.astrarre.api.Platformed;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassMerger extends Merger {
-
 	public ClassMerger(Map<String, ?> properties) {
 		super(properties);
 	}

@@ -28,55 +28,6 @@ public class AccessMerger extends Merger implements Opcodes {
 		super(properties);
 	}
 
-	public static int getAccess(AnnotationNode annotation) {
-		List<Object> values = annotation.values;
-		List<String> vals = (List<String>) values.get(values.indexOf("flags") + 1);
-		int access = 0;
-		for (String val : vals) {
-			switch (val) {
-			case "public":
-				access |= ACC_PUBLIC;
-				break;
-			case "protect":
-				access |= ACC_PROTECTED;
-				break;
-			case "private":
-				access |= ACC_PRIVATE;
-				break;
-			case "interface":
-				access |= ACC_INTERFACE;
-				break;
-			case "abstract":
-				access |= ACC_ABSTRACT;
-				break;
-			case "enum":
-				access |= ACC_ENUM;
-				break;
-			case "@interface":
-				access |= ACC_ANNOTATION;
-				break;
-			case "final":
-				access |= ACC_FINAL;
-				break;
-			case "static":
-				access |= ACC_STATIC;
-				break;
-			case "synchronized":
-				access |= ACC_SYNCHRONIZED;
-				break;
-			case "volatile":
-				access |= ACC_VOLATILE;
-				break;
-			case "transient":
-				access |= ACC_TRANSIENT;
-				break;
-			case "native":
-				access |= ACC_NATIVE;
-				break;
-			}
-		}
-		return access;
-	}
 
 	@Override
 	public void merge(Set<PlatformId> allActivePlatforms,

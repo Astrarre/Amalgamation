@@ -3,6 +3,7 @@ package io.github.astrarre.api;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -52,11 +53,8 @@ public class Platformed<T> implements Identified {
 		List<PlatformId> platforms = null;
 		for (AnnotationNode node : annotationNodes) {
 			if(Classes.PLATFORM_DESC.equals(node.desc)) {
-				List<String> names = new ArrayList<>(AsmUtil.get(node, "value", Collections.emptyList()));
-				names.addAll(activePlatform.names);
-				PlatformId platform = new PlatformId(names);
 				if(platforms == null) platforms = new ArrayList<>();
-				platforms.add(platform);
+				platforms.add(getPlatform(node, activePlatform));
 			}
 		}
 
@@ -65,6 +63,12 @@ public class Platformed<T> implements Identified {
 		} else {
 			return platforms;
 		}
+	}
+
+	public static PlatformId getPlatform(AnnotationNode node, PlatformId active) {
+		List<String> names = new ArrayList<>(AsmUtil.get(node, "value", Collections.emptyList()));
+		names.addAll(active.names);
+		return new PlatformId(names);
 	}
 
 	@Override

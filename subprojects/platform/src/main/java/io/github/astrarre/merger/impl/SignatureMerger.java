@@ -1,4 +1,4 @@
-package io.github.astrarre.merger;
+package io.github.astrarre.merger.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
+import io.github.astrarre.merger.Merger;
 import net.devtech.signutil.v0.api.TypeArgument;
 import net.devtech.signutil.v0.api.bounded.ClassSignature;
 import net.devtech.signutil.v0.api.bounded.TypeParameter;

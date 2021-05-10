@@ -8,6 +8,7 @@ import io.github.astrarre.Classes;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class PlatformId implements Identified {
+	public static final PlatformId EMPTY = of();
 	public final List<String> names;
 
 	public PlatformId(List<String> names) {

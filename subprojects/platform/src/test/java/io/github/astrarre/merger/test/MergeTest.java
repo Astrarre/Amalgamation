@@ -17,7 +17,7 @@ import java.util.Set;
 
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
-import io.github.astrarre.merger.SignatureMerger;
+import io.github.astrarre.merger.impl.SignatureMerger;
 import io.github.astrarre.merger.impl.AccessMerger;
 import io.github.astrarre.merger.impl.ClassMerger;
 import io.github.astrarre.merger.impl.HeaderMerger;
