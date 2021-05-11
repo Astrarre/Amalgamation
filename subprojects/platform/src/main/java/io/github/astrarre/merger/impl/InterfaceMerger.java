@@ -25,10 +25,7 @@ public class InterfaceMerger extends Merger {
 	}
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		Set<PlatformId> allPlatforms = new HashSet<>();
 		MultiValuedMap<String, PlatformId> interfacesByPlatform = new ArrayListValuedHashMap<>();
 		for (Platformed<ClassNode> input : inputs) {

@@ -17,10 +17,7 @@ public class ClassMerger extends Merger {
 	}
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		Set<PlatformId> computed = new HashSet<>();
 		List<Platformed<ClassNode>> recomputedInputs = new ArrayList<>();
 		for (Platformed<ClassNode> input : inputs) {
@@ -33,11 +30,9 @@ public class ClassMerger extends Merger {
 		inputs.clear();
 		inputs.addAll(recomputedInputs);
 
-		if (!allActivePlatforms.equals(computed)) {
-			for (PlatformId ids : computed) {
-				if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();
-				target.invisibleAnnotations.add(ids.createAnnotation()); // todo reduce
-			}
+		for (PlatformId ids : computed) { // todo reduce
+			if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();
+			target.invisibleAnnotations.add(ids.createAnnotation());
 		}
 	}
 }

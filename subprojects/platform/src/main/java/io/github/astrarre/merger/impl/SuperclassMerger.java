@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
@@ -23,10 +22,7 @@ public class SuperclassMerger extends Merger {
 	}
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		Map<String, List<Platformed<String>>> supers = new HashMap<>();
 		for (Platformed<ClassNode> info : inputs) {
 			if(info.val.invisibleAnnotations != null) {

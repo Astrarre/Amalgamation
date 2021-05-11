@@ -73,7 +73,7 @@ public class MergeTest {
 				combinations.add(Arrays.asList("forge", "fabric", "spigot"));
 				combinations.add(Arrays.asList("1.16.5", "1.16.4"));
 				for (Merger merger : mergers) {
-					merger.merge(activePlatforms, nodes, merged, combinations);
+					merger.merge(nodes, merged, combinations);
 				}
 
 				ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);

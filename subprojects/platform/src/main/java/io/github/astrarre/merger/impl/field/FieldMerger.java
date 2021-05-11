@@ -24,10 +24,7 @@ public class FieldMerger extends Merger {
 	}
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		Set<PlatformId> all = new HashSet<>();
 		MultiValuedMap<FieldKey, PlatformId> fieldAgreementMap = new ArrayListValuedHashMap<>();
 		for (Platformed<ClassNode> input : inputs) {

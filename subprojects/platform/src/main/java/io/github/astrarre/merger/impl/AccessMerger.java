@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
@@ -30,10 +29,7 @@ public class AccessMerger extends Merger implements Opcodes {
 
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		MultiValuedMap<Integer, PlatformId> accessFlags = new ArrayListValuedHashMap<>();
 		for (Platformed<ClassNode> input : inputs) {
 			for (Platformed<ClassNode> platformed : input.split(AsmUtil.get(AsmUtil.withDesc(input.val.invisibleAnnotations,

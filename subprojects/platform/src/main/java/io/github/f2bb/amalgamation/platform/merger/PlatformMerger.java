@@ -22,6 +22,7 @@ package io.github.f2bb.amalgamation.platform.merger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,9 +30,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.api.Platformed;
+import io.github.astrarre.merger.Merger;
+import io.github.astrarre.merger.impl.AccessMerger;
+import io.github.astrarre.merger.impl.ClassMerger;
+import io.github.astrarre.merger.impl.HeaderMerger;
+import io.github.astrarre.merger.impl.InnerClassAttributeMerger;
+import io.github.astrarre.merger.impl.InterfaceMerger;
+import io.github.astrarre.merger.impl.SignatureMerger;
+import io.github.astrarre.merger.impl.SuperclassMerger;
 import io.github.f2bb.amalgamation.Platform;
-import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
-import io.github.f2bb.amalgamation.platform.merger.impl.MergerConfig;
 import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -43,7 +52,7 @@ public class PlatformMerger {
 
 	private static final String PLATFORM_DESCRIPTOR = Type.getDescriptor(Platform.class);
 
-	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms, boolean compareInstructions) throws IOException {
+	public static void merge(MergeContext mergeContext, Collection<PlatformData> platforms, Map<String, ?> configuration) throws IOException {
 		Map<String, List<PlatformData>> mergeClasses = new HashMap<>();
 
 		for (PlatformData platform : platforms) {
@@ -56,14 +65,24 @@ public class PlatformMerger {
 			});
 		}
 
-		mergeClasses(mergeContext, mergeClasses, platforms, compareInstructions);
+		mergeClasses(mergeContext, mergeClasses, platforms, configuration);
 	}
 
 	private static void mergeClasses(MergeContext mergeContext,
 			Map<String, List<PlatformData>> classes,
 			Collection<PlatformData> availablePlatforms,
-			boolean compareInstructions) {
+			Map<String, ?> configuration) {
 		Set<CompletableFuture<?>> futures = new HashSet<>();
+
+		List<Merger> mergers = new ArrayList<>();
+		mergers.add(new AccessMerger(configuration));
+		mergers.add(new ClassMerger(configuration));
+		mergers.add(new HeaderMerger(configuration));
+		mergers.add(new InnerClassAttributeMerger(configuration));
+		mergers.add(new InterfaceMerger(configuration));
+		mergers.add(new SignatureMerger(configuration));
+		mergers.add(new SuperclassMerger(configuration));
+
 
 		classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
 			if (platforms.size() == 1) {
@@ -89,17 +108,18 @@ public class PlatformMerger {
 
 				mergeContext.accept(node);
 			} else {
-				List<ClassInfo> infos = new ArrayList<>();
+				List<Platformed<ClassNode>> infos = new ArrayList<>();
 
 				for (PlatformData platform : platforms) {
-					infos.add(new ClassInfo(read(platform.get(file)), platform.name));
+					infos.add(new Platformed<>(new PlatformId(platform.name), read(platform.get(file))));
 				}
 
-				MergerConfig context = new MergerConfig(availablePlatforms, compareInstructions);
-				ClassNode node = new ClassNode();
-				Merger.MERGER.merge(context, node, infos);
+				ClassNode merged = new ClassNode();
+				for (Merger merger : mergers) {
+					merger.merge(infos, merged, Collections.emptyList()); // todo provide pairings
+				}
 
-				mergeContext.accept(node);
+				mergeContext.accept(merged);
 			}
 		}, mergeContext.getExecutor())));
 

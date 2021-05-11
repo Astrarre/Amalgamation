@@ -19,8 +19,16 @@
 
 package io.github.f2bb.amalgamation.gradle.tasks;
 
+import io.github.astrarre.api.PlatformId;
+import io.github.astrarre.splitter.Splitter;
+import io.github.astrarre.splitter.impl.AccessSplitter;
+import io.github.astrarre.splitter.impl.ClassSplitter;
+import io.github.astrarre.splitter.impl.HeaderSplitter;
+import io.github.astrarre.splitter.impl.InnerClassAttributeSplitter;
+import io.github.astrarre.splitter.impl.InterfaceSplitter;
+import io.github.astrarre.splitter.impl.SignatureSplitter;
+import io.github.astrarre.splitter.impl.SuperclassSplitter;
 import io.github.f2bb.amalgamation.gradle.util.DelegatedFilterReader;
-import io.github.f2bb.amalgamation.platform.merger.impl.Merger;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
 import org.objectweb.asm.ClassReader;
@@ -33,7 +41,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class StripJar extends Jar {
-    private final Set<String> platforms = new HashSet<>();
+    private final List<String> platforms = new ArrayList<>();
     public StripJar() {
         getMainSpec().appendCachingSafeCopyAction(fileCopyDetails -> {
             if (!fileCopyDetails.getName().endsWith(".class")) {
@@ -48,21 +56,32 @@ public class StripJar extends Jar {
                 throw new RuntimeException(exception);
             }
 
-            if (Merger.MERGER.strip(node, platforms)) {
-                fileCopyDetails.exclude();
-            } else {
-                ClassWriter writer = new ClassWriter(0);
-                node.accept(writer);
-
-                Map<String, Object> properties = new HashMap<>();
-                properties.put("data", new InputStreamReader(new ByteArrayInputStream(writer.toByteArray())));
-                fileCopyDetails.filter(properties, DelegatedFilterReader.class);
+            List<Splitter> splitters = new ArrayList<>();
+            splitters.add(new AccessSplitter(null));
+            splitters.add(new ClassSplitter(null));
+            splitters.add(new HeaderSplitter(null));
+            splitters.add(new InnerClassAttributeSplitter(null));
+            splitters.add(new InterfaceSplitter(null));
+            splitters.add(new SignatureSplitter(null));
+            splitters.add(new SuperclassSplitter(null));
+            ClassNode split = new ClassNode();
+            for (Splitter splitter : splitters) {
+                if(splitter.split(node, new PlatformId(this.platforms), split)) {
+                    fileCopyDetails.exclude();
+                    return;
+                }
             }
+            ClassWriter writer = new ClassWriter(0);
+            split.accept(writer);
+
+            Map<String, Object> properties = new HashMap<>();
+            properties.put("data", new InputStreamReader(new ByteArrayInputStream(writer.toByteArray())));
+            fileCopyDetails.filter(properties, DelegatedFilterReader.class);
         });
     }
 
     @Input
-    public Set<String> getPlatforms() {
+    public List<String> getPlatforms() {
         return platforms;
     }
 

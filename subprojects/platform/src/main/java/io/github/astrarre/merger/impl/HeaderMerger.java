@@ -3,10 +3,8 @@ package io.github.astrarre.merger.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -17,10 +15,7 @@ public class HeaderMerger extends Merger {
 	}
 
 	@Override
-	public void merge(Set<PlatformId> allActivePlatforms,
-			List<Platformed<ClassNode>> inputs,
-			ClassNode target,
-			List<List<String>> platformCombinations) {
+	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
 		ClassNode copyTo = inputs.get(0).val;
 		target.name = copyTo.name;
 		List<AnnotationNode> visible = new ArrayList<>();
