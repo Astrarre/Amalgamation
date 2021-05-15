@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.astrarre.Classes;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
@@ -29,9 +30,9 @@ public class AccessMerger extends Merger implements Opcodes {
 
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		MultiValuedMap<Integer, PlatformId> accessFlags = new ArrayListValuedHashMap<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			for (Platformed<ClassNode> platformed : input.split(AsmUtil.get(AsmUtil.withDesc(input.val.invisibleAnnotations,
 					Classes.ACCESS_DESC,
 					node -> true), "platforms", Collections.emptyList()))) {

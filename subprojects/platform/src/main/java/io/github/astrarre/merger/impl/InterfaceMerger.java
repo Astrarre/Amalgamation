@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.util.AsmUtil;
 import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;
@@ -25,10 +26,10 @@ public class InterfaceMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Set<PlatformId> allPlatforms = new HashSet<>();
 		MultiValuedMap<String, PlatformId> interfacesByPlatform = new ArrayListValuedHashMap<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			for (Platformed<String> platformed : input.split(c -> c.interfaces, (c, s) -> AsmUtil.get(
 					AsmUtil.withDesc(c.invisibleAnnotations,
 							Classes.INTERFACE_DESC,

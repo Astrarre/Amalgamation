@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.astrarre.Classes;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
@@ -22,9 +23,9 @@ public class SuperclassMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Map<String, List<Platformed<String>>> supers = new HashMap<>();
-		for (Platformed<ClassNode> info : inputs) {
+		for (RawPlatformClass info : inputs) {
 			if(info.val.invisibleAnnotations != null) {
 				for (AnnotationNode annotation : info.val.invisibleAnnotations) {
 					if (Classes.PARENT_DESC.equals(annotation.desc)) {

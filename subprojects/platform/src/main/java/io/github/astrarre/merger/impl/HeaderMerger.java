@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.api.Platformed;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -15,11 +15,11 @@ public class HeaderMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		ClassNode copyTo = inputs.get(0).val;
 		target.name = copyTo.name;
 		List<AnnotationNode> visible = new ArrayList<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			ClassNode node = input.val;
 			if(node.visibleAnnotations != null) {
 				visible.addAll(node.visibleAnnotations);
@@ -28,7 +28,7 @@ public class HeaderMerger extends Merger {
 		target.visibleAnnotations = visible;
 
 		int maxVersion = 0;
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			if(input.val.version > maxVersion) {
 				maxVersion = input.val.version;
 			}

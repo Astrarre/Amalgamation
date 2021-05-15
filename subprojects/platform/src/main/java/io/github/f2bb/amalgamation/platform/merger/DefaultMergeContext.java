@@ -25,20 +25,24 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public abstract class AbstractMergeContext implements MergeContext {
+public class DefaultMergeContext implements MergeContext {
 	private final Iterable<Path> mergedJarRoots;
 	private final Executor executor;
+	private final Map<String, List<String>> idMap;
 
-	public AbstractMergeContext(Iterable<Path> mergedJarRoots) {
-		this(mergedJarRoots, Executors.newWorkStealingPool());
+	public DefaultMergeContext(Iterable<Path> mergedJarRoots, Map<String, List<String>> map) {
+		this(mergedJarRoots, Executors.newWorkStealingPool(), map);
 	}
 
-	public AbstractMergeContext(Iterable<Path> mergedJarRoots, Executor executor) {
+	public DefaultMergeContext(Iterable<Path> mergedJarRoots, Executor executor, Map<String, List<String>> map) {
 		this.mergedJarRoots = mergedJarRoots;
 		this.executor = executor;
+		this.idMap = map;
 	}
 
 	@Override
@@ -87,5 +91,10 @@ public abstract class AbstractMergeContext implements MergeContext {
 	@Override
 	public boolean shouldAttemptMerge(PlatformData platform, String name) {
 		return true;
+	}
+
+	@Override
+	public Map<String, List<String>> idMap() {
+		return this.idMap;
 	}
 }

@@ -22,8 +22,6 @@ import com.google.gson.JsonPrimitive;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
-import io.github.f2bb.amalgamation.platform.merger.AbstractMergeContext;
-import io.github.f2bb.amalgamation.platform.merger.MergeContext;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 
@@ -36,20 +34,6 @@ public class LauncherMeta {
 	public LauncherMeta(Gradle gradle, Logger logger) {
 		this.globalCache = CachedFile.globalCache(gradle);
 		this.logger = logger;
-	}
-
-	public MergeContext createContext(Iterable<Path> output) {
-		return new AbstractMergeContext(output) {
-			@Override
-			public int versionIndex(String string) {
-				LauncherMeta.Version version = LauncherMeta.this.getVersion(string);
-				if (version == null) {
-					return -1;
-				} else {
-					return version.index;
-				}
-			}
-		};
 	}
 
 	public Version getVersion(String version) {

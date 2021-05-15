@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
@@ -17,18 +18,13 @@ public class ClassMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Set<PlatformId> computed = new HashSet<>();
-		List<Platformed<ClassNode>> recomputedInputs = new ArrayList<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			for (Platformed<ClassNode> platformed : input.split(n -> n.invisibleAnnotations)) {
 				computed.add(platformed.id);
-				recomputedInputs.add(platformed);
 			}
 		}
-
-		inputs.clear();
-		inputs.addAll(recomputedInputs);
 
 		for (PlatformId ids : computed) { // todo reduce
 			if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();

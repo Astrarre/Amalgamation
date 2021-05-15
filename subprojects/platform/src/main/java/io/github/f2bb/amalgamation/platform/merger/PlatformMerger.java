@@ -22,7 +22,6 @@ package io.github.f2bb.amalgamation.platform.merger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import io.github.astrarre.api.PlatformId;
-import io.github.astrarre.api.Platformed;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.merger.impl.AccessMerger;
 import io.github.astrarre.merger.impl.ClassMerger;
@@ -41,7 +40,6 @@ import io.github.astrarre.merger.impl.InterfaceMerger;
 import io.github.astrarre.merger.impl.SignatureMerger;
 import io.github.astrarre.merger.impl.SuperclassMerger;
 import io.github.f2bb.amalgamation.Platform;
-import io.github.f2bb.amalgamation.platform.util.ClassInfo;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
@@ -83,7 +81,6 @@ public class PlatformMerger {
 		mergers.add(new SignatureMerger(configuration));
 		mergers.add(new SuperclassMerger(configuration));
 
-
 		classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
 			if (platforms.size() == 1) {
 				// This class is only present on one platform
@@ -108,15 +105,15 @@ public class PlatformMerger {
 
 				mergeContext.accept(node);
 			} else {
-				List<Platformed<ClassNode>> infos = new ArrayList<>();
+				List<RawPlatformClass> infos = new ArrayList<>();
 
 				for (PlatformData platform : platforms) {
-					infos.add(new Platformed<>(new PlatformId(platform.name), read(platform.get(file))));
+					infos.add(new RawPlatformClass(new PlatformId(platform.name), read(platform.get(file)), platform));
 				}
 
 				ClassNode merged = new ClassNode();
 				for (Merger merger : mergers) {
-					merger.merge(infos, merged, Collections.emptyList()); // todo provide pairings
+					merger.merge(infos, merged, mergeContext.idMap());
 				}
 
 				mergeContext.accept(merged);

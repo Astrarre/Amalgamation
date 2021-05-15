@@ -17,6 +17,7 @@ import java.util.Set;
 
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.impl.SignatureMerger;
 import io.github.astrarre.merger.impl.AccessMerger;
 import io.github.astrarre.merger.impl.ClassMerger;
@@ -50,9 +51,9 @@ public class MergeTest {
 				activePlatforms.add(forge);
 				activePlatforms.add(fabricClient);
 
-				List<Platformed<ClassNode>> nodes = new ArrayList<>();
-				nodes.add(new Platformed<>(fabric, aNode));
-				nodes.add(new Platformed<>(forge, bNode));
+				List<RawPlatformClass> nodes = new ArrayList<>();
+				nodes.add(new RawPlatformClass(fabric, aNode, null));
+				nodes.add(new RawPlatformClass(forge, bNode, null));
 				//nodes.add(new Platformed<>(fabricClient, aNode));
 
 				Map<String, Object> config = new HashMap<>();

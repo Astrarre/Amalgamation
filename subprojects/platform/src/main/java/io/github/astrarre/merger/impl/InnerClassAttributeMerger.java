@@ -3,8 +3,8 @@ package io.github.astrarre.merger.impl;
 import java.util.List;
 import java.util.Map;
 
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
-import io.github.astrarre.api.Platformed;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 
@@ -14,9 +14,9 @@ public class InnerClassAttributeMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		inputs.stream()
-		      .map(Platformed::getVal)
+		      .map(RawPlatformClass::getVal)
 		      .map(node -> node.innerClasses)
 		      .flatMap(List::stream)
 		      .map(InnerClassNodeWrapper::new)

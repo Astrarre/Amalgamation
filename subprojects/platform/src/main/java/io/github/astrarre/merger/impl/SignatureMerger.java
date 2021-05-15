@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.api.Platformed;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import net.devtech.signutil.v0.api.bounded.ClassSignature;
 import net.devtech.signutil.v0.api.bounded.TypeParameter;
@@ -18,7 +18,7 @@ public class SignatureMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Map<String, TypeParameter> typeArguments = new HashMap<>();
 		ClassType superClass = ClassType.create("L" + target.superName + ";");
 		Map<String, ClassType> interfaces = new HashMap<>();
@@ -27,7 +27,7 @@ public class SignatureMerger extends Merger {
 		}
 
 		boolean special = false;
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			if(input.val.signature == null) continue;
 			special = true;
 			ClassSignature signature = ClassSignature.create(input.val.signature);

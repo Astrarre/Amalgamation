@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
@@ -26,10 +27,10 @@ public class MethodMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Set<PlatformId> all = new HashSet<>();
 		MultiValuedMap<MethodKey, PlatformId> methodAgreementMap = new ArrayListValuedHashMap<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			for (Platformed<MethodNode> platformed : input.split(c -> c.methods, (c, f) -> f.invisibleAnnotations)) {
 				methodAgreementMap.put(new MethodKey(this.compareInstructions, platformed.val), platformed.id);
 				all.add(platformed.id);

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.astrarre.Classes;
+import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
@@ -24,10 +25,10 @@ public class FieldMerger extends Merger {
 	}
 
 	@Override
-	public void merge(List<Platformed<ClassNode>> inputs, ClassNode target, List<List<String>> platformCombinations) {
+	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		Set<PlatformId> all = new HashSet<>();
 		MultiValuedMap<FieldKey, PlatformId> fieldAgreementMap = new ArrayListValuedHashMap<>();
-		for (Platformed<ClassNode> input : inputs) {
+		for (RawPlatformClass input : inputs) {
 			for (Platformed<FieldNode> platformed : input.split(c -> c.fields, (c, f) -> f.invisibleAnnotations)) {
 				fieldAgreementMap.put(new FieldKey(platformed.val), platformed.id);
 				all.add(platformed.id);
