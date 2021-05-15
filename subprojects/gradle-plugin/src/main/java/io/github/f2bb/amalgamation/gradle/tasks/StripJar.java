@@ -27,6 +27,7 @@ import io.github.astrarre.splitter.impl.HeaderSplitter;
 import io.github.astrarre.splitter.impl.InnerClassAttributeSplitter;
 import io.github.astrarre.splitter.impl.InterfaceSplitter;
 import io.github.astrarre.splitter.impl.SignatureSplitter;
+import io.github.astrarre.splitter.impl.Splitters;
 import io.github.astrarre.splitter.impl.SuperclassSplitter;
 import io.github.f2bb.amalgamation.gradle.util.DelegatedFilterReader;
 import org.gradle.api.tasks.Input;
@@ -43,6 +44,7 @@ import java.util.*;
 public class StripJar extends Jar {
     private final List<String> platforms = new ArrayList<>();
     public StripJar() {
+        List<Splitter> splitters = Splitters.defaults(null);
         getMainSpec().appendCachingSafeCopyAction(fileCopyDetails -> {
             if (!fileCopyDetails.getName().endsWith(".class")) {
                 return;
@@ -56,14 +58,6 @@ public class StripJar extends Jar {
                 throw new RuntimeException(exception);
             }
 
-            List<Splitter> splitters = new ArrayList<>();
-            splitters.add(new AccessSplitter(null));
-            splitters.add(new ClassSplitter(null));
-            splitters.add(new HeaderSplitter(null));
-            splitters.add(new InnerClassAttributeSplitter(null));
-            splitters.add(new InterfaceSplitter(null));
-            splitters.add(new SignatureSplitter(null));
-            splitters.add(new SuperclassSplitter(null));
             ClassNode split = new ClassNode();
             for (Splitter splitter : splitters) {
                 if(splitter.split(node, new PlatformId(this.platforms), split)) {

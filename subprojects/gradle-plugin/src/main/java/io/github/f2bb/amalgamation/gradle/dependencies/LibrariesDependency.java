@@ -53,7 +53,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 				input -> Iterables.transform(input.evaluateAllDependencies(), dependency -> {
 					Path jar;
 					if (FALLBACK.equals(this.librariesDirectory)) {
-						jar = CachedFile.globalCache(this.project.getGradle());
+						jar = CachedFile.globalCache(this.project.getGradle()).resolve(dependency.path);
 					} else {
 						jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
 					}

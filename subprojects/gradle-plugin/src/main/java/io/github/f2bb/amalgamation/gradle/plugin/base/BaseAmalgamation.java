@@ -19,15 +19,22 @@
 
 package io.github.f2bb.amalgamation.gradle.plugin.base;
 
+import java.io.File;
+
 import io.github.f2bb.amalgamation.gradle.dependencies.MergerDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 
 import net.fabricmc.loom.configuration.ide.RunConfig;
 import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 
 public interface BaseAmalgamation {
     Dependency merge(Action<MergerDependency> configuration);
+
+    Provider<FileCollection> splitClasspath(Action<ConfigurableFileCollection> config, String... platforms);
 
     //todo void runConfig(RunConfigSettings settings);
 

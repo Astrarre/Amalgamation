@@ -123,7 +123,7 @@ public class PlatformMerger {
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 	}
 
-	private static ClassNode read(byte[] bytes) {
+	public static ClassNode read(byte[] bytes) {
 		ClassNode node = new ClassNode();
 		new ClassReader(bytes).accept(node, 0);
 		return node;

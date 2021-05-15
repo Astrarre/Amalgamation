@@ -71,7 +71,8 @@ public class AccessSplitter extends Splitter {
 
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
-		for (AnnotationNode annotation : input.visibleAnnotations) {
+		if(input.invisibleAnnotations == null) return false;
+		for (AnnotationNode annotation : input.invisibleAnnotations) {
 			if (Classes.ACCESS_DESC.equals(annotation.desc)) {
 				List<AnnotationNode> platforms = AsmUtil.get(annotation, "platforms", Collections.emptyList());
 				if (SplitterUtil.matches(platforms, forPlatform)) {

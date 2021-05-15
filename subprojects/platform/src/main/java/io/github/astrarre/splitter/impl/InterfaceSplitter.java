@@ -22,8 +22,8 @@ public class InterfaceSplitter extends Splitter {
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
 		target.interfaces = new ArrayList<>(input.interfaces);
-		if (input.visibleAnnotations != null) {
-			for (AnnotationNode annotation : input.visibleAnnotations) {
+		if (input.invisibleAnnotations != null) {
+			for (AnnotationNode annotation : input.invisibleAnnotations) {
 				if(Classes.INTERFACE_DESC.equals(annotation.desc)) {
 					Type type = AsmUtil.get(annotation, "parent", Classes.OBJECT_TYPE);
 					List<AnnotationNode> platforms = AsmUtil.get(annotation, "platforms", Collections.emptyList());

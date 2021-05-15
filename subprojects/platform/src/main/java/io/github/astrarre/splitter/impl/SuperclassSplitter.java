@@ -13,7 +13,7 @@ public class SuperclassSplitter extends Splitter {
 
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
-		input.superName = target.superName;
+		target.superName = input.superName; // todo parent annotation
 		return false;
 	}
 }

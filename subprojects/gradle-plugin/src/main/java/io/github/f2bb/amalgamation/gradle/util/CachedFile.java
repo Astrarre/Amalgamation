@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.func.UnsafeConsumer;
+import org.gradle.api.Project;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,10 @@ public abstract class CachedFile<T> {
 
 	public static Path globalCache(Gradle gradle) {
 		return gradle.getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation");
+	}
+
+	public static Path projectCache(Project project) {
+		return project.getBuildDir().toPath().resolve("amalgamation-caches");
 	}
 
 	public static Path forHash(Path dir, UnsafeConsumer<PrimitiveSink> hashing) {

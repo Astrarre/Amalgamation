@@ -56,12 +56,25 @@ dependencies {
         mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
         remap ag.merge {
             compareInstructions = false
-            include(ag.client('1.16.5'), 'client')
-            include(ag.server('1.16.5'), 'server')
+            include(ag.client('1.16.5'), of('side', 'client'))
+            include(ag.server('1.16.5'), of('side', 'server'))
         }
     }
     implementation ag.libraries('1.16.5')
 }
+
+
+task testDiff(type: JavaExec) {
+    group = "tests"
+    description = "Test Diff:tm:"
+    classpath = ag.splitClasspath({
+        it.from sourceSets.main.runtimeClasspath
+    }, 'client').get()
+    main = "me.ramidzkh.concern.Concern"
+    args("hello")
+    workingDir("$rootDir/run")
+}
+tasks.testDiff.dependsOn(tasks.compileJava)
 
 /*
 task stripFabric_1_16(type: StripJar) {
