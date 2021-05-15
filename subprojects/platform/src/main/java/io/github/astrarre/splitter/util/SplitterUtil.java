@@ -32,6 +32,8 @@ public class SplitterUtil {
 						nodes.add(created.createAnnotation());
 					}
 				}
+			} else {
+				nodes.add(node);
 			}
 		}
 		return nodes;

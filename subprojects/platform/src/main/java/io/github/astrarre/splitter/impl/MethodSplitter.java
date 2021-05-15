@@ -32,9 +32,14 @@ public class MethodSplitter extends Splitter {
 				continue;
 			}
 
-			for (AnnotationNode annotation : method.invisibleAnnotations) {
-				if(Classes.DISPLACE_DESC.equals(annotation.desc)) {
-					method.name = AsmUtil.get(annotation, "value", method.name);
+			method.invisibleAnnotations = SplitterUtil.stripAnnotations(method.invisibleAnnotations, forPlatform);
+
+			Iterator<AnnotationNode> iter = method.invisibleAnnotations.iterator();
+			while (iter.hasNext()) {
+				AnnotationNode annotation = iter.next();
+				if (Classes.DISPLACE_DESC.equals(annotation.desc)) {
+					method.name = AsmUtil.get(annotation, "value", method.name); // todo technically this should be copied
+					iter.remove();
 				}
 			}
 		}

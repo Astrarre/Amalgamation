@@ -1,5 +1,7 @@
 package io.github.f2bb.amalgamation.gradle.util;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -10,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -17,7 +21,10 @@ import java.util.function.Supplier;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.github.f2bb.amalgamation.gradle.extensions.LauncherMeta;
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.f2bb.amalgamation.gradle.util.func.UnsafeConsumer;
@@ -132,7 +139,9 @@ public abstract class CachedFile<T> {
 				}
 
 				try { // Try download to the output
-					Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
+					InputStream stream = connection.getInputStream();
+					Files.copy(stream, to, StandardCopyOption.REPLACE_EXISTING);
+					stream.close();
 				} catch (IOException e) {
 					Files.delete(to); // Probably isn't good if it fails to copy/save
 					clock.close();
@@ -292,7 +301,9 @@ public abstract class CachedFile<T> {
 		try {
 			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
 			if (Files.exists(path)) {
-				return GSON.fromJson(Files.newBufferedReader(path), this.value);
+				try(BufferedReader reader = Files.newBufferedReader(path)) {
+					return GSON.fromJson(reader, this.value);
+				}
 			} else {
 				return null;
 			}
@@ -304,11 +315,14 @@ public abstract class CachedFile<T> {
 	public void setData(T data) {
 		try {
 			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
-			GSON.toJson(data, Files.newBufferedWriter(path));
+			try(BufferedWriter writer = Files.newBufferedWriter(path)) {
+				GSON.toJson(data, writer);
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
+
 
 	/**
 	 * if the file exists, it will return the reader, else it will update the file and get the reader.

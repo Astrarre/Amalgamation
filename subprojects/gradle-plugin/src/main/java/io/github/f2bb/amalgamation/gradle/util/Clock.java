@@ -3,7 +3,7 @@ package io.github.f2bb.amalgamation.gradle.util;
 import org.gradle.api.logging.Logger;
 
 public class Clock implements AutoCloseable {
-	private final String message;
+	public String message;
 	private final Logger logger;
 	private final long start;
 

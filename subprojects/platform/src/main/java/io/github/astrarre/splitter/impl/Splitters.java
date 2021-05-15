@@ -17,6 +17,7 @@ public class Splitters {
 		splitters.add(new SignatureSplitter(properties));
 		splitters.add(new SuperclassSplitter(properties));
 		splitters.add(new MethodSplitter(properties));
+		splitters.add(new FieldSplitter(properties));
 		return splitters;
 	}
 }

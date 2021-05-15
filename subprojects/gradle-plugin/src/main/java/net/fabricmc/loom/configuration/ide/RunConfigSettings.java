@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
+import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -254,14 +255,7 @@ public final class RunConfigSettings implements Named {
 	}
 
 	public static String getOS() {
-		String osName = System.getProperty("os.name").toLowerCase();
-		if (osName.contains("win")) {
-			return "windows";
-		} else if (osName.contains("mac")) {
-			return "osx";
-		} else {
-			return "linux";
-		}
+		return BaseAmalgamationImpl.OPERATING_SYSTEM;
 	}
 
 	/**

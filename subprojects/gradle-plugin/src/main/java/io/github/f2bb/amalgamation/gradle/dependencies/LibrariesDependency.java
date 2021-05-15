@@ -40,8 +40,6 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 		if (!(file.isDirectory() && file.exists())) {
 			this.librariesDirectory = FALLBACK;
 		}
-
-		this.librariesDirectory = FALLBACK;
 	}
 
 	@Override
