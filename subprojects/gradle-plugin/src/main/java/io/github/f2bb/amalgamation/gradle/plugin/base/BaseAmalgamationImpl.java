@@ -34,7 +34,6 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 
 	static {
 		String osName = System.getProperty("os.name").toLowerCase();
-		System.out.println("osName         wadiawdawdbuiawdi     " + osName);
 		if (osName.contains("win")) {
 			OPERATING_SYSTEM = "windows";
 		} else if (osName.contains("mac")) {
@@ -42,6 +41,7 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		} else {
 			OPERATING_SYSTEM = "linux";
 		}
+
 	}
 
 	protected final Project project;

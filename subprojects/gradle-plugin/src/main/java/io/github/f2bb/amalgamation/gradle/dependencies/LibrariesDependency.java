@@ -13,7 +13,7 @@ import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
-public class LibrariesDependency extends AbstractSelfResolvingDependency {
+public class LibrariesDependency extends AbstractSelfResolvingDependency { // todo seperate out natives
 	public static final String FALLBACK = "AMALGAMATION_GLOBAL";
 	/**
 	 * defaults to your .minecraft installation, if not found, uses amalgamation cache
@@ -23,7 +23,6 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	public LibrariesDependency(Project project, String version) {
 		super(project, "net.minecraft", "minecraft-libraries", version);
 		// todo multimc support
-		// C:\Users\%user%\Desktop\archive\Games\MultiMC\libraries
 		switch (BaseAmalgamationImpl.OPERATING_SYSTEM) {
 		case "windows":
 			this.librariesDirectory = System.getenv("appdata") + "/.minecraft/libraries";

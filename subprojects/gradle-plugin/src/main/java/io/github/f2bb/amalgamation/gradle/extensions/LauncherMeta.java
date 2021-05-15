@@ -229,7 +229,7 @@ public class LauncherMeta {
 				if(classifier != null) {
 					HashedURL url = this.classifierUrls.get(classifier);
 					if(url != null) {
-						urls.add(this.mainDownloadUrl);
+						urls.add(url);
 					}
 				}
 
