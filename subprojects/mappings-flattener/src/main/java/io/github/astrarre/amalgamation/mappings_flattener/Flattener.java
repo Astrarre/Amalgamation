@@ -2,9 +2,12 @@ package io.github.astrarre.amalgamation.mappings_flattener;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,9 +61,13 @@ public class Flattener extends ClassVisitor {
 		LauncherMeta meta = new LauncherMeta(cache, logger);
 		LauncherMeta.Version version = meta.getVersion(args[2]);
 		CachedFile file = CachedFile.forUrl(version.getClientJar(), cache.resolve(version.version + "-client.jar"), logger);
+		File test = new File(args[1]);
+		System.out.println("To: " + cache.resolve(version.version + "-client.jar").toAbsolutePath());
+		test.getParentFile().mkdirs();
 		try (TinyEmitter emitter = new TinyEmitter(new BufferedWriter(new FileWriter(args[1])))) {
 			TinyTree tree;
-			try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
+			try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(args[0]),
+					null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
 				tree = TinyMappingFactory.load(reader);
 			}
 			emitter.start(tree.getMetadata());
