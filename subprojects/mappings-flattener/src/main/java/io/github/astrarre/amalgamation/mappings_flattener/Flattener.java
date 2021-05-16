@@ -4,8 +4,11 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -63,8 +66,9 @@ public class Flattener extends ClassVisitor {
 		CachedFile file = CachedFile.forUrl(version.getClientJar(), cache.resolve(version.version + "-client.jar"), logger);
 		File test = new File(args[1]);
 		System.out.println("To: " + cache.resolve(version.version + "-client.jar").toAbsolutePath());
+		if(test.getParentFile() != null)
 		test.getParentFile().mkdirs();
-		try (TinyEmitter emitter = new TinyEmitter(new BufferedWriter(new FileWriter(args[1])))) {
+		try (TinyEmitter emitter = new TinyEmitter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[1]), StandardCharsets.UTF_8)))) {
 			TinyTree tree;
 			try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(args[0]),
 					null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {

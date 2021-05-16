@@ -58,7 +58,7 @@ val flatten = tasks.register<JavaExec>("flatten") {
     group = "run"
     classpath = sourceSets.main.get().runtimeClasspath
     main = "io.github.astrarre.amalgamation.mappings_flattener.Flattener"
-    args(get().absolutePath, File(project.buildDir, "flattener/mappings/flattened.tiny").absolutePath, "1.16.5")
+    args(get().absolutePath, File(project.buildDir, "flattener/mappings/mappings.tiny").absolutePath, "1.16.5")
     workingDir("$rootDir/run")
 }
 

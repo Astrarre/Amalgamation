@@ -91,13 +91,13 @@ public class TinyEmitter implements AutoCloseable {
 		try {
 			this.commentTabLevel = 2;
 			this.writeLn();
-			this.newln = true;
 			this.writer.write("\tm\t");
 			this.writer.write(name.getDescriptor(this.rootNamespace));
 			for (String namespace : this.namespaces) {
 				this.writer.write('\t');
 				this.writer.write(name.getRawName(namespace));
 			}
+			this.newln = true;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
