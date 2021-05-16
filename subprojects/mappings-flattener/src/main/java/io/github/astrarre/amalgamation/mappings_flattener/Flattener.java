@@ -5,6 +5,9 @@ import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,11 +18,15 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import io.github.astrarre.amalgamation.utils.CachedFile;
+import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.Descriptored;
@@ -46,6 +53,11 @@ public class Flattener extends ClassVisitor {
 
 	public static void main(String[] args) throws Exception {
 		//TinyTree tree = TinyMappingFactory.load(new BufferedReader(new FileReader(args[0])));
+		Logger logger = LoggerFactory.getLogger("mappings-flattener");
+		Path cache = Paths.get("cache");
+		LauncherMeta meta = new LauncherMeta(cache, logger);
+		LauncherMeta.Version version = meta.getVersion(args[2]);
+		CachedFile file = CachedFile.forUrl(version.getClientJar(), cache.resolve(version.version + "-client.jar"), logger);
 		try (TinyEmitter emitter = new TinyEmitter(new BufferedWriter(new FileWriter(args[1])))) {
 			TinyTree tree;
 			try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
@@ -54,7 +66,7 @@ public class Flattener extends ClassVisitor {
 			emitter.start(tree.getMetadata());
 
 			Flattener flattener = new Flattener(emitter, tree);
-			try (ZipInputStream jar = new ZipInputStream(new FileInputStream(args[2]))) {
+			try (ZipInputStream jar = new ZipInputStream(Files.newInputStream(file.getPath()))) {
 				ZipEntry entry;
 				while ((entry = jar.getNextEntry()) != null) {
 					if (entry.getName().endsWith(".class")) {
