@@ -66,7 +66,6 @@ val flattened = tasks.register<Jar>("flattened") {
     dependsOn(flatten)
     archiveBaseName.set(artifact)
     archiveVersion.set(yarnBuild)
-    archiveClassifier.set("flattened")
     from(File(project.buildDir, "flattener"))
 }
 
@@ -74,7 +73,7 @@ publishing {
     publications {
         create<MavenPublication>("flattenedYarn") {
             artifactId = "yarn-flattened"
-            version = yarnBuild
+            version = yarnBuild.replace('+', '-')
             artifact(flattened) {
                 builtBy(flattened)
             }
