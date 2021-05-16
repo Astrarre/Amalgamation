@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.utils;
+package io.github.astrarre.amalgamation.gradle.util;
 
 import java.util.function.Consumer;
 

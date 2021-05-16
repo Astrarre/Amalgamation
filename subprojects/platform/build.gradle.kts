@@ -43,6 +43,9 @@ repositories {
         name = "HalfOf2"
         url = uri("https://storage.googleapis.com/devan-maven/")
     }
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 dependencies {

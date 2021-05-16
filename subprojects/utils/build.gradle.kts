@@ -27,6 +27,7 @@ repositories {
         name = "FabricMC"
         url = uri("https://maven.fabricmc.net/")
     }
+
 }
 
 dependencies {
@@ -34,7 +35,4 @@ dependencies {
     implementation("org.slf4j", "slf4j-api", "1.7.30")
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("com.google.guava", "guava", "30.1-jre")
-    api("org.cadixdev", "lorenz", "0.5.6")
-    api("net.fabricmc", "tiny-remapper", "0.3.2")
-    api("net.fabricmc", "lorenz-tiny", "3.0.0")
 }

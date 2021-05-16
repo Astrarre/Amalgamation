@@ -17,14 +17,28 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+plugins {
+    `java-library`
+}
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
-include("mappings-flattener")
+repositories {
+    mavenCentral()
+    maven {
+        name = "FabricMC"
+        url = uri("https://maven.fabricmc.net/")
+    }
+    maven {
+        url = uri("https://jitpack.io")
+    }
+}
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+dependencies {
+    compileOnly("org.jetbrains", "annotations", "20.1.0")
+    implementation(project(":utils"))
+    implementation("org.slf4j", "slf4j-api", "1.7.30")
+    implementation("com.google.code.gson", "gson", "2.8.6")
+    implementation("com.google.guava", "guava", "30.1-jre")
+    implementation("net.fabricmc:tiny-mappings-parser:0.3.0+build.17")
+    implementation ("org.ow2.asm:asm:9.1")
+
 }

@@ -21,7 +21,7 @@ import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.utils.CachedFile;
 import io.github.astrarre.amalgamation.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.util.LazySet;
-import io.github.astrarre.amalgamation.utils.Mappings;
+import io.github.astrarre.amalgamation.gradle.util.Mappings;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
