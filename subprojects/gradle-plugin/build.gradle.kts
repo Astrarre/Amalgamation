@@ -33,6 +33,11 @@ repositories {
         name = "MinecraftForge"
         url = uri("https://files.minecraftforge.net/maven")
     }
+
+    maven {
+        name = "HalfOf2"
+        url = uri("https://storage.googleapis.com/devan-maven/")
+    }
 }
 
 dependencies {

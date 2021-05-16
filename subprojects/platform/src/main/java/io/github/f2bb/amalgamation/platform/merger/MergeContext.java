@@ -29,7 +29,7 @@ import org.objectweb.asm.tree.ClassNode;
 /**
  * All methods in this class must be thread safe
  */
-public interface MergeContext {
+public interface MergeContext extends AutoCloseable {
 
 	/**
 	 * @return The executor to use for merging. Can dramatically increase speed

@@ -22,7 +22,7 @@ public class StrippedServerJarCachedFile extends CachedFile<Long> {
 	@Nullable
 	@Override
 	protected Long writeIfOutdated(Path path, @Nullable Long currentData) throws Throwable {
-		Path serverJar = this.serverJar.getPath();
+		Path serverJar = this.serverJar.getOutdatedPath();
 		if(currentData == null || Files.getLastModifiedTime(serverJar).toMillis() > currentData) {
 			Files.copy(serverJar, path);
 			try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {

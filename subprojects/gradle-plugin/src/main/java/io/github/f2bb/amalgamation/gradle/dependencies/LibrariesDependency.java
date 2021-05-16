@@ -54,7 +54,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency { // to
 					} else {
 						jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
 					}
-					return CachedFile.forUrl(dependency, jar, this.project.getLogger()).getPath();
+					return CachedFile.forUrl(dependency, jar, this.project.getLogger()).getOutdatedPath();
 				})));
 	}
 

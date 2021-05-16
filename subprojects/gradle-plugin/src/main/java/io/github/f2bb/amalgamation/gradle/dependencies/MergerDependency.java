@@ -126,7 +126,7 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 	}
 
 	private final Map<List<TypeEntry>, Iterable<File>> uniqueResolved = new HashMap<>(), mergeResolved = new HashMap<>();
-	@Override
+	/*@Override todo fix weird multithreading glitch
 	protected Set<File> path() {
 		if (this.resolved == null) {
 			this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, this.resolve(dependencies)));
@@ -135,7 +135,7 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 					BaseAmalgamationImpl.SERVICE));
 		}
 		return this.resolved;
-	}
+	}*/
 
 	public void include(Object object, TypeEntry... platforms) {
 		this.merge.computeIfAbsent(Arrays.asList(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
@@ -147,6 +147,8 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 
 	@Override
 	protected Path resolvePath() {
+		this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, this.resolve(dependencies)));
+		this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, this.resolve(dependencies)));
 		return this.merger.getPath();
 	}
 
@@ -164,18 +166,10 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 		this.additionalEntries.add(of(type, entry));
 	}
 
-	/**
-	 * a 'type' and it's value, aids in merging. For example, the entry for '1.16.5' would be 'version', '1.16.5'.
-	 *
-	 * These assist in annotation merging, eg. `@Platform("fabric", "client"), @Platform("fabric", "server")` == `@Platform("fabric")`
-	 */
 	public TypeEntry of(String type, String entry) {
 		return new TypeEntry(type, entry);
 	}
 
-	/**
-	 * if the entry belongs to it's own thing
-	 */
 	public TypeEntry ofRand(String entry) {
 		return new TypeEntry(UUID.randomUUID().toString(), entry);
 	}

@@ -29,12 +29,11 @@ buildscript {
             name = "MinecraftForge"
             url = uri("https://files.minecraftforge.net/maven")
         }
-
-
         maven {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
+
     }
 
     dependencies {
@@ -46,11 +45,25 @@ apply plugin: 'java'
 apply plugin: 'io.github.f2bb.amalgamation.minecraft'
 
 repositories {
+    mavenCentral()
     jcenter()
     maven { url 'https://maven.fabricmc.net/' }
     maven { url 'https://files.minecraftforge.net/maven/' }
+    maven {
+        name = "HalfOf2"
+        url = uri("https://storage.googleapis.com/devan-maven/")
+    }
 }
 
+/**
+ * dependencies {
+ compile ag.merge {
+ include('com.google.code.gson:gson:1.1', of('ver', '1.1'))
+ include('com.google.code.gson:gson:2.8.6', of('ver', '2.8.6'))
+ }
+ }
+
+ */
 dependencies {
     implementation ag.map {
         mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
@@ -74,7 +87,7 @@ task testDiff(type: JavaExec) {
     args("hello")
     workingDir("$rootDir/run")
 }
-tasks.testDiff.dependsOn(tasks.compileJava)
+tasks.testDiff.dependsOn(tasks.classes)
 
 /*
 task stripFabric_1_16(type: StripJar) {

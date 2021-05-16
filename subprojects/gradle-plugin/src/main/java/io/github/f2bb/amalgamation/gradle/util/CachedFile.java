@@ -41,6 +41,7 @@ public abstract class CachedFile<T> {
 
 	/**
 	 * @param file the location of the file
+	 * @param value the type so gson can deserialize the data
 	 */
 	public CachedFile(Path file, Class<T> value) {
 		this(() -> file, value);
@@ -327,6 +328,7 @@ public abstract class CachedFile<T> {
 	/**
 	 * if the file exists, it will return the reader, else it will update the file and get the reader.
 	 * refresh dependencies overrides this behavior
+	 * @return a reader for the file that may not be up to date
 	 */
 	public Reader getOutdatedReader() {
 		try {

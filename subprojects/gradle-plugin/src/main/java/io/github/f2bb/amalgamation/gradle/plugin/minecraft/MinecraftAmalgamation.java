@@ -31,11 +31,13 @@ import org.gradle.api.artifacts.Dependency;
 
 public interface MinecraftAmalgamation extends BaseAmalgamation {
     /**
+     * @param version the minecraft version string, should match up with launchermeta
      * @return a dependency for the obfuscated client jar
      */
     Dependency client(String version);
 
     /**
+     * @param version the minecraft version string, should match up with launchermeta
      * @return a dependency for the obfuscated server jar (dependencies stripped)
      */
     Dependency server(String version);
@@ -43,6 +45,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
     Configuration libraries(String version);
 
     /**
+     * @param mappings configurate mappings
      * @return a list of the remapped dependencies
      */
     Dependency map(Action<RemappingDependency> mappings);

@@ -286,6 +286,7 @@ public final class RunConfigSettings implements Named {
 
 	/**
 	 * Copies settings from another run configuration.
+	 * @param parent the run config parent
 	 */
 	public void inherit(RunConfigSettings parent) {
 		this.vmArgs.addAll(0, parent.vmArgs);

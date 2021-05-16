@@ -194,7 +194,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 			if(selfResolving == null) {
 				return configuration;
 			} else {
-				return Iterables.concat(configuration.resolve(), selfResolving);
+				return Iterables.concat(configuration.getResolvedConfiguration().getFiles(), selfResolving);
 			}
 		}
 	}

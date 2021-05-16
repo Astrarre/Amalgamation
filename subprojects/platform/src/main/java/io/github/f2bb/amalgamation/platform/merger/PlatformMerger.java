@@ -32,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.RawPlatformClass;
 import io.github.astrarre.merger.Merger;
+import io.github.astrarre.merger.Mergers;
 import io.github.astrarre.merger.impl.AccessMerger;
 import io.github.astrarre.merger.impl.ClassMerger;
 import io.github.astrarre.merger.impl.HeaderMerger;
@@ -39,6 +40,8 @@ import io.github.astrarre.merger.impl.InnerClassAttributeMerger;
 import io.github.astrarre.merger.impl.InterfaceMerger;
 import io.github.astrarre.merger.impl.SignatureMerger;
 import io.github.astrarre.merger.impl.SuperclassMerger;
+import io.github.astrarre.merger.impl.field.FieldMerger;
+import io.github.astrarre.merger.impl.method.MethodMerger;
 import io.github.f2bb.amalgamation.Platform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -72,14 +75,7 @@ public class PlatformMerger {
 			Map<String, ?> configuration) {
 		Set<CompletableFuture<?>> futures = new HashSet<>();
 
-		List<Merger> mergers = new ArrayList<>();
-		mergers.add(new AccessMerger(configuration));
-		mergers.add(new ClassMerger(configuration));
-		mergers.add(new HeaderMerger(configuration));
-		mergers.add(new InnerClassAttributeMerger(configuration));
-		mergers.add(new InterfaceMerger(configuration));
-		mergers.add(new SignatureMerger(configuration));
-		mergers.add(new SuperclassMerger(configuration));
+		List<Merger> mergers = Mergers.defaults(configuration);
 
 		classes.forEach((file, platforms) -> futures.add(CompletableFuture.runAsync(() -> {
 			if (platforms.size() == 1) {

@@ -8,6 +8,8 @@ import io.github.f2bb.amalgamation.Platform;
 public class Concern {
     public static void main(String[] args) {
         hello();
+        com.google.gson.Gson gson = null;
+        System.out.println(gson);
     }
 
     @Platform("server")

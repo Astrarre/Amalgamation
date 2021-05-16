@@ -24,6 +24,7 @@ import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.f2bb.amalgamation.gradle.util.CachedFile;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
+import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
 
 public class LauncherMeta {
 	public static final Set<String> OS_CLASSIFIERS = ImmutableSet.of("natives-linux", "natives-windows", "natives-osx");
@@ -185,9 +186,6 @@ public class LauncherMeta {
 	public static final class Library {
 		public final HashedURL mainDownloadUrl;
 		public final List<Rule> rules;
-		/**
-		 * classifier -> native jar url
-		 */
 		public final Map<String, HashedURL> classifierUrls;
 		public final Map<String, String> nativesOsToClassifier;
 		protected List<HashedURL> evaluatedDependencies;

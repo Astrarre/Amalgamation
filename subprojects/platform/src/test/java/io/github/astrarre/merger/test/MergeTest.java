@@ -69,10 +69,10 @@ public class MergeTest {
 				mergers.add(new FieldMerger(config));
 				mergers.add(new SignatureMerger(config));
 
-				List<List<String>> combinations = new ArrayList<>();
-				combinations.add(Arrays.asList("server", "client"));
-				combinations.add(Arrays.asList("forge", "fabric", "spigot"));
-				combinations.add(Arrays.asList("1.16.5", "1.16.4"));
+				Map<String, List<String>> combinations = new HashMap<>();
+				combinations.put("side",Arrays.asList("server", "client"));
+				combinations.put("platform",Arrays.asList("forge", "fabric", "spigot"));
+				combinations.put("versions",Arrays.asList("1.16.5", "1.16.4"));
 				for (Merger merger : mergers) {
 					merger.merge(nodes, merged, combinations);
 				}

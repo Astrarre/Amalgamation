@@ -89,6 +89,11 @@ public class DefaultMergeContext implements MergeContext {
 	}
 
 	@Override
+	public void close() throws Exception {
+
+	}
+
+	@Override
 	public boolean shouldAttemptMerge(PlatformData platform, String name) {
 		return true;
 	}
