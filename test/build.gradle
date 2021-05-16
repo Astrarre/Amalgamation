@@ -37,12 +37,12 @@ buildscript {
     }
 
     dependencies {
-        classpath 'io.github.f2bb.amalgamation:gradle-plugin'
+        classpath 'io.github.astrarre.amalgamation:gradle-plugin'
     }
 }
 
 apply plugin: 'java'
-apply plugin: 'io.github.f2bb.amalgamation.minecraft'
+apply plugin: 'io.github.astrarre.amalgamation.minecraft'
 
 repositories {
     mavenCentral()

@@ -17,13 +17,21 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
+import org.gradle.api.Action;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+public interface BaseAmalgamation {
+    Dependency merge(Action<MergerDependency> configuration);
+
+    Provider<FileCollection> splitClasspath(Action<ConfigurableFileCollection> config, String... platforms);
+
+    //todo void runConfig(RunConfigSettings settings);
+
+    //todo Iterable<RunConfigSettings> getRunConfigs();
 }

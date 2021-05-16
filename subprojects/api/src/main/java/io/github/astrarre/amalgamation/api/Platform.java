@@ -17,13 +17,32 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.api;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+import java.lang.annotation.*;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+/**
+ * a sided platform
+ *
+ * example:
+ * <code>
+ *     public class Foo implements @Platform("forge") Runnable
+ * </code>
+ */
+@Retention(RetentionPolicy.CLASS)
+@Repeatable(Platform.Platforms.class)
+@Target({ElementType.TYPE_USE, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+public @interface Platform {
+
+    /**
+     * @return the names of the platform. eg. ["fabric", "client"] or ["spigot"]
+     */
+    String[] value();
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE_USE, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+    @interface Platforms {
+
+        Platform[] value();
+    }
 }

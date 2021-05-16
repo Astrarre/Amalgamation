@@ -17,13 +17,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.utils.func;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+public interface UnsafeBiFunction<A, B, R> {
+    R apply(A a, B b) throws Throwable;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+    default R applyFailException(A a, B b) {
+        try {
+            return this.apply(a, b);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
 }

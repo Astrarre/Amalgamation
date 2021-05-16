@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
+import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
+import io.github.astrarre.amalgamation.utils.OsUtil;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -255,7 +255,7 @@ public final class RunConfigSettings implements Named {
 	}
 
 	public static String getOS() {
-		return BaseAmalgamationImpl.OPERATING_SYSTEM;
+		return OsUtil.OPERATING_SYSTEM;
 	}
 
 	/**

@@ -17,13 +17,24 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+plugins {
+    `java-library`
+}
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+repositories {
+    mavenCentral()
+    maven {
+        name = "FabricMC"
+        url = uri("https://maven.fabricmc.net/")
+    }
+}
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+dependencies {
+    compileOnly("org.jetbrains", "annotations", "20.1.0")
+    implementation("org.slf4j", "slf4j-api", "1.7.30")
+    implementation("com.google.code.gson", "gson", "2.8.6")
+    implementation("com.google.guava", "guava", "30.1-jre")
+    api("org.cadixdev", "lorenz", "0.5.6")
+    api("net.fabricmc", "tiny-remapper", "0.3.2")
+    api("net.fabricmc", "lorenz-tiny", "3.0.0")
 }

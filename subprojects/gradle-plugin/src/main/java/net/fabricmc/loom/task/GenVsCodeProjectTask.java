@@ -24,22 +24,7 @@
 
 package net.fabricmc.loom.task;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.impldep.org.apache.commons.io.FileUtils;
-
-import net.fabricmc.loom.configuration.ide.RunConfig;
-import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 
 // Recommended vscode plugins:
 // https://marketplace.visualstudio.com/items?itemName=redhat.java

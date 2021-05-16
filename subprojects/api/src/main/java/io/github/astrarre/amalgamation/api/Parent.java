@@ -17,13 +17,20 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.api;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+/**
+ * a platform-specific super class
+ */
+public @interface Parent {
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+    /**
+     * @return this class's super class on the specified platform
+     */
+    Class<?> parent();
+
+    /**
+     * @return the platforms the class is a super on
+     */
+    Platform[] platforms();
 }

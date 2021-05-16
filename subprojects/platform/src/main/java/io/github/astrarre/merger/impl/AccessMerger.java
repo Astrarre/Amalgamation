@@ -12,7 +12,7 @@ import io.github.astrarre.merger.Merger;
 import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.api.Platformed;
 import io.github.astrarre.merger.util.AsmUtil;
-import io.github.f2bb.amalgamation.Access;
+import io.github.astrarre.amalgamation.api.Access;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.AnnotationVisitor;

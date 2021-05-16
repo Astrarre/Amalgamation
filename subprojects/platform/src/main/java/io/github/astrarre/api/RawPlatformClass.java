@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import io.github.astrarre.Classes;
 import io.github.astrarre.merger.util.AsmUtil;
-import io.github.f2bb.amalgamation.platform.merger.PlatformData;
+import io.github.astrarre.merger.context.PlatformData;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 

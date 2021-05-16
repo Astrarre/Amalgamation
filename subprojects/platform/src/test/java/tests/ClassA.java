@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.function.Function;
 
-import io.github.f2bb.amalgamation.Interface;
-import io.github.f2bb.amalgamation.Parent;
-import io.github.f2bb.amalgamation.Platform;
+import io.github.astrarre.amalgamation.api.Interface;
+import io.github.astrarre.amalgamation.api.Parent;
+import io.github.astrarre.amalgamation.api.Platform;
 
 @Interface (parent = Function.class,
 		platforms = {

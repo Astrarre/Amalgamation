@@ -24,18 +24,7 @@
 
 package net.fabricmc.loom.task;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.impldep.org.apache.commons.io.FileUtils;
-import org.gradle.plugins.ide.eclipse.model.EclipseModel;
-
-import net.fabricmc.loom.configuration.ide.RunConfig;
-import net.fabricmc.loom.configuration.ide.RunConfigSettings;
 
 public class GenEclipseRunsTask extends DefaultTask {
 	/*@TaskAction

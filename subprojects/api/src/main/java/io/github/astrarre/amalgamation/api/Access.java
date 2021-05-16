@@ -17,13 +17,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.api;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+import java.lang.annotation.*;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+@Retention(RetentionPolicy.CLASS)
+@Repeatable(Access.Accesses.class)
+@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+public @interface Access {
+
+    /**
+     * @return the access flags of this class on the given platform
+     */
+    String[] flags();
+
+    Platform[] platforms();
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+    @interface Accesses {
+
+        Access[] value();
+    }
 }

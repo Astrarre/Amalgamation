@@ -1,10 +1,10 @@
 package io.github.astrarre;
 
-import io.github.f2bb.amalgamation.Access;
-import io.github.f2bb.amalgamation.Displace;
-import io.github.f2bb.amalgamation.Interface;
-import io.github.f2bb.amalgamation.Parent;
-import io.github.f2bb.amalgamation.Platform;
+import io.github.astrarre.amalgamation.api.Access;
+import io.github.astrarre.amalgamation.api.Displace;
+import io.github.astrarre.amalgamation.api.Interface;
+import io.github.astrarre.amalgamation.api.Parent;
+import io.github.astrarre.amalgamation.api.Platform;
 import org.objectweb.asm.Type;
 
 public class Classes {

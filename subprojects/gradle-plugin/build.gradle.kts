@@ -44,23 +44,21 @@ dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
 
     implementation(project(":platform"))
+    implementation(project(":utils"))
     implementation("com.google.guava", "guava", "30.1-jre")
     implementation("com.google.code.gson", "gson", "2.8.6")
-    implementation("org.cadixdev", "lorenz", "0.5.6")
-    implementation("net.fabricmc", "tiny-remapper", "0.3.2")
-    implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
 }
 
 gradlePlugin {
     plugins {
         create("base") {
-            id = "io.github.f2bb.amalgamation.base"
-            implementationClass = "io.github.f2bb.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin"
+            id = "io.github.astrarre.amalgamation.base"
+            implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin"
         }
 
         create("minecraft") {
-            id = "io.github.f2bb.amalgamation.minecraft"
-            implementationClass = "io.github.f2bb.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin"
+            id = "io.github.astrarre.amalgamation.minecraft"
+            implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin"
         }
     }
 }

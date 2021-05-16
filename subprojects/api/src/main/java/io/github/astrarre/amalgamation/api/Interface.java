@@ -17,13 +17,27 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-rootProject.name = "amalgamation"
+package io.github.astrarre.amalgamation.api;
 
-include("api")
-include("gradle-plugin")
-include("platform")
-include("utils")
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
+/**
+ * a platform specific interface
+ */
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
+public @interface Interface {
+
+    /**
+     * @return this class's super class on the specified platform
+     */
+    Class<?> parent();
+
+    /**
+     * @return the platforms the class is a super on
+     */
+    Platform[] platforms();
 }

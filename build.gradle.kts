@@ -22,7 +22,7 @@ plugins {
 }
 
 allprojects {
-    group = "io.github.f2bb.amalgamation"
+    group = "io.github.astrarre.amalgamation"
     version = "1.0.0-SNAPSHOT"
 }
 
