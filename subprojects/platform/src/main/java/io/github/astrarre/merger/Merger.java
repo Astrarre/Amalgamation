@@ -8,7 +8,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public abstract class Merger implements Opcodes {
-
 	public Merger(Map<String, ?> properties) {}
 
 	/**

@@ -20,6 +20,10 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency { // to
 	 * defaults to your .minecraft installation, if not found, uses amalgamation cache
 	 */
 	public String librariesDirectory;
+	/**
+	 * states whether to include natives in libraries
+	 */
+	public LauncherMeta.NativesRule rule = LauncherMeta.NativesRule.ALL_NON_NATIVES;
 
 	public LibrariesDependency(Project project, String version) {
 		super(project, "net.minecraft", "minecraft-libraries", version);
@@ -48,7 +52,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency { // to
 		return Iterables.concat(Iterables.transform(
 				Objects.requireNonNull(meta.getVersion(this.version), "Invalid version: " + this.version)
 				       .getLibraries(),
-				input -> Iterables.transform(input.evaluateAllDependencies(), dependency -> {
+				input -> Iterables.transform(input.evaluateAllDependencies(this.rule), dependency -> {
 					Path jar;
 					if (FALLBACK.equals(this.librariesDirectory)) {
 						jar = BaseAmalgamationImpl.globalCache(this.project.getGradle()).resolve(dependency.path);

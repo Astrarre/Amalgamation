@@ -192,48 +192,61 @@ public class LauncherMeta {
 			this.nativesOsToClassifier = classifier;
 		}
 
-		public List<HashedURL> evaluateAllDependencies() {
+		public List<HashedURL> evaluateAllDependencies(NativesRule natives) {
 			if(this.evaluatedDependencies == null) {
 				List<HashedURL> urls = new ArrayList<>();
-				boolean includeMain = false;
-				for (Rule rule : this.rules) {
-					if(rule.action == RuleType.ALLOW) {
-						if(rule.osName == null) {
-							includeMain = true;
-						} else if(OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
-							includeMain = true;
-							break;
+				if(natives.getNormalDependencies()) {
+					boolean includeMain = false;
+					for (Rule rule : this.rules) {
+						if (rule.action == RuleType.ALLOW) {
+							if (rule.osName == null) {
+								includeMain = true;
+							} else if (OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
+								includeMain = true;
+								break;
+							}
+						} else {
+							if (rule.osName == null) {
+								includeMain = false;
+							} else if (OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
+								includeMain = false;
+								break;
+							}
 						}
-					} else {
-						if(rule.osName == null) {
-							includeMain = false;
-						} else if(OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
-							includeMain = false;
-							break;
+					}
+
+					if (includeMain) {
+						urls.add(this.mainDownloadUrl);
+					}
+				}
+
+				if(natives.getNatives()) {
+					String classifier = this.nativesOsToClassifier.get(OsUtil.OPERATING_SYSTEM);
+					if (classifier != null) {
+						HashedURL url = this.classifierUrls.get(classifier);
+						if (url != null) {
+							urls.add(url);
 						}
 					}
 				}
 
-				if(includeMain) {
-					urls.add(this.mainDownloadUrl);
-				}
-
-				String classifier = this.nativesOsToClassifier.get(OsUtil.OPERATING_SYSTEM);
-				if(classifier != null) {
-					HashedURL url = this.classifierUrls.get(classifier);
-					if(url != null) {
-						urls.add(url);
-					}
-				}
-
-				this.classifierUrls.forEach((s, url) -> {
-					if(!this.nativesOsToClassifier.containsValue(s) && !OS_CLASSIFIERS.contains(s)) {
-						urls.add(url);
-					}
-				});
 				this.evaluatedDependencies = Collections.unmodifiableList(urls);
 			}
 			return this.evaluatedDependencies;
+		}
+	}
+
+	public enum NativesRule {
+		ALL,
+		NATIVES_ONLY,
+		ALL_NON_NATIVES;
+
+		public boolean getNormalDependencies() {
+			return this != NATIVES_ONLY;
+		}
+
+		public boolean getNatives() {
+			return this != ALL_NON_NATIVES;
 		}
 	}
 

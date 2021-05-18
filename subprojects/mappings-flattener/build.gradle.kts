@@ -40,7 +40,8 @@ dependencies {
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("com.google.guava", "guava", "30.1-jre")
     implementation("net.fabricmc:tiny-mappings-parser:0.3.0+build.17")
-    implementation ("org.ow2.asm:asm:9.1")
+    implementation("org.ow2.asm:asm-commons:9.1")
+    implementation("org.ow2.asm:asm:9.1")
 }
 
 val org = "net.fabricmc"
@@ -48,9 +49,9 @@ val artifact = "yarn"
 val minecraftVersion = "1.16.5"
 val yarnBuild = "1.16.5+build.4"
 
-fun get(): File {
+fun get(ext: String): File {
     val config = project.configurations.detachedConfiguration()
-    config.dependencies.add(project.dependencies.create("$org:$artifact:$yarnBuild:mergedv2"))
+    config.dependencies.add(project.dependencies.create("$org:$artifact:$yarnBuild$ext"))
     return config.resolve().first()
 }
 
@@ -58,7 +59,7 @@ val flatten = tasks.register<JavaExec>("flatten") {
     group = "run"
     classpath = sourceSets.main.get().runtimeClasspath
     main = "io.github.astrarre.amalgamation.mappings_flattener.Flattener"
-    args(get().absolutePath, File(project.buildDir, "flattener/mappings/mappings.tiny").absolutePath, "1.16.5")
+    args(get(":v2").absolutePath, File(project.buildDir, "flattener/v2/mappings/mappings.tiny").absolutePath, "1.16.5")
     workingDir("$rootDir/run")
 }
 
@@ -66,7 +67,25 @@ val flattened = tasks.register<Jar>("flattened") {
     dependsOn(flatten)
     archiveBaseName.set(artifact)
     archiveVersion.set(yarnBuild)
-    from(File(project.buildDir, "flattener"))
+    archiveClassifier.set("v2")
+    from(File(project.buildDir, "flattener/v2"))
+}
+
+
+val flattenMerged = tasks.register<JavaExec>("flattenMerged") {
+    group = "run"
+    classpath = sourceSets.main.get().runtimeClasspath
+    main = "io.github.astrarre.amalgamation.mappings_flattener.Flattener"
+    args(get(":mergedv2").absolutePath, File(project.buildDir, "flattener/mergedv2/mappings/mappings.tiny").absolutePath, "1.16.5")
+    workingDir("$rootDir/run")
+}
+
+val flattenedMerged = tasks.register<Jar>("flattenedMerged") {
+    dependsOn(flattenMerged)
+    archiveBaseName.set(artifact)
+    archiveVersion.set(yarnBuild)
+    archiveClassifier.set("mergedv2")
+    from(File(project.buildDir, "flattener/mergedv2"))
 }
 
 publishing {
@@ -74,6 +93,9 @@ publishing {
         create<MavenPublication>("flattenedYarn") {
             artifactId = "yarn-flattened"
             version = yarnBuild.replace('+', '-')
+            artifact(flattenedMerged) {
+                builtBy(flattenedMerged)
+            }
             artifact(flattened) {
                 builtBy(flattened)
             }

@@ -25,10 +25,10 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Configuration libraries(String version) {
-		Configuration configuration = this.project.getConfigurations().create(version + "-libraries");
-		configuration.getDependencies().add(new LibrariesDependency(this.project, version));
-		return configuration;
+	public Dependency libraries(String version, Action<LibrariesDependency> configure) {
+		LibrariesDependency dependency = new LibrariesDependency(this.project, version);
+		configure.execute(dependency);
+		return dependency;
 	}
 
 	@Override

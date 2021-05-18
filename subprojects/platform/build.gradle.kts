@@ -59,6 +59,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("io.github.java-diff-utils:java-diff-utils:4.5")
     implementation("net.devtech:signutil:1.0.0")
+    implementation("com.github.javaparser:javaparser-core:3.22.0")
 }
 
 tasks.register<Jar>("testJar") {

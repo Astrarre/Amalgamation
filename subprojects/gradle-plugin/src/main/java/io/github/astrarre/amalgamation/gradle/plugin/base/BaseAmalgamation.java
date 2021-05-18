@@ -30,7 +30,7 @@ public interface BaseAmalgamation {
     Dependency merge(Action<MergerDependency> configuration);
 
     Provider<FileCollection> splitClasspath(Action<ConfigurableFileCollection> config, String... platforms);
-
+    
     //todo void runConfig(RunConfigSettings settings);
 
     //todo Iterable<RunConfigSettings> getRunConfigs();

@@ -67,7 +67,7 @@ public class Flattener extends ClassVisitor {
 		File test = new File(args[1]);
 		System.out.println("To: " + cache.resolve(version.version + "-client.jar").toAbsolutePath());
 		if(test.getParentFile() != null)
-		test.getParentFile().mkdirs();
+			test.getParentFile().mkdirs();
 		try (TinyEmitter emitter = new TinyEmitter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[1]), StandardCharsets.UTF_8)))) {
 			TinyTree tree;
 			try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(args[0]),
@@ -111,6 +111,7 @@ public class Flattener extends ClassVisitor {
 
 		super.visit(version, access, name, signature, superName, interfaces);
 		ClassDef def = this.tree.getDefaultNamespaceClassMap().get(name);
+		if(def == null) return;
 		this.emitter.pushClass(def);
 		this.emitter.pushComment(def.getComment());
 	}
@@ -158,7 +159,7 @@ public class Flattener extends ClassVisitor {
 			String desc,
 			BiConsumer<Boolean, T> onFind) {
 		Map<String, ClassDef> map = this.tree.getDefaultNamespaceClassMap();
-		if (this.find(getter.apply(map.get(data.name)), name, desc, onFind, true)) {
+		if (map.containsKey(data.name) && this.find(getter.apply(map.get(data.name)), name, desc, onFind, true)) {
 			return;
 		}
 		if (map.containsKey(data.superName) && this.find(getter.apply(map.get(data.superName)), name, desc, onFind, false)) {
