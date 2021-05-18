@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
-import io.github.astrarre.amalgamation.utils.OsUtil;
+import io.github.astrarre.amalgamation.utils.OS;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -255,7 +255,7 @@ public final class RunConfigSettings implements Named {
 	}
 
 	public static String getOS() {
-		return OsUtil.OPERATING_SYSTEM;
+		return OS.ACTIVE.launchermetaName;
 	}
 
 	/**

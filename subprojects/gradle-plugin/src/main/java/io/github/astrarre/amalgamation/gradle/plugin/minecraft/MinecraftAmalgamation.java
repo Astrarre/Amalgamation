@@ -19,6 +19,8 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.io.File;
+
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
@@ -44,6 +46,10 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
     Dependency server(String version);
 
     Dependency libraries(String version, Action<LibrariesDependency> configure);
+
+    String assets(String version);
+
+    String natives(String version);
 
     /**
      * @param mappings configurate mappings

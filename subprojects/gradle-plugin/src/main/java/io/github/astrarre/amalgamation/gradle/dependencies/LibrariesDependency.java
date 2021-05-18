@@ -10,7 +10,6 @@ import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.utils.CachedFile;
-import io.github.astrarre.amalgamation.utils.OsUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -27,19 +26,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency { // to
 
 	public LibrariesDependency(Project project, String version) {
 		super(project, "net.minecraft", "minecraft-libraries", version);
-		// todo multimc support
-		switch (OsUtil.OPERATING_SYSTEM) {
-		case "windows":
-			this.librariesDirectory = System.getenv("appdata") + "/.minecraft/libraries";
-			break;
-		case "linux":
-			this.librariesDirectory = System.getProperty("user.home") + "/.minecraft/libraries";
-			break;
-		case "osx":
-			this.librariesDirectory = System.getProperty("user.home") + "/Library/Application Support/minecraft/libraries";
-			break;
-		}
-
+		this.librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
 		File file = new File(this.librariesDirectory);
 		if (!(file.isDirectory() && file.exists())) {
 			this.librariesDirectory = FALLBACK;
@@ -59,7 +46,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency { // to
 					} else {
 						jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
 					}
-					return CachedFile.forUrl(dependency, jar, this.project.getLogger()).getOutdatedPath();
+					return CachedFile.forUrl(dependency, jar, this.project.getLogger(), false).getOutdatedPath();
 				})));
 	}
 

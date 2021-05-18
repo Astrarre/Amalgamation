@@ -29,7 +29,7 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		return thread;
 	}, null, true);
 
-	protected final Project project;
+	public final Project project;
 
 	public BaseAmalgamationImpl(Project project) {this.project = project;}
 

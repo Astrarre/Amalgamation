@@ -67,6 +67,8 @@ repositories {
  }
 
  */
+
+println(ag.natives('1.16.5'))
 dependencies {
     implementation ag.map {
         mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
@@ -76,7 +78,7 @@ dependencies {
             include(ag.server('1.16.5'), of('side', 'server'))
         }
     }
-    implementation ag.libraries('1.16.5')
+    implementation ag.libraries('1.16.5', {})
 }
 
 

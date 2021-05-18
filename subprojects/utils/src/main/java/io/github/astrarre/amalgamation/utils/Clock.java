@@ -1,7 +1,7 @@
 package io.github.astrarre.amalgamation.utils;
 
 
-import org.slf4j.Logger;
+import org.gradle.api.logging.Logger;
 
 public class Clock implements AutoCloseable {
 	public String message;
@@ -16,6 +16,6 @@ public class Clock implements AutoCloseable {
 
 	@Override
 	public void close() {
-		this.logger.info(String.format(this.message, System.currentTimeMillis() - this.start));
+		this.logger.lifecycle(String.format(this.message, System.currentTimeMillis() - this.start));
 	}
 }

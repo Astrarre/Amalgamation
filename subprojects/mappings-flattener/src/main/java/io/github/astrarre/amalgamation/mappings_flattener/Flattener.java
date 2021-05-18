@@ -26,13 +26,13 @@ import java.util.zip.ZipInputStream;
 
 import io.github.astrarre.amalgamation.utils.CachedFile;
 import io.github.astrarre.amalgamation.utils.LauncherMeta;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.Descriptored;
@@ -59,11 +59,11 @@ public class Flattener extends ClassVisitor {
 
 	public static void main(String[] args) throws Exception {
 		//TinyTree tree = TinyMappingFactory.load(new BufferedReader(new FileReader(args[0])));
-		Logger logger = LoggerFactory.getLogger("mappings-flattener");
+		Logger logger = Logging.getLogger("logger");
 		Path cache = Paths.get("cache");
 		LauncherMeta meta = new LauncherMeta(cache, logger);
 		LauncherMeta.Version version = meta.getVersion(args[2]);
-		CachedFile file = CachedFile.forUrl(version.getClientJar(), cache.resolve(version.version + "-client.jar"), logger);
+		CachedFile file = CachedFile.forUrl(version.getClientJar(), cache.resolve(version.version + "-client.jar"), logger, false);
 		File test = new File(args[1]);
 		System.out.println("To: " + cache.resolve(version.version + "-client.jar").toAbsolutePath());
 		if(test.getParentFile() != null)

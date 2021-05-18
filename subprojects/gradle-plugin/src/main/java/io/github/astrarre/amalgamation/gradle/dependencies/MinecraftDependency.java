@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import io.github.astrarre.amalgamation.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.gradle.jars.StrippedServerJarCachedFile;
+import io.github.astrarre.amalgamation.gradle.files.StrippedServerJarCachedFile;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.utils.CachedFile;
@@ -25,9 +25,9 @@ public class MinecraftDependency extends AbstractSingleFileSelfResolvingDependen
 				"invalid version: " + version);
 		Path jar = BaseAmalgamationImpl.globalCache(project.getGradle()).resolve(this.getVersion() + "-" + this.getName() + ".jar");
 		if (isClient) {
-			this.jar = CachedFile.forUrl(v.getClientJar(), jar, project.getLogger());
+			this.jar = CachedFile.forUrl(v.getClientJar(), jar, project.getLogger(), false);
 		} else {
-			CachedFile<?> serverJar = CachedFile.forUrl(v.getServerJar(), jar, project.getLogger());
+			CachedFile<?> serverJar = CachedFile.forUrl(v.getServerJar(), jar, project.getLogger(), false);
 			project.getLogger().lifecycle("getting server without libraries . . .");
 			this.jar = new StrippedServerJarCachedFile(jar, serverJar);
 		}

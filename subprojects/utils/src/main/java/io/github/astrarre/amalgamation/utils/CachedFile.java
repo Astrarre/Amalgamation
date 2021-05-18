@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -19,23 +20,24 @@ import java.util.function.Supplier;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.github.astrarre.amalgamation.utils.func.UnsafeConsumer;
+import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
 public abstract class CachedFile<T> {
 	public static boolean refreshAmalgamationCaches, offlineMode;
 	public static final Gson GSON = new Gson();
 	private final Supplier<Path> file;
 	private final Lock lock = new ReentrantLock();
-	private final Class<T> value;
+	private final Type value;
 
 	/**
 	 * @param file the location of the file
 	 * @param value the type so gson can deserialize the data
 	 */
-	public CachedFile(Path file, Class<T> value) {
+	public CachedFile(Path file, Type value) {
 		this(() -> file, value);
 		try {
 			Files.createDirectories(file.getParent());
@@ -44,7 +46,7 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public CachedFile(Supplier<Path> file, Class<T> value) {
+	public CachedFile(Supplier<Path> file, Type value) {
 		this.file = new Supplier<Path>() {
 			Path lazy;
 
@@ -66,15 +68,15 @@ public abstract class CachedFile<T> {
 		return dir.resolve(hasher.hash().toString());
 	}
 
-	public static CachedFile<String> forUrl(String url, Path path, Logger logger) {
+	public static CachedFile<String> forUrl(String url, Path path, Logger logger, boolean compress) {
 		try {
-			return forUrl(new URL(url), path, logger);
+			return forUrl(new URL(url), path, logger, compress);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public static CachedFile<String> forUrl(LauncherMeta.HashedURL url, Path path, Logger logger) {
+	public static CachedFile<String> forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compressed) {
 		return new CachedFile<String>(path, String.class) {
 			@Nullable
 			@Override
@@ -82,131 +84,62 @@ public abstract class CachedFile<T> {
 				if(url.hash.equals(hash)) {
 					return null;
 				}
-				Clock clock = new Clock("Validating/Downloading " + url + " cache took %dms", logger);
-				HttpURLConnection connection = (HttpURLConnection) url.getUrl().openConnection();
-				// If the output already exists we'll use it's last modified time
-				if (Files.exists(to)) {
-					if (offlineMode) {
-						clock.close();
-						return null;
-					}
 
-					connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
+				long lastModifyTime;
+				if(Files.exists(to)) {
+					lastModifyTime = Files.getLastModifiedTime(to).toMillis();
+				} else {
+					lastModifyTime = -1;
 				}
 
-				// We want to download gzip compressed stuff
-				connection.setRequestProperty("Accept-Encoding", "gzip");
-
-				// Try make the connection, it will hang here if the connection is bad
-				connection.connect();
-
-				int code = connection.getResponseCode();
-
-				if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
-					//Didn't get what we expected
-					clock.close();
-					throw new IOException(connection.getResponseMessage() + " for " + url);
-				}
-
-				long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
-
-				if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
-				                                                                                               .toMillis() >= modifyTime)) {
-					logger.info("'{}' Not Modified, skipping.", to);
-					clock.close();
-					return null; //What we've got is already fine
-				}
-
-				long contentLength = connection.getContentLengthLong();
-
-				if (contentLength >= 0) {
-					logger.info("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
-				}
-
-				try { // Try download to the output
-					InputStream stream = connection.getInputStream();
+				DownloadUtil.Result result = DownloadUtil.read(url.getUrl(), null, lastModifyTime, logger, offlineMode, compressed);
+				if(result == null) return null;
+				try(InputStream stream = result.stream) { // Try download to the output
 					Files.copy(stream, to, StandardCopyOption.REPLACE_EXISTING);
-					stream.close();
+					result.clock.close();
 				} catch (IOException e) {
 					Files.delete(to); // Probably isn't good if it fails to copy/save
-					clock.close();
 					throw e;
 				}
 
 				//Set the modify time to match the server's (if we know it)
-				if (modifyTime > 0) {
-					Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
+				if (result.lastModifyDate > 0) {
+					Files.setLastModifiedTime(to, FileTime.fromMillis(result.lastModifyDate));
 				}
 
-				clock.close();
 				return url.hash;
 			}
 		};
 	}
 
-	public static CachedFile<String> forUrl(URL url, Path path, Logger logger) {
+	public static CachedFile<String> forUrl(URL url, Path path, Logger logger, boolean compress) {
 		return new CachedFile<String>(path, String.class) {
 			@Nullable
 			@Override
 			protected String writeIfOutdated(Path to, @Nullable String etag) throws IOException {
-				HttpURLConnection connection;
-
-				try (Clock ignored = new Clock("Validating " + url + " cache took %dms", logger)) {
-					connection = (HttpURLConnection) url.openConnection();
-					// If the output already exists we'll use it's last modified time
-					if (Files.exists(to)) {
-						if (offlineMode) {
-							return etag;
-						}
-
-						connection.setIfModifiedSince(Files.getLastModifiedTime(to).toMillis());
-					}
-
-					if (etag != null) {
-						connection.setRequestProperty("If-None-Match", etag);
-					}
-
-					// We want to download gzip compressed stuff
-					connection.setRequestProperty("Accept-Encoding", "gzip");
-
-					// Try make the connection, it will hang here if the connection is bad
-					connection.connect();
-
-					int code = connection.getResponseCode();
-
-					if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
-						//Didn't get what we expected
-						throw new IOException(connection.getResponseMessage() + " for " + url);
-					}
-
-					long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
-
-					if (Files.exists(to) && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && Files.getLastModifiedTime(to)
-							.toMillis() >= modifyTime)) {
-						logger.info("'{}' Not Modified, skipping.", to);
-						return null; //What we've got is already fine
-					}
-
-					long contentLength = connection.getContentLengthLong();
-
-					if (contentLength >= 0) {
-						logger.info("'{}' Changed, downloading {}", to, toNiceSize(contentLength));
-					}
-
-					try { // Try download to the output
-						Files.copy(connection.getInputStream(), to, StandardCopyOption.REPLACE_EXISTING);
-					} catch (IOException e) {
-						Files.delete(to); // Probably isn't good if it fails to copy/save
-						throw e;
-					}
-
-					//Set the modify time to match the server's (if we know it)
-					if (modifyTime > 0) {
-						Files.setLastModifiedTime(to, FileTime.fromMillis(modifyTime));
-					}
+				long lastModifyTime;
+				if(Files.exists(to)) {
+					lastModifyTime = Files.getLastModifiedTime(to).toMillis();
+				} else {
+					lastModifyTime = -1;
 				}
 
-				return connection.getHeaderField("ETag");
+				DownloadUtil.Result result = DownloadUtil.read(url, null, lastModifyTime, logger, offlineMode, compress);
+				if(result == null) return null;
+				try(InputStream stream = result.stream) { // Try download to the output
+					Files.copy(stream, to, StandardCopyOption.REPLACE_EXISTING);
+					result.clock.close();
+				} catch (IOException e) {
+					Files.delete(to); // Probably isn't good if it fails to copy/save
+					throw e;
+				}
+
+				//Set the modify time to match the server's (if we know it)
+				if (result.lastModifyDate > 0) {
+					Files.setLastModifiedTime(to, FileTime.fromMillis(result.lastModifyDate));
+				}
+
+				return result.etag;
 			}
 		};
 	}

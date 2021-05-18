@@ -36,7 +36,7 @@ repositories {
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
     implementation(project(":utils"))
-    implementation("org.slf4j", "slf4j-api", "1.7.30")
+    implementation(gradleApi())
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("com.google.guava", "guava", "30.1-jre")
     implementation("net.fabricmc:tiny-mappings-parser:0.3.0+build.17")

@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.jars;
+package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;

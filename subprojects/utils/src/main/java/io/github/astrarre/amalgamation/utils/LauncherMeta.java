@@ -7,6 +7,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -19,7 +20,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import org.slf4j.Logger;
+import org.gradle.api.logging.Logger;
+import org.gradle.internal.impldep.org.bouncycastle.math.raw.Nat;
 
 public class LauncherMeta {
 	public static final Set<String> OS_CLASSIFIERS = ImmutableSet.of("natives-linux", "natives-windows", "natives-osx");
@@ -32,6 +34,23 @@ public class LauncherMeta {
 		this.logger = logger;
 	}
 
+	public static String activeMinecraftDirectory() {
+		return minecraftDirectory(OS.ACTIVE);
+	}
+
+	public static String minecraftDirectory(OS os) {
+		switch (os) {
+		case WINDOWS:
+			return System.getenv("appdata") + "/.minecraft/libraries";
+		case LINUX:
+			return System.getProperty("user.home") + "/.minecraft/libraries";
+		case MACOS:
+			return System.getProperty("user.home") + "/Library/Application Support/minecraft/libraries";
+		default:
+			throw new UnsupportedOperationException("unsupported operating system " + os);
+		}
+	}
+
 	public Version getVersion(String version) {
 		this.init(version);
 		return this.versions.get(version);
@@ -41,10 +60,10 @@ public class LauncherMeta {
 		Map<String, Version> vers = this.versions;
 		CachedFile<?> cache = null;
 		if (vers == null) {
-			this.logger.info("downloading manifest . . .");
+			this.logger.lifecycle("downloading manifest . . .");
 			cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
 					this.globalCache.resolve("version_manifest.json"),
-					this.logger);
+					this.logger, true);
 			try (Reader reader = cache.getOutdatedReader()) {
 				Map<String, Version> versions = this.read(reader);
 				if (versions.containsKey(lookingFor)) {
@@ -59,7 +78,7 @@ public class LauncherMeta {
 			if (cache == null) {
 				cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
 						this.globalCache.resolve("version_manifest.json"),
-						this.logger);
+						this.logger, true);
 			}
 			try (Reader reader = cache.getReader()) {
 				this.versions = this.read(reader);
@@ -84,7 +103,7 @@ public class LauncherMeta {
 	}
 
 	public JsonObject read(String output, String url) {
-		CachedFile<?> cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger);
+		CachedFile<?> cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger, true);
 		try (Reader reader = cache.getOutdatedReader()) {
 			return CachedFile.GSON.fromJson(reader, JsonObject.class);
 		} catch (IOException e) {
@@ -183,7 +202,7 @@ public class LauncherMeta {
 		public final List<Rule> rules;
 		public final Map<String, HashedURL> classifierUrls;
 		public final Map<String, String> nativesOsToClassifier;
-		protected List<HashedURL> evaluatedDependencies;
+		protected Map<NativesRule, List<HashedURL>> evaluatedDependencies;
 
 		public Library(HashedURL artifact, List<Rule> rules, Map<String, HashedURL> urls, Map<String, String> classifier) {
 			this.mainDownloadUrl = artifact;
@@ -193,7 +212,8 @@ public class LauncherMeta {
 		}
 
 		public List<HashedURL> evaluateAllDependencies(NativesRule natives) {
-			if(this.evaluatedDependencies == null) {
+			List<HashedURL> get = this.evaluatedDependencies != null ? this.evaluatedDependencies.get(natives) : null;
+			if(get == null) {
 				List<HashedURL> urls = new ArrayList<>();
 				if(natives.getNormalDependencies()) {
 					boolean includeMain = false;
@@ -201,14 +221,14 @@ public class LauncherMeta {
 						if (rule.action == RuleType.ALLOW) {
 							if (rule.osName == null) {
 								includeMain = true;
-							} else if (OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
+							} else if (OS.ACTIVE.launchermetaName.equals(rule.osName)) {
 								includeMain = true;
 								break;
 							}
 						} else {
 							if (rule.osName == null) {
 								includeMain = false;
-							} else if (OsUtil.OPERATING_SYSTEM.equals(rule.osName)) {
+							} else if (OS.ACTIVE.launchermetaName.equals(rule.osName)) {
 								includeMain = false;
 								break;
 							}
@@ -221,7 +241,7 @@ public class LauncherMeta {
 				}
 
 				if(natives.getNatives()) {
-					String classifier = this.nativesOsToClassifier.get(OsUtil.OPERATING_SYSTEM);
+					String classifier = this.nativesOsToClassifier.get(OS.ACTIVE.launchermetaName);
 					if (classifier != null) {
 						HashedURL url = this.classifierUrls.get(classifier);
 						if (url != null) {
@@ -229,10 +249,10 @@ public class LauncherMeta {
 						}
 					}
 				}
-
-				this.evaluatedDependencies = Collections.unmodifiableList(urls);
+				if(this.evaluatedDependencies == null) this.evaluatedDependencies = new EnumMap<NativesRule, List<HashedURL>>(NativesRule.class);
+				this.evaluatedDependencies.put(natives, get = Collections.unmodifiableList(urls));
 			}
-			return this.evaluatedDependencies;
+			return get;
 		}
 	}
 
