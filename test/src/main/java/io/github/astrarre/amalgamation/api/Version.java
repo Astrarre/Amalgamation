@@ -1,4 +1,4 @@
-package io.github.f2bb.amalgamation;
+package io.github.astrarre.amalgamation.api;
 
 
 

@@ -11,12 +11,15 @@ import org.objectweb.asm.tree.AnnotationNode;
 
 public class SplitterUtil {
 	public static boolean matches(List<AnnotationNode> nodes, PlatformId id) {
+		boolean visited = false;
 		for (PlatformId platform : Platformed.getPlatforms(nodes, PlatformId.EMPTY)) {
+			if(platform == PlatformId.EMPTY) continue;
+			visited = true;
 			if(platform.names.containsAll(id.names)) {
 				return true;
 			}
 		}
-		return false;
+		return !visited;
 	}
 
 	public static List<AnnotationNode> stripAnnotations(List<AnnotationNode> strip, PlatformId id) {

@@ -71,12 +71,17 @@ public class AccessSplitter extends Splitter {
 
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
-		if(input.invisibleAnnotations == null) return false;
+		if(input.invisibleAnnotations == null) {
+			target.access = input.access;
+			return false;
+		}
+		boolean found = false;
 		for (AnnotationNode annotation : input.invisibleAnnotations) {
 			if (Classes.ACCESS_DESC.equals(annotation.desc)) {
 				List<AnnotationNode> platforms = AsmUtil.get(annotation, "platforms", Collections.emptyList());
 				if (SplitterUtil.matches(platforms, forPlatform)) {
 					target.access = getAccess(annotation);
+					found = true;
 					List<AnnotationNode> stripped = SplitterUtil.stripAnnotations(platforms, forPlatform);
 					if(!stripped.isEmpty()) {
 						AnnotationNode access = new AnnotationNode(Classes.ACCESS_DESC);
@@ -87,6 +92,10 @@ public class AccessSplitter extends Splitter {
 					}
 				}
 			}
+		}
+
+		if(!found) {
+			target.access = input.access;
 		}
 		return false;
 	}

@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation.platform.util.spigot;
+package io.github.astrarre.amalgamation.api.platform.util.spigot;
 
 import org.objectweb.asm.commons.Remapper;
 

@@ -7,6 +7,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import io.github.astrarre.amalgamation.utils.CachedFile;
@@ -24,7 +25,7 @@ public class LibraryStrippedFile extends CachedFile<Long> {
 	protected Long writeIfOutdated(Path path, @Nullable Long currentData) throws Throwable {
 		Path serverJar = this.serverJar.getOutdatedPath();
 		if(currentData == null || Files.getLastModifiedTime(serverJar).toMillis() > currentData) {
-			Files.copy(serverJar, path);
+			Files.copy(serverJar, path, StandardCopyOption.REPLACE_EXISTING);
 			try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
 				Path root = fileSystem.getPath("/");
 				Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
@@ -38,6 +39,7 @@ public class LibraryStrippedFile extends CachedFile<Long> {
 					}
 				});
 			}
+			return Files.getLastModifiedTime(serverJar).toMillis();
 		}
 		return null;
 	}

@@ -17,24 +17,20 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package io.github.astrarre.amalgamation.api;
 
 /**
- * if the method with the given name is stripped, the current method will replace it.
- * <p>
- * eg. if you have a fabric-only method called foo, and a forge method called bar {@code @Displace("foo")} will cause `bar` to take the place of `foo` in the forge-specific jar
+ * a platform-specific super class
  */
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface Displace {
+public @interface Parent {
 
     /**
-     * @return the name of the method to displace
+     * @return this class's super class on the specified platform
      */
-    String value();
+    Class<?> parent();
+
+    /**
+     * @return the platforms the class is a super on
+     */
+    Platform[] platforms();
 }

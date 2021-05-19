@@ -101,7 +101,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.resolve(true);
 	}
 
-	protected Set<File> path() {
+	protected Set<File> path() throws IOException {
 		if (this.resolved == null) {
 			Set<File> files = new HashSet<>();
 			for (Path path : this.resolvePaths()) {
@@ -116,12 +116,20 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 
 	@Override
 	public Set<File> resolve(boolean b) {
-		return this.path();
+		try {
+			return this.path();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public FileCollection getFiles() {
-		return this.project.files(this.path());
+		try {
+			return this.project.files(this.path());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Nullable
@@ -169,7 +177,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@NotNull
 	@Override
 	public String toString() {
-		return this.getGroup() + ':' + this.getName() + ':' + this.getVersion();
+		return this.getClass().getSimpleName();
 	}
 
 	public static <T> Iterable<T> filt(Iterable<T> incoming, Collection<T> excess, Predicate<T> test) {

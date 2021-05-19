@@ -17,27 +17,30 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package io.github.f2bb.amalgamation;
+package io.github.astrarre.amalgamation.api;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * a platform specific interface
- */
 @Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-public @interface Interface {
+@Repeatable(Access.Accesses.class)
+@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+public @interface Access {
 
     /**
-     * @return this class's super class on the specified platform
+     * @return the access flags of this class on the given platform
      */
-    Class<?> parent();
+    String[] flags();
 
-    /**
-     * @return the platforms the class is a super on
-     */
     Platform[] platforms();
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
+    @interface Accesses {
+
+        Access[] value();
+    }
 }

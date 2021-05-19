@@ -57,7 +57,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Dependency libraries(String version, Action<LibrariesDependency> configure);
 
-	String assets(String version);
+	Assets assets(String version);
 
 	String natives(String version);
 

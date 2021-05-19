@@ -127,13 +127,12 @@ public class MergerDependency extends AbstractSelfResolvingDependency {
 	@Override
 	protected Set<File> path() {
 		if (this.resolved == null) {
-			List<File> resources = new ArrayList<>();
+			List<File> resources = new ArrayList<>(); // todo instead put metadata in the files so no duplication
 			this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, filt(this.resolve(dependencies), resources, MergerDependency::isResourcesJar)));
 			this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, filt(this.resolve(dependencies), resources, MergerDependency::isResourcesJar)));
 			Path path = this.merger.getPath(); // order matters
 			Set<File> files = new HashSet<>();
 			files.add(path.toFile());
-			files.addAll(resources);
 			this.resolved = files;
 			return files;
 		}

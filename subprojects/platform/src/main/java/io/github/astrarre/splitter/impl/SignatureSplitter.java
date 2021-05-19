@@ -13,7 +13,7 @@ public class SignatureSplitter extends Splitter {
 
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
-		input.signature = target.signature; // todo intelligent signature merging
+		target.signature = input.signature; // todo intelligent signature merging
 		return false;
 	}
 }

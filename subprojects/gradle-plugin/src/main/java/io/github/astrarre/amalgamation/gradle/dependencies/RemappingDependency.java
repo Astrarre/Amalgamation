@@ -147,25 +147,19 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 
 	private Iterable<File> resolvedMappings, resolvedDependencies, resolvedClasspath;
 	@Override
-	protected Set<File> path() {
+	protected Set<File> path() throws IOException {
 		if (this.resolved == null) {
 			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
 			this.resolvedMappings = configuration.resolve();
 			List<File> resources = new ArrayList<>();
 			this.resolvedDependencies = filt(this.resolve(this.inputs), resources, MergerDependency::isResourcesJar);
 			this.resolvedClasspath = filt(this.resolve(this.classpath), resources, MergerDependency::isResourcesJar);
-			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> {
-				try {
-					Set<File> files = Files.walk(this.remapper.getPath())
-					                       .filter(Files::isRegularFile)
-					                       .map(Path::toFile)
-					                       .collect(Collectors.toCollection(HashSet::new));
-					files.addAll(resources);
-					return files;
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}));
+			Set<File> files = Files.walk(this.remapper.getPath())
+			                       .filter(Files::isRegularFile)
+			                       .map(Path::toFile)
+			                       .collect(Collectors.toCollection(HashSet::new));
+			files.addAll(resources);
+			this.resolved = files;
 		}
 		return this.resolved;
 	}
@@ -200,6 +194,4 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				new ArrayList<>(this.inputs),
 				new ArrayList<>(this.classpath));
 	}
-
-
 }

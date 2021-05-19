@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
-import io.github.astrarre.amalgamation.gradle.files.Assets;
+import io.github.astrarre.amalgamation.gradle.files.AssetProvider;
 import io.github.astrarre.amalgamation.gradle.files.NativesFile;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.utils.CachedFile;
@@ -25,12 +25,12 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public Dependency client(String version) {
-		return new MinecraftDependency(this.project, version, true, true, false);
+		return new MinecraftDependency(this.project, version, true, false, false);
 	}
 
 	@Override
 	public Dependency server(String version) {
-		return new MinecraftDependency(this.project, version, false, true, true);
+		return new MinecraftDependency(this.project, version, false, false, true);
 	}
 
 	@Override
@@ -41,9 +41,9 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public String assets(String version) {
+	public Assets assets(String version) {
 		try(Clock clock = new Clock("Cache validation / download for assets took %sms", this.logger)) {
-			return Assets.getAssetsDir(this, version);
+			return AssetProvider.getAssetsDir(this, version);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

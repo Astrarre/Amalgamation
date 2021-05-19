@@ -37,7 +37,6 @@ public class NativesFile extends CachedFile<Set<String>> {
 				return null;
 			}
 
-
 			if (currentData != null) {
 				boolean allContained = true;
 				for (LauncherMeta.Library library : this.meta.getVersion(this.version).getLibraries()) {
@@ -92,3 +91,4 @@ public class NativesFile extends CachedFile<Set<String>> {
 		}
 	}
 }
+

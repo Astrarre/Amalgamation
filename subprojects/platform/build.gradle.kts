@@ -51,7 +51,8 @@ repositories {
 dependencies {
     api("org.ow2.asm:asm:9.0")
     api("org.ow2.asm:asm-tree:9.0")
-
+    api("org.ow2.asm:asm-analysis:9.0")
+    api("org.ow2.asm:asm-util:9.0")
     implementation(project(":api"))
     implementation("org.ow2.asm:asm-commons:9.0")
     implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")

@@ -230,7 +230,7 @@ public class LauncherMeta {
 			if(get == null) {
 				List<HashedURL> urls = new ArrayList<>();
 				if(natives.getNormalDependencies()) {
-					boolean includeMain = false;
+					boolean includeMain = true;
 					for (Rule rule : this.rules) {
 						if (rule.action == RuleType.ALLOW) {
 							if (rule.osName == null) {
@@ -238,6 +238,8 @@ public class LauncherMeta {
 							} else if (OS.ACTIVE.launchermetaName.equals(rule.osName)) {
 								includeMain = true;
 								break;
+							} else {
+								includeMain = false;
 							}
 						} else {
 							if (rule.osName == null) {
@@ -245,6 +247,8 @@ public class LauncherMeta {
 							} else if (OS.ACTIVE.launchermetaName.equals(rule.osName)) {
 								includeMain = false;
 								break;
+							} else {
+								includeMain = true;
 							}
 						}
 					}
@@ -263,7 +267,7 @@ public class LauncherMeta {
 						}
 					}
 				}
-				if(this.evaluatedDependencies == null) this.evaluatedDependencies = new EnumMap<NativesRule, List<HashedURL>>(NativesRule.class);
+				if(this.evaluatedDependencies == null) this.evaluatedDependencies = new EnumMap<>(NativesRule.class);
 				this.evaluatedDependencies.put(natives, get = Collections.unmodifiableList(urls));
 			}
 			return get;

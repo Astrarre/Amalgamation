@@ -18,6 +18,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
+import io.github.astrarre.amalgamation.gradle.plugin.minecraft.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
 import io.github.astrarre.amalgamation.utils.CachedFile;
@@ -25,11 +26,12 @@ import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.utils.OS;
 import org.jetbrains.annotations.Nullable;
 
-public class Assets { // todo log config
+public class AssetProvider { // todo log config
 	@Nullable
-	public static String getAssetsDir(MinecraftAmalgamationImpl amalgamation, String version) throws IOException {
+	public static Assets getAssetsDir(MinecraftAmalgamationImpl amalgamation, String version) throws IOException {
 		amalgamation.logger.lifecycle("downloading assets . . .");
-		Path assetsDir = Paths.get(LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets");
+		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
+		Path assetsDir = Paths.get(assetsDirPath);
 		if(Files.exists(assetsDir)) {
 			amalgamation.logger.lifecycle("Found .minecraft assets folder");
 		} else {
@@ -37,25 +39,19 @@ public class Assets { // todo log config
 			assetsDir = BaseAmalgamationImpl.globalCache(amalgamation.project.getGradle()).resolve("assetsDir");
 		}
 
-		Path markerFile = assetsDir.resolve(version + ".marker");
-		if(BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
-			Files.deleteIfExists(markerFile);
-		} else if (Files.exists(markerFile)) {
-			return assetsDir.toAbsolutePath().toString();
-		}
-
 		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(amalgamation.project).getVersion(version);
+		String assetIndexVersion = vers.getAssetIndexVersion();
 		Path indexFile = assetsDir.resolve("indexes").resolve(vers.getAssetIndexVersion() + ".json");
+		Assets assets = new Assets(assetIndexVersion, assetsDirPath);
 		if(Files.exists(indexFile) && !BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
-			Files.createFile(markerFile);
-			return assetsDir.toAbsolutePath().toString();
+			return assets;
 		}
 
 		CachedFile<?> file = CachedFile.forUrl(vers.getAssetIndexUrl(), indexFile, amalgamation.logger, true);
 		Path objectsDir = assetsDir.resolve("objects");
 		try(Reader reader = file.getReader()) {
-			JsonObject assets = CachedFile.GSON.fromJson(reader, JsonObject.class);
-			JsonObject objects = assets.getAsJsonObject("objects");
+			JsonObject assetsJson = CachedFile.GSON.fromJson(reader, JsonObject.class);
+			JsonObject objects = assetsJson.getAsJsonObject("objects");
 			List<Future<?>> futures = new ArrayList<>(objects.entrySet().size());
 			for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
 				Future<?> future = BaseAmalgamationImpl.SERVICE.submit(() -> {
@@ -77,8 +73,6 @@ public class Assets { // todo log config
 		} catch (IOException | InterruptedException | ExecutionException e) {
 			throw new RuntimeException(e);
 		}
-		Files.createFile(markerFile);
-
-		return assetsDir.toAbsolutePath().toString();
+		return assets;
 	}
 }
