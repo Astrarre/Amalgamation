@@ -102,7 +102,7 @@ task testDiff(type: JavaExec) {
     main = "net.fabricmc.loader.launch.knot.KnotClient"
     def natives = ag.natives('1.16.5')
     systemProperty("fabric.development", true)
-    systemProperty("java.library.path", natives)
+    systemProperty("java.library.globalCache", natives)
     systemProperty("org.lwjgl.librarypath", natives)
     def assets = ag.assets('1.16.5')
     args("--assetIndex", assets.assetIndex, "--assetsDir", assets.assetsDir)
