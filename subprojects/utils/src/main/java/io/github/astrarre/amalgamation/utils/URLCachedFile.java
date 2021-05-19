@@ -90,12 +90,12 @@ public abstract class URLCachedFile<T> extends CachedFile<T> {
 
 		@Override
 		protected @Nullable String toEtag(String s) {
-			return null;
+			return s;
 		}
 
 		@Override
 		protected String newValue(String etag) {
-			return null;
+			return etag;
 		}
 	}
 
