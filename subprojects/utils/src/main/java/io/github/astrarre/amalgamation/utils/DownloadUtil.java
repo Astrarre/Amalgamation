@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.gradle.api.logging.Logger;
@@ -25,9 +26,10 @@ public class DownloadUtil {
 			connection.setRequestProperty("If-None-Match", etag);
 		}
 
+
 		if(compressed) {
 			// We want to download gzip compressed stuff
-			connection.setRequestProperty("Accept-Encoding", "gzip");
+			connection.setRequestProperty("Accept-Encoding", "br"); // todo maybe use brotili idk
 		}
 
 		// Try make the connection, it will hang here if the connection is bad
@@ -44,7 +46,7 @@ public class DownloadUtil {
 		long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
 
 		if (currentLastModifyDate != -1 && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && currentLastModifyDate >= modifyTime)) {
-			logger.lifecycle("'{}' Not Modified, skipping.", url);
+			if(logger != null) logger.lifecycle("'{}' Not Modified, skipping.", url);
 			clock.close();
 			return null; //What we've got is already fine
 		}
@@ -52,7 +54,7 @@ public class DownloadUtil {
 		long contentLength = connection.getContentLengthLong();
 
 		if (contentLength >= 0) {
-			logger.lifecycle("'{}' Changed, downloading {}", url, CachedFile.toNiceSize(contentLength));
+			if(logger != null) logger.lifecycle("'{}' Changed, downloading {}", url, CachedFile.toNiceSize(contentLength));
 		}
 
 		try { // Try download to the output
@@ -63,6 +65,7 @@ public class DownloadUtil {
 			throw e;
 		}
 	}
+
 
 	public static class Result {
 		public final InputStream stream;

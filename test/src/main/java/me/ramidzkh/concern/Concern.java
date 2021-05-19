@@ -1,6 +1,5 @@
 package me.ramidzkh.concern;
 
-import java.util.Arrays;
 
 import io.github.f2bb.amalgamation.Displace;
 import io.github.f2bb.amalgamation.Platform;

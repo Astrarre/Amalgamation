@@ -12,9 +12,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import io.github.astrarre.amalgamation.utils.CachedFile;
 import org.jetbrains.annotations.Nullable;
 
-public class StrippedServerJarCachedFile extends CachedFile<Long> {
+public class LibraryStrippedFile extends CachedFile<Long> {
 	private final CachedFile<?> serverJar;
-	public StrippedServerJarCachedFile(Path file, CachedFile<?> serverJar) {
+	public LibraryStrippedFile(Path file, CachedFile<?> serverJar) {
 		super(file, Long.class);
 		this.serverJar = serverJar;
 	}

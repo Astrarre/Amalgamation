@@ -21,6 +21,9 @@ package io.github.astrarre.amalgamation.gradle.tasks;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.file.FileCollection;
@@ -33,51 +36,52 @@ import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemapJar extends Jar {
-    private FileCollection classpath;
-    private MappingSet mappings;
+	private FileCollection classpath;
+	private MappingSet mappings;
 
-    @InputFiles
-    public FileCollection getClasspath() {
-        return classpath;
-    }
+	@InputFiles
+	public FileCollection getClasspath() {
+		return this.classpath;
+	}
 
-    public void setClasspath(FileCollection classpath) {
-        this.classpath = classpath;
-    }
+	public void setClasspath(FileCollection classpath) {
+		this.classpath = classpath;
+	}
 
-    @Input
-    public MappingSet getMappings() {
-        return mappings;
-    }
+	@Input
+	public MappingSet getMappings() {
+		return this.mappings;
+	}
 
-    public void setMappings(MappingSet mappings) {
-        this.mappings = mappings;
-    }
+	public void setMappings(MappingSet mappings) {
+		this.mappings = mappings;
+	}
 
-    @TaskAction
-    public void remap() throws IOException {
-        TinyRemapper remapper = TinyRemapper.newRemapper()
-                //todo .withMappings(MappingUtils.createMappingProvider(mappings))
-                .build();
+	@TaskAction
+	public void remap() throws IOException {
+		TinyRemapper remapper = TinyRemapper.newRemapper()
+		                                    //todo .withMappings(MappingUtils.createMappingProvider(mappings))
+		                                    .build();
 
-        FileCollection inputs = getInputs().getFiles();
+		FileCollection inputs = this.getInputs().getFiles();
 
-        for (File file : inputs) {
-            remapper.readInputsAsync(file.toPath());
-        }
+		for (File file : inputs) {
+			remapper.readInputsAsync(file.toPath());
+		}
 
-        for (File file : classpath) {
-            remapper.readClassPathAsync(file.toPath());
-        }
+		for (File file : this.classpath) {
+			remapper.readClassPathAsync(file.toPath());
+		}
 
-        try (OutputConsumerPath outputConsumerPath = new OutputConsumerPath.Builder(getArchiveFile().get().getAsFile().toPath()).build()) {
-            for (File file : inputs) {
-                outputConsumerPath.addNonClassFiles(file.toPath());
-            }
+		try (OutputConsumerPath outputConsumerPath = new OutputConsumerPath.Builder(this.getArchiveFile().get().getAsFile().toPath()).build()) {
+			for (File file : inputs) {
+				outputConsumerPath.addNonClassFiles(file.toPath());
+			}
 
-            remapper.apply(outputConsumerPath);
-        } finally {
-            remapper.finish();
-        }
-    }
+			remapper.apply(outputConsumerPath);
+		} finally {
+			remapper.finish();
+		}
+	}
+
 }

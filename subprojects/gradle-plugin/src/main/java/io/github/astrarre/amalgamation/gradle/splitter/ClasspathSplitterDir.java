@@ -14,22 +14,24 @@ import java.util.List;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
-import io.github.astrarre.amalgamation.utils.func.UnsafeConsumer;
-import io.github.astrarre.api.PlatformId;
-import io.github.astrarre.splitter.Splitter;
-import io.github.astrarre.splitter.impl.Splitters;
 import io.github.astrarre.amalgamation.utils.CachedFile;
 import io.github.astrarre.amalgamation.utils.Clock;
+import io.github.astrarre.amalgamation.utils.func.UnsafeConsumer;
+import io.github.astrarre.api.PlatformId;
 import io.github.astrarre.merger.context.PlatformMerger;
+import io.github.astrarre.splitter.Splitter;
+import io.github.astrarre.splitter.impl.Splitters;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
-// todo this is bad, make one CachedFile per classpath thing
+
+// todo this is bad, make one CachedFile per file
 public class ClasspathSplitterDir extends CachedFile<String> {
 	protected final Project project;
 	protected final List<Path> input;
 	protected final List<String> toSplit;
+
 	public ClasspathSplitterDir(Path file, Project project, List<Path> input, List<String> split) {
 		super(file, String.class);
 		this.project = project;
@@ -39,7 +41,7 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 
 	@Override
 	protected @Nullable String writeIfOutdated(Path path, @Nullable String currentData) throws Throwable {
-		try(Clock clock = new Clock("splitting " + this.input + " took %sms", this.project.getLogger())) {
+		try (Clock clock = new Clock("splitting " + this.input + " took %sms", this.project.getLogger())) {
 			Hasher hasher = Hashing.sha256().newHasher();
 			this.toSplit.forEach(hasher::putUnencodedChars);
 			for (Path input : this.input) {
@@ -49,7 +51,7 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 
 			String hash = hasher.hash().toString();
 			if (hash.equals(currentData)) {
-				clock.message = "cache validation for " + this.input + " took %sms";
+				clock.message = "Cache validation / download for " + this.input + " took %sms";
 				return null;
 			}
 
@@ -74,17 +76,24 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 	protected void stripTo(List<Splitter> splitters, Path jarPath, Iterable<Path> fromPath) throws URISyntaxException, IOException {
 		Files.createDirectories(jarPath.getParent());
 		Files.deleteIfExists(jarPath);
-		try(FileSystem writeSystem = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergerDependency.CREATE_ZIP)) {
-			for (Path path : fromPath) {
-				try(FileSystem readSystem = FileSystems.newFileSystem(path, null)) {
-					for (Path root : readSystem.getRootDirectories()) {
-						this.stripTo(splitters, writeSystem, root);
-					}
-				} catch (ProviderNotFoundException e) {
-					this.stripTo(splitters, writeSystem, path);
+		FileSystem system = null;
+		for (Path path : fromPath) {
+			this.project.getLogger().lifecycle(path+"");
+			try (FileSystem readSystem = FileSystems.newFileSystem(path, null)) {
+				if(Files.exists(readSystem.getPath("resourceJar.marker"))) { // todo replace with merger metadata
+					this.project.getLogger().lifecycle("skipped " + path + " as it is a resources jar");
+					continue;
 				}
+				for (Path root : readSystem.getRootDirectories()) {
+					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergerDependency.CREATE_ZIP);
+					this.stripTo(splitters, system, root);
+				}
+			} catch (ProviderNotFoundException e) {
+				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergerDependency.CREATE_ZIP);
+				this.stripTo(splitters, system, path);
 			}
 		}
+		if(system != null) system.close();
 	}
 
 	protected void stripTo(List<Splitter> splitters, FileSystem writeSystem, Path root) throws IOException {
@@ -94,14 +103,14 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 				if (!(Files.exists(dest) || Files.isDirectory(file))) {
 					byte[] output;
 
-					if(!dest.toString().endsWith(".class")) {
+					if (!dest.toString().endsWith(".class")) {
 						output = Files.readAllBytes(file);
 					} else {
 						ClassNode from = PlatformMerger.read(Files.readAllBytes(file));
 						ClassNode splitted = new ClassNode();
 						PlatformId platformId = new PlatformId(this.toSplit);
 						for (Splitter splitter : splitters) {
-							if(splitter.split(from, platformId, splitted)) {
+							if (splitter.split(from, platformId, splitted)) {
 								return;
 							}
 						}
@@ -112,7 +121,7 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 
 					Files.createDirectories(dest.getParent());
 					Files.write(dest, output);
-				} else if(Files.exists(dest) && !Files.isDirectory(dest)) {
+				} else if (Files.exists(dest) && !Files.isDirectory(dest)) {
 					System.err.println(dest + " is duplicated!");
 				}
 			}

@@ -9,12 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
@@ -53,7 +55,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 					return null;
 				}
 
-				project.getLogger().lifecycle("Remapping " + inputs.size() + " dependencies");
+				project.getLogger().lifecycle("Remapping " + RemappingDependency.this.inputs.size() + " dependencies");
 
 				try (Clock ignored = new Clock("Remapped " + RemappingDependency.this.inputs.size() + " dependencies in %dms", project.getLogger())) {
 					MappingSet mappings = MappingSet.create();
@@ -63,13 +65,13 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 					TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
 
 					Map<File, InputTag> tags = new HashMap<>();
-					for (File file : RemappingDependency.this.resolve(RemappingDependency.this.inputs)) {
+					for (File file : RemappingDependency.this.resolvedDependencies) {
 						InputTag tag = remapper.createInputTag();
 						tags.put(file, tag);
 						remapper.readInputsAsync(tag, file.toPath());
 					}
 
-					for (File file : RemappingDependency.this.resolve(RemappingDependency.this.classpath)) {
+					for (File file : RemappingDependency.this.resolvedClasspath) {
 						remapper.readClassPathAsync(file.toPath());
 					}
 
@@ -149,12 +151,17 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		if (this.resolved == null) {
 			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
 			this.resolvedMappings = configuration.resolve();
-			this.resolvedDependencies = this.resolve(this.inputs);
-			this.resolvedClasspath = this.resolve(this.classpath);
-
+			List<File> resources = new ArrayList<>();
+			this.resolvedDependencies = filt(this.resolve(this.inputs), resources, MergerDependency::isResourcesJar);
+			this.resolvedClasspath = filt(this.resolve(this.classpath), resources, MergerDependency::isResourcesJar);
 			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> {
 				try {
-					return Files.walk(this.remapper.getPath()).filter(Files::isRegularFile).map(Path::toFile).collect(Collectors.toSet());
+					Set<File> files = Files.walk(this.remapper.getPath())
+					                       .filter(Files::isRegularFile)
+					                       .map(Path::toFile)
+					                       .collect(Collectors.toCollection(HashSet::new));
+					files.addAll(resources);
+					return files;
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -193,4 +200,6 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				new ArrayList<>(this.inputs),
 				new ArrayList<>(this.classpath));
 	}
+
+
 }

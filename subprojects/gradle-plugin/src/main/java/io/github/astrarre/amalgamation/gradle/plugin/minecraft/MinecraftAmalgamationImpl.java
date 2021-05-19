@@ -1,5 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Set;
 
@@ -7,9 +8,11 @@ import com.google.gson.reflect.TypeToken;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.gradle.files.Assets;
 import io.github.astrarre.amalgamation.gradle.files.NativesFile;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.utils.CachedFile;
+import io.github.astrarre.amalgamation.utils.Clock;
 import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -22,12 +25,12 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public Dependency client(String version) {
-		return new MinecraftDependency(this.project, version, true);
+		return new MinecraftDependency(this.project, version, true, true, false);
 	}
 
 	@Override
 	public Dependency server(String version) {
-		return new MinecraftDependency(this.project, version, false);
+		return new MinecraftDependency(this.project, version, false, true, true);
 	}
 
 	@Override
@@ -39,10 +42,15 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public String assets(String version) {
-		return null;
+		try(Clock clock = new Clock("Cache validation / download for assets took %sms", this.logger)) {
+			return Assets.getAssetsDir(this, version);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static final Type SET = new TypeToken<Set<String>>() {}.getType();
+
 	@Override
 	public String natives(String version) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);

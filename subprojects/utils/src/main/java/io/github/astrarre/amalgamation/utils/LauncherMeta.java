@@ -41,11 +41,11 @@ public class LauncherMeta {
 	public static String minecraftDirectory(OS os) {
 		switch (os) {
 		case WINDOWS:
-			return System.getenv("appdata") + "/.minecraft/libraries";
+			return System.getenv("appdata") + "/.minecraft";
 		case LINUX:
-			return System.getProperty("user.home") + "/.minecraft/libraries";
+			return System.getProperty("user.home") + "/.minecraft";
 		case MACOS:
-			return System.getProperty("user.home") + "/Library/Application Support/minecraft/libraries";
+			return System.getProperty("user.home") + "/Library/Application Support/minecraft";
 		default:
 			throw new UnsupportedOperationException("unsupported operating system " + os);
 		}
@@ -53,7 +53,9 @@ public class LauncherMeta {
 
 	public Version getVersion(String version) {
 		this.init(version);
-		return this.versions.get(version);
+		Version version1 = this.versions.get(version);
+		if(version1 == null) throw new IllegalArgumentException("Invalid version " + version);
+		return version1;
 	}
 
 	private void init(String lookingFor) {
@@ -118,7 +120,8 @@ public class LauncherMeta {
 		public final int index;
 		public final String version, manifestUrl;
 		private boolean initialized;
-		public String assetIndexUrl;
+		private HashedURL assetIndexUrl;
+		private String assetIndexPath;
 		private HashedURL clientJar, serverJar;
 		private List<Library> libraries;
 
@@ -131,6 +134,16 @@ public class LauncherMeta {
 		public HashedURL getClientJar() {
 			this.init();
 			return this.clientJar;
+		}
+
+		public HashedURL getAssetIndexUrl() {
+			this.init();
+			return this.assetIndexUrl;
+		}
+
+		public String getAssetIndexVersion() {
+			this.init();
+			return this.assetIndexPath;
 		}
 
 		private void init() {
@@ -181,8 +194,9 @@ public class LauncherMeta {
 				}
 
 				this.libraries = Collections.unmodifiableList(libraries);
+				this.assetIndexPath = versionJson.getAsJsonPrimitive("assets").getAsString();
+				this.assetIndexUrl = new HashedURL(versionJson.getAsJsonObject("assetIndex"), this.assetIndexPath + ".json");
 				this.initialized = true;
-				this.assetIndexUrl = versionJson.getAsJsonObject("assetIndex").getAsJsonPrimitive("url").getAsString();
 			}
 		}
 
@@ -319,8 +333,12 @@ public class LauncherMeta {
 			this.path = path;
 		}
 
-		public URL getUrl() throws MalformedURLException {
-			return new URL(this.url);
+		public URL getUrl() {
+			try {
+				return new URL(this.url);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		@Override

@@ -6,13 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileTime;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -20,7 +19,6 @@ import java.util.function.Supplier;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.github.astrarre.amalgamation.utils.func.UnsafeConsumer;
 import org.gradle.api.logging.Logger;
@@ -76,72 +74,12 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public static CachedFile<String> forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compressed) {
-		return new CachedFile<String>(path, String.class) {
-			@Nullable
-			@Override
-			protected String writeIfOutdated(Path to, @Nullable String hash) throws IOException {
-				if(url.hash.equals(hash)) {
-					return null;
-				}
-
-				long lastModifyTime;
-				if(Files.exists(to)) {
-					lastModifyTime = Files.getLastModifiedTime(to).toMillis();
-				} else {
-					lastModifyTime = -1;
-				}
-
-				DownloadUtil.Result result = DownloadUtil.read(url.getUrl(), null, lastModifyTime, logger, offlineMode, compressed);
-				if(result == null) return null;
-				try(InputStream stream = result.stream) { // Try download to the output
-					Files.copy(stream, to, StandardCopyOption.REPLACE_EXISTING);
-					result.clock.close();
-				} catch (IOException e) {
-					Files.delete(to); // Probably isn't good if it fails to copy/save
-					throw e;
-				}
-
-				//Set the modify time to match the server's (if we know it)
-				if (result.lastModifyDate > 0) {
-					Files.setLastModifiedTime(to, FileTime.fromMillis(result.lastModifyDate));
-				}
-
-				return url.hash;
-			}
-		};
+	public static CachedFile<String> forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compress) {
+		return new URLCachedFile.Hashed(path, url, logger, compress);
 	}
 
 	public static CachedFile<String> forUrl(URL url, Path path, Logger logger, boolean compress) {
-		return new CachedFile<String>(path, String.class) {
-			@Nullable
-			@Override
-			protected String writeIfOutdated(Path to, @Nullable String etag) throws IOException {
-				long lastModifyTime;
-				if(Files.exists(to)) {
-					lastModifyTime = Files.getLastModifiedTime(to).toMillis();
-				} else {
-					lastModifyTime = -1;
-				}
-
-				DownloadUtil.Result result = DownloadUtil.read(url, null, lastModifyTime, logger, offlineMode, compress);
-				if(result == null) return null;
-				try(InputStream stream = result.stream) { // Try download to the output
-					Files.copy(stream, to, StandardCopyOption.REPLACE_EXISTING);
-					result.clock.close();
-				} catch (IOException e) {
-					Files.delete(to); // Probably isn't good if it fails to copy/save
-					throw e;
-				}
-
-				//Set the modify time to match the server's (if we know it)
-				if (result.lastModifyDate > 0) {
-					Files.setLastModifiedTime(to, FileTime.fromMillis(result.lastModifyDate));
-				}
-
-				return result.etag;
-			}
-		};
+		return new URLCachedFile.Normal(path, url, logger, compress);
 	}
 
 	/**
@@ -195,13 +133,19 @@ public abstract class CachedFile<T> {
 
 	public Path getPath() {
 		try {
+			Path path = this.file.get();
 			if (refreshAmalgamationCaches) {
-				Files.deleteIfExists(this.file.get());
+				Files.deleteIfExists(path.toAbsolutePath().getParent().resolve(path.getFileName() + ".data"));
+				if(Files.isDirectory(path)) {
+					delete(path);
+				} else {
+					Files.deleteIfExists(path);
+				}
 			}
 
 			this.lock.lock();
 			T old = this.getData();
-			T data = this.writeIfOutdated(this.file.get(), old);
+			T data = this.writeIfOutdated(path, old);
 			if (data != null) {
 				this.setData(data);
 			}
@@ -241,6 +185,17 @@ public abstract class CachedFile<T> {
 		}
 	}
 
+	public static void delete(Path path) throws IOException {
+		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+			try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
+				for (Path entry : entries) {
+					delete(entry);
+				}
+			}
+		}
+		Files.deleteIfExists(path);
+	}
+
 
 	/**
 	 * if the file exists, it will return the reader, else it will update the file and get the reader.
@@ -267,4 +222,5 @@ public abstract class CachedFile<T> {
 			throw new RuntimeException(e);
 		}
 	}
+
 }

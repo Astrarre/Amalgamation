@@ -1,11 +1,18 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -165,6 +172,15 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.getGroup() + ':' + this.getName() + ':' + this.getVersion();
 	}
 
+	public static <T> Iterable<T> filt(Iterable<T> incoming, Collection<T> excess, Predicate<T> test) {
+		for (T t : incoming) {
+			if(test.test(t)) {
+				excess.add(t);
+			}
+		}
+		return Iterables.filter(incoming, input -> !test.test(input));
+	}
+
 	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
 		Configuration configuration = null;
 		Iterable<File> selfResolving = null;
@@ -196,6 +212,15 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 			} else {
 				return Iterables.concat(configuration.getResolvedConfiguration().getFiles(), selfResolving);
 			}
+		}
+	}
+
+	public static boolean isResourcesJar(File file) {
+		if(file.isDirectory()) return false;
+		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
+			return Files.exists(system.getPath("resourceJar.marker"));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

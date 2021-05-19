@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
 
-public class MergerDependency extends AbstractSingleFileSelfResolvingDependency {
+public class MergerDependency extends AbstractSelfResolvingDependency {
 	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
 	public final CachedFile<?> merger;
 	private final Map<List<TypeEntry>, Collection<Dependency>> unique = new HashMap<>(), merge = new HashMap<>();
@@ -122,16 +124,21 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 	}
 
 	private final Map<List<TypeEntry>, Iterable<File>> uniqueResolved = new HashMap<>(), mergeResolved = new HashMap<>();
-	/*@Override todo fix weird multithreading glitch
+	@Override
 	protected Set<File> path() {
 		if (this.resolved == null) {
-			this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, this.resolve(dependencies)));
-			this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, this.resolve(dependencies)));
-			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> Collections.singleton(this.merger.getPath().toFile()),
-					BaseAmalgamationImpl.SERVICE));
+			List<File> resources = new ArrayList<>();
+			this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, filt(this.resolve(dependencies), resources, MergerDependency::isResourcesJar)));
+			this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, filt(this.resolve(dependencies), resources, MergerDependency::isResourcesJar)));
+			Path path = this.merger.getPath(); // order matters
+			Set<File> files = new HashSet<>();
+			files.add(path.toFile());
+			files.addAll(resources);
+			this.resolved = files;
+			return files;
 		}
 		return this.resolved;
-	}*/
+	}
 
 	public void include(Object object, TypeEntry... platforms) {
 		this.merge.computeIfAbsent(Arrays.asList(platforms), s -> new ArrayList<>()).add(this.project.getDependencies().create(object));
@@ -142,11 +149,10 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 	}
 
 	@Override
-	protected Path resolvePath() {
-		this.unique.forEach((strings, dependencies) -> this.uniqueResolved.put(strings, this.resolve(dependencies)));
-		this.merge.forEach((strings, dependencies) -> this.mergeResolved.put(strings, this.resolve(dependencies)));
-		return this.merger.getPath();
+	protected Iterable<Path> resolvePaths() {
+		throw new UnsupportedOperationException();
 	}
+
 
 	@Override
 	public Dependency copy() {
@@ -186,4 +192,5 @@ public class MergerDependency extends AbstractSingleFileSelfResolvingDependency 
 			return this.type + " of " + this.entry;
 		}
 	}
+
 }

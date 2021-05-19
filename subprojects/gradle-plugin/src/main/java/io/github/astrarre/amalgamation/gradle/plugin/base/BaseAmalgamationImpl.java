@@ -20,6 +20,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
 
 public class BaseAmalgamationImpl implements BaseAmalgamation {
@@ -30,8 +31,12 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	}, null, true);
 
 	public final Project project;
+	public final Logger logger;
 
-	public BaseAmalgamationImpl(Project project) {this.project = project;}
+	public BaseAmalgamationImpl(Project project) {
+		this.project = project;
+		this.logger = project.getLogger();
+	}
 
 	public static Path globalCache(Gradle gradle) {
 		return gradle.getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation");

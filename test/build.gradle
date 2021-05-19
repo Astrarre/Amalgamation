@@ -68,7 +68,6 @@ repositories {
 
  */
 
-println(ag.natives('1.16.5'))
 dependencies {
     implementation ag.map {
         mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
@@ -85,9 +84,9 @@ dependencies {
 task testDiff(type: JavaExec) {
     group = "tests"
     description = "Test Diff:tm:"
-    classpath = ag.splitClasspath({
+    classpath ag.splitClasspath({
         it.from sourceSets.main.runtimeClasspath
-    }, 'client').get()
+    }, 'client')
     main = "me.ramidzkh.concern.Concern"
     args("hello")
     workingDir("$rootDir/run")

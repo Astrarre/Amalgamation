@@ -19,41 +19,51 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
-import java.io.File;
-
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.Action;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 
 // todo support looms caches
 // todo natives (dlls)
 // todo assets
 
+@SuppressWarnings ({
+		"rawtypes",
+		"unchecked"
+})
 public interface MinecraftAmalgamation extends BaseAmalgamation {
-    /**
-     * @param version the minecraft version string, should match up with launchermeta
-     * @return a dependency for the obfuscated client jar
-     */
-    Dependency client(String version);
+	Action NOTHING = o -> {};
+	static <T> Action<T> nothing() {
+		return NOTHING;
+	}
 
-    /**
-     * @param version the minecraft version string, should match up with launchermeta
-     * @return a dependency for the obfuscated server jar (dependencies stripped)
-     */
-    Dependency server(String version);
+	/**
+	 * @param version the minecraft version string, should match up with launchermeta
+	 * @return a dependency for the obfuscated client jar
+	 */
+	Dependency client(String version);
 
-    Dependency libraries(String version, Action<LibrariesDependency> configure);
+	/**
+	 * @param version the minecraft version string, should match up with launchermeta
+	 * @return a dependency for the obfuscated server jar (dependencies stripped)
+	 */
+	Dependency server(String version);
 
-    String assets(String version);
+	default Dependency libraries(String version) {
+        return this.libraries(version, NOTHING);
+	}
 
-    String natives(String version);
+	Dependency libraries(String version, Action<LibrariesDependency> configure);
 
-    /**
-     * @param mappings configurate mappings
-     * @return a list of the remapped dependencies
-     */
-    Dependency map(Action<RemappingDependency> mappings);
+	String assets(String version);
+
+	String natives(String version);
+
+	/**
+	 * @param mappings configurate mappings
+	 * @return a list of the remapped dependencies
+	 */
+	Dependency map(Action<RemappingDependency> mappings);
 }
