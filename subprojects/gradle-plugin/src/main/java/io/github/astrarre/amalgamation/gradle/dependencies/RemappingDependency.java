@@ -39,6 +39,7 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemappingDependency extends AbstractSelfResolvingDependency {
 	public final CachedFile<?> remapper;
+	public boolean globalCache = false;
 	private final List<Dependency> inputs, classpath;
 	private Dependency mappings;
 	private String from, to;
@@ -47,7 +48,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		super(project, "io.github.amalgamation", null, "0.0.0");
 		this.inputs = new ArrayList<>();
 		this.classpath = new ArrayList<>();
-		this.remapper = new CachedFile<Void>(() -> BaseAmalgamationImpl.globalCache(this.project.getGradle()).resolve(this.getName()), Void.class) {
+		this.remapper = new CachedFile<Void>(() -> BaseAmalgamationImpl.cache(project, this.globalCache).resolve("remaps").resolve(this.getName()), Void.class) {
 			@Nullable
 			@Override
 			protected Void writeIfOutdated(Path path, @Nullable Void currentData) throws IOException {
@@ -60,7 +61,9 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				try (Clock ignored = new Clock("Remapped " + RemappingDependency.this.inputs.size() + " dependencies in %dms", project.getLogger())) {
 					MappingSet mappings = MappingSet.create();
 
-					loadMappings(mappings, RemappingDependency.this.resolvedMappings, RemappingDependency.this.from, RemappingDependency.this.to);
+					for (File mapping : RemappingDependency.this.resolvedMappings) {
+						loadMappings(mappings, mapping, RemappingDependency.this.from, RemappingDependency.this.to);
+					}
 
 					TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
 
@@ -77,9 +80,10 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 
 					for (Map.Entry<File, InputTag> entry : tags.entrySet()) {
 						InputTag tag = entry.getValue();
-						Path destination = path.resolve(Hashing.sha256().hashUnencodedChars(entry.getKey().getAbsolutePath()).toString() + ".jar");
+						File file = entry.getKey();
+						Path destination = path.resolve(Hashing.sha256().hashUnencodedChars(file.getAbsolutePath()).toString() + ".jar");
 						try (OutputConsumerPath output = new OutputConsumerPath.Builder(destination).build()) {
-							output.addNonClassFiles(entry.getKey().toPath(), NonClassCopyMode.FIX_META_INF, remapper);
+							output.addNonClassFiles(file.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
 							remapper.apply(output, tag);
 						}
 					}
@@ -92,12 +96,10 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		};
 	}
 
-	private static void loadMappings(MappingSet mappings, Iterable<File> files, String from, String to) throws IOException {
-		for (File file : files) {
-			try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(),
-					null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
-				new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), from, to).read(mappings);
-			}
+	public static void loadMappings(MappingSet mappings, File file, String from, String to) throws IOException {
+		try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(),
+				null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
+			new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), from, to).read(mappings);
 		}
 	}
 
@@ -127,12 +129,12 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	 * @param from the origin namespace
 	 * @param to the destination namespace
 	 */
-	public void mappings(Object object, String from, String to) {
+	public Dependency mappings(Object object, String from, String to) {
 		if (this.mappings == null) {
 			this.mappings = this.project.getDependencies().create(object);
 			this.from = from;
 			this.to = to;
-			return;
+			return this.mappings;
 		}
 		throw new IllegalStateException("cannot layer mappings like that yet");
 	}

@@ -13,16 +13,17 @@ import java.util.List;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import io.github.astrarre.amalgamation.utils.CachedFile;
 import io.github.astrarre.amalgamation.utils.Clock;
 import io.github.astrarre.amalgamation.utils.func.UnsafeConsumer;
 import io.github.astrarre.api.PlatformId;
-import io.github.astrarre.merger.context.PlatformMerger;
+import io.github.astrarre.merger.Mergers;
 import io.github.astrarre.splitter.Splitter;
 import io.github.astrarre.splitter.impl.Splitters;
+import org.checkerframework.checker.units.qual.C;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -80,16 +81,12 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 		for (Path path : fromPath) {
 			this.project.getLogger().lifecycle(path+"");
 			try (FileSystem readSystem = FileSystems.newFileSystem(path, null)) {
-				if(Files.exists(readSystem.getPath("resourceJar.marker"))) { // todo replace with merger metadata
-					this.project.getLogger().lifecycle("skipped " + path + " as it is a resources jar");
-					continue;
-				}
 				for (Path root : readSystem.getRootDirectories()) {
-					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergerDependency.CREATE_ZIP);
+					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), Mergers.CREATE_ZIP);
 					this.stripTo(splitters, system, root);
 				}
 			} catch (ProviderNotFoundException e) {
-				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergerDependency.CREATE_ZIP);
+				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), Mergers.CREATE_ZIP);
 				this.stripTo(splitters, system, path);
 			}
 		}
@@ -106,7 +103,7 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 					if (!dest.toString().endsWith(".class")) {
 						output = Files.readAllBytes(file);
 					} else {
-						ClassNode from = PlatformMerger.read(Files.readAllBytes(file));
+						ClassNode from = from(Files.readAllBytes(file));
 						ClassNode splitted = new ClassNode();
 						PlatformId platformId = new PlatformId(this.toSplit);
 						for (Splitter splitter : splitters) {
@@ -126,5 +123,12 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 				}
 			}
 		})::acceptFailException);
+	}
+
+	public static ClassNode from(byte[] bytes) {
+		ClassReader reader = new ClassReader(bytes);
+		ClassNode node = new ClassNode();
+		reader.accept(node, 0);
+		return node;
 	}
 }

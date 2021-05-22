@@ -6,11 +6,13 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -19,6 +21,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import io.github.astrarre.merger.Mergers;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -190,6 +193,10 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	}
 
 	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
+		return resolve(this.project, dependencies);
+	}
+
+	public static Iterable<File> resolve(Project project, Iterable<Dependency> dependencies) {
 		Configuration configuration = null;
 		Iterable<File> selfResolving = null;
 		for (Dependency dependency : dependencies) {
@@ -201,7 +208,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 				}
 			} else {
 				if (configuration == null) {
-					configuration = this.project.getConfigurations().detachedConfiguration(dependency);
+					configuration = project.getConfigurations().detachedConfiguration(dependency);
 				} else {
 					configuration.getDependencies().add(dependency);
 				}
@@ -225,8 +232,19 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 
 	public static boolean isResourcesJar(File file) {
 		if(file.isDirectory()) return false;
-		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			return Files.exists(system.getPath("resourceJar.marker"));
+		try(FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
+			if(Files.exists(system.getPath(Mergers.RESOURCES_MARKER_FILE))) {
+				return true;
+			} else {
+				Path path = system.getPath(Mergers.MERGER_META_FILE);
+				if(Files.exists(path)) {
+					Properties properties = new Properties();
+					properties.load(Files.newInputStream(path));
+					return properties.getProperty("resources", "false").equals("true");
+				} else {
+					return false;
+				}
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

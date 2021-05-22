@@ -25,7 +25,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.utils.Lazy;
 import org.cadixdev.lorenz.MappingSet;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -37,7 +40,7 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemapJar extends Jar {
 	private FileCollection classpath;
-	private MappingSet mappings;
+	private FileCollection mappings;
 
 	@InputFiles
 	public FileCollection getClasspath() {
@@ -48,14 +51,11 @@ public class RemapJar extends Jar {
 		this.classpath = classpath;
 	}
 
-	@Input
-	public MappingSet getMappings() {
+	@InputFiles
+	public FileCollection getMappings() {
 		return this.mappings;
 	}
 
-	public void setMappings(MappingSet mappings) {
-		this.mappings = mappings;
-	}
 
 	@TaskAction
 	public void remap() throws IOException {

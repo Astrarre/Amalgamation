@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +13,7 @@ import java.util.zip.ZipOutputStream;
 
 import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.utils.URLCachedFile;
+import io.github.astrarre.merger.Mergers;
 import org.gradle.api.logging.Logger;
 
 public class MinecraftFile extends URLCachedFile.Hashed {
@@ -31,7 +31,7 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 		Path classesJar = file.resolve("classes.jar");
 		Path resourcesJar = file.resolve("resources.jar");
 		try(ZipOutputStream classes = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(classesJar))); ZipOutputStream resources = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(resourcesJar)))) {
-			resources.putNextEntry(new ZipEntry("resourceJar.marker"));
+			resources.putNextEntry(new ZipEntry(Mergers.RESOURCES_MARKER_FILE));
 			resources.closeEntry();
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
@@ -53,7 +53,7 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 
 					if(toWriteTo != null) {
 						toWriteTo.putNextEntry(entry);
-						copy(zis, toWriteTo);
+						Mergers.copy(zis, toWriteTo);
 						toWriteTo.closeEntry();
 					}
 				}
@@ -63,12 +63,5 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 		return zis;
 	}
 
-	private static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
-	public static void copy(InputStream from, OutputStream to) throws IOException {
-		int read;
-		byte[] buf = BUFFER.get();
-		while ((read = from.read(buf)) != -1) {
-			to.write(buf, 0, read);
-		}
-	}
+
 }

@@ -19,6 +19,10 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
+import java.io.File;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
@@ -30,8 +34,12 @@ public interface BaseAmalgamation {
     Dependency merge(Action<MergerDependency> configuration);
 
     Provider<FileCollection> splitClasspath(Action<ConfigurableFileCollection> config, String... platforms);
-    
+
     //todo void runConfig(RunConfigSettings settings);
 
     //todo Iterable<RunConfigSettings> getRunConfigs();
+
+    <T> Provider<T> provideLazy(Supplier<T> action);
+
+    Provider<Iterable<File>> resolve(Iterable<Object> dependency);
 }

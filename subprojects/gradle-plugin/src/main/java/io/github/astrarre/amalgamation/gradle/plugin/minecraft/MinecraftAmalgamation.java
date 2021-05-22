@@ -19,6 +19,8 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.io.File;
+
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;

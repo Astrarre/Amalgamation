@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "me.ramidzkh.concern.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "ConeCernMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

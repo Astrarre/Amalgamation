@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.api.RawPlatformClass;
+import io.github.astrarre.api.classes.RawPlatformClass;
+
 import io.github.astrarre.merger.Merger;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;

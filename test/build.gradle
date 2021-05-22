@@ -1,3 +1,5 @@
+import io.github.astrarre.amalgamation.utils.Lazy
+
 /*
  * Amalgamation
  * Copyright (C) 2021 Astrarre
@@ -58,20 +60,13 @@ repositories {
     }
 }
 
-/**
- * dependencies {
- compile ag.merge {
- include('com.google.code.gson:gson:1.1', of('ver', '1.1'))
- include('com.google.code.gson:gson:2.8.6', of('ver', '2.8.6'))
- }
- }
-
- */
-
+def mergedMappings = dependencies.create('net.fabricmc:yarn:1.16.5+build.4:mergedv2')
 dependencies {
     implementation ag.map {
-        mappings('net.fabricmc:yarn:1.16.5+build.4:mergedv2', 'official', 'named')
+        mappings(mergedMappings, 'official', 'named')
+        globalCache = true
         remap ag.merge {
+            globalCache = true
             compareInstructions = false
             include(ag.client('1.16.5'), of('side', 'client'))
             include(ag.server('1.16.5'), of('side', 'server'))
@@ -90,8 +85,37 @@ dependencies {
     implementation("org.ow2.asm:asm-tree:9.1")
     implementation("org.ow2.asm:asm-util:9.1")
     implementation ag.libraries('1.16.5')
+    annotationProcessor("net.fabricmc:fabric-mixin-compile-extensions:0.4.3")
 }
 
+task unzip(type: Copy) {
+    inputs.files(ag.resolve([mergedMappings]))
+    from provider {
+        zipTree(ag.resolve([mergedMappings]).get().first())
+    }
+    into "$buildDir/unzip/"
+}
+
+configurations {
+    annotationProcessor {
+        extendsFrom implementation
+    }
+}
+
+compileJava {
+    def compilerArgs = options.compilerArgs
+    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappings/mappings.tiny" as String)
+    compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String) // I have no idea what this does btw
+    compilerArgs.add("-AoutRefMapFile=${destinationDirectory.get().asFile}/test-refmap.json" as String)
+    compilerArgs.add("-AdefaultObfuscationEnv=named:intermediary" as String)
+    dependsOn tasks.unzip
+}
+
+import io.github.astrarre.amalgamation.gradle.tasks.RemapJar
+task outputJar(type: RemapJar) {
+    from jar
+
+}
 
 task testDiff(type: JavaExec) {
     group = "tests"
@@ -102,14 +126,14 @@ task testDiff(type: JavaExec) {
     main = "net.fabricmc.loader.launch.knot.KnotClient"
     def natives = ag.natives('1.16.5')
     systemProperty("fabric.development", true)
+    systemProperty("fabric.gameVersion", '1.16.5')
     systemProperty("java.library.globalCache", natives)
     systemProperty("org.lwjgl.librarypath", natives)
     def assets = ag.assets('1.16.5')
     args("--assetIndex", assets.assetIndex, "--assetsDir", assets.assetsDir)
     workingDir("$rootDir/run")
+    dependsOn tasks.classes
 }
-
-tasks.testDiff.dependsOn(tasks.classes)
 
 /*
 task stripFabric_1_16(type: StripJar) {

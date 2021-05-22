@@ -33,7 +33,6 @@ public abstract class URLCachedFile<T> extends CachedFile<T> {
 		this.compress = compress;
 	}
 
-
 	@Nullable
 	@Override
 	protected T writeIfOutdated(Path to, @Nullable T data) throws Throwable {

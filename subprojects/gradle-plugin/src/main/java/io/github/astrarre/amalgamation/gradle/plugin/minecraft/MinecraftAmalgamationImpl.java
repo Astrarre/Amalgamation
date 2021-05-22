@@ -25,12 +25,12 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public Dependency client(String version) {
-		return new MinecraftDependency(this.project, version, true, false, false);
+		return new MinecraftDependency(this.project, version, true, true, false);
 	}
 
 	@Override
 	public Dependency server(String version) {
-		return new MinecraftDependency(this.project, version, false, false, true);
+		return new MinecraftDependency(this.project, version, false, true, true);
 	}
 
 	@Override

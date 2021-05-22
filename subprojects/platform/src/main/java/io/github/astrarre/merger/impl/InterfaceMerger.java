@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.api.RawPlatformClass;
+import io.github.astrarre.api.classes.RawPlatformClass;
+
 import io.github.astrarre.merger.util.AsmUtil;
 import io.github.astrarre.Classes;
 import io.github.astrarre.merger.Merger;

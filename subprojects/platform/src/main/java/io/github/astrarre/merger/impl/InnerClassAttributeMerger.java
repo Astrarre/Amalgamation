@@ -3,7 +3,8 @@ package io.github.astrarre.merger.impl;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.api.RawPlatformClass;
+import io.github.astrarre.api.classes.RawPlatformClass;
+
 import io.github.astrarre.merger.Merger;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
