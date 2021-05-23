@@ -21,7 +21,3 @@ rootProject.name = "amalgamation"
 
 include("api")
 include("gradle-plugin")
-
-for (project in rootProject.children) {
-    project.projectDir = file("subprojects/${project.name}")
-}
