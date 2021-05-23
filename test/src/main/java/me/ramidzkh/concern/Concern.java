@@ -4,8 +4,6 @@ package me.ramidzkh.concern;
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 
-import net.fabricmc.loader.launch.common.FabricLauncherBase;
-
 public class Concern {
     public static void main(String[] args) {
         System.out.println("");

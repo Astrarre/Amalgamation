@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
-import io.github.astrarre.amalgamation.utils.OS;
+import io.github.astrarre.amalgamation.gradle.utils.OS;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.JavaPluginConvention;

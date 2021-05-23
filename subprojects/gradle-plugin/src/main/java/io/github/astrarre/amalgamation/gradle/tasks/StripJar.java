@@ -19,10 +19,10 @@
 
 package io.github.astrarre.amalgamation.gradle.tasks;
 
-import io.github.astrarre.api.PlatformId;
-import io.github.astrarre.splitter.Splitter;
-import io.github.astrarre.splitter.impl.Splitters;
-import io.github.astrarre.amalgamation.gradle.util.DelegatedFilterReader;
+import io.github.astrarre.amalgamation.gradle.utils.DelegatedFilterReader;
+import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
 import org.objectweb.asm.ClassReader;

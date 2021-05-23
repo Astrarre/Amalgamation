@@ -20,7 +20,6 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;

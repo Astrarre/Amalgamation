@@ -8,13 +8,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.files.MinecraftFile;
 import io.github.astrarre.amalgamation.gradle.files.LibraryStrippedFile;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.gradle.util.LazySet;
-import io.github.astrarre.amalgamation.utils.CachedFile;
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
+import io.github.astrarre.amalgamation.gradle.utils.LazySet;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 

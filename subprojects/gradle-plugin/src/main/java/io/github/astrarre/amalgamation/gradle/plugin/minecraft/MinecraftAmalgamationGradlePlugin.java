@@ -19,9 +19,9 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
+import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;

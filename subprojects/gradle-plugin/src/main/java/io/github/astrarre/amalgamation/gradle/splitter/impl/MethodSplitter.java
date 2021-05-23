@@ -1,0 +1,56 @@
+package io.github.astrarre.amalgamation.gradle.splitter.impl;
+
+import java.util.Map;
+
+import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.splitter.util.SplitterUtil;
+import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
+import io.github.astrarre.amalgamation.gradle.utils.Classes;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
+
+public class MethodSplitter extends Splitter {
+	public MethodSplitter(Map<String, ?> properties) {
+		super(properties);
+	}
+
+	@Override
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
+		for (MethodNode method : input.methods) {
+			if (method.invisibleAnnotations == null) {
+				target.methods.add(method);
+				continue;
+			}
+
+			if (!SplitterUtil.matches(method.invisibleAnnotations, forPlatform)) {
+				continue;
+			}
+
+			method = copy(method);
+			method.invisibleAnnotations = SplitterUtil.stripAnnotations(method.invisibleAnnotations, forPlatform);
+			for (AnnotationNode annotation : method.invisibleAnnotations) {
+				if (Classes.DISPLACE_DESC.equals(annotation.desc)) {
+					method.name = AsmUtil.get(annotation, "value", method.name);
+				}
+			}
+			target.methods.add(method);
+		}
+		return false;
+	}
+
+	public static MethodNode copy(MethodNode node) {
+		MethodNode n[] = {null};
+		ClassVisitor visitor = new ClassVisitor(ASM9) {
+			@Override
+			public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+				return n[0] = new MethodNode(access, name, descriptor, signature, exceptions);
+			}
+		};
+		node.accept(visitor);
+		return n[0];
+	}
+}

@@ -11,9 +11,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.utils.URLCachedFile;
-import io.github.astrarre.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
+import io.github.astrarre.amalgamation.gradle.utils.URLCachedFile;
+import io.github.astrarre.amalgamation.gradle.merger.Mergers;
 import org.gradle.api.logging.Logger;
 
 public class MinecraftFile extends URLCachedFile.Hashed {

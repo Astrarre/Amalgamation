@@ -19,9 +19,7 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import io.github.astrarre.amalgamation.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

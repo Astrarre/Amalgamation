@@ -10,10 +10,10 @@ import java.util.zip.ZipInputStream;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
-import io.github.astrarre.amalgamation.utils.CachedFile;
-import io.github.astrarre.amalgamation.utils.Clock;
-import io.github.astrarre.amalgamation.utils.DownloadUtil;
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.utils.Clock;
+import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.jetbrains.annotations.Nullable;
 
 public class NativesFile extends CachedFile<Set<String>> {

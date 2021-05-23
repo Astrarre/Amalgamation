@@ -21,16 +21,8 @@ package io.github.astrarre.amalgamation.gradle.tasks;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
-import io.github.astrarre.amalgamation.utils.Lazy;
-import org.cadixdev.lorenz.MappingSet;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;

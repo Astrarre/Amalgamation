@@ -2,7 +2,6 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
@@ -12,7 +11,7 @@ import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import io.github.astrarre.amalgamation.gradle.files.SplitClasspathProvider;
-import io.github.astrarre.amalgamation.utils.Lazy;
+import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;

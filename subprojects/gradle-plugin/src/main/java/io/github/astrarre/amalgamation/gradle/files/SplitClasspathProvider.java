@@ -14,11 +14,10 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.splitter.ClasspathSplitterDir;
-import io.github.astrarre.amalgamation.utils.CachedFile;
-import io.github.astrarre.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.merger.Mergers;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;

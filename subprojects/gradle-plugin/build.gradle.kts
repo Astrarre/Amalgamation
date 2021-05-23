@@ -47,11 +47,13 @@ repositories {
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
 
-    implementation(project(":platform"))
-    implementation(project(":utils"))
+    implementation(project(":api"))
     implementation("com.google.guava", "guava", "30.1-jre")
+    implementation("net.devtech", "signutil", "1.0.0")
     implementation("com.google.code.gson", "gson", "2.8.6")
+    implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("org.cadixdev", "lorenz", "0.5.6")
+    implementation("org.apache.commons", "commons-collections4", "4.4")
     implementation("net.fabricmc", "tiny-remapper", "0.3.2")
     implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
     implementation("net.fabricmc", "dev-launch-injector", "0.2.1+build.8")

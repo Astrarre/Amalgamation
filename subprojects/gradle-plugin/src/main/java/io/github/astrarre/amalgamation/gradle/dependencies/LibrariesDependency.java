@@ -6,10 +6,10 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 import com.google.common.collect.Iterables;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 

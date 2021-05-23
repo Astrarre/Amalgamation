@@ -2,9 +2,6 @@ package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,14 +13,14 @@ import java.util.concurrent.Future;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.astrarre.amalgamation.gradle.plugin.minecraft.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.gradle.plugin.minecraft.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
-import io.github.astrarre.amalgamation.utils.CachedFile;
-import io.github.astrarre.amalgamation.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.utils.OS;
+import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
+import io.github.astrarre.amalgamation.gradle.utils.OS;
 import org.jetbrains.annotations.Nullable;
 
 public class AssetProvider { // todo log config
