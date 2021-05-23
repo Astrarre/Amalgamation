@@ -31,7 +31,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.google.common.collect.ImmutableMap;
 import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.EnvironmentAnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.PlatformAnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.api.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;

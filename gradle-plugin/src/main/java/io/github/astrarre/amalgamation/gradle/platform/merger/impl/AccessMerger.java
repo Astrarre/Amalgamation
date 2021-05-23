@@ -6,29 +6,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.api.Access;
-import io.github.astrarre.amalgamation.gradle.platform.api.AnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class AccessMerger extends Merger implements Opcodes {
-	public static final String ACCESS = Type.getDescriptor(Access.class);
 
 	public AccessMerger(Map<String, ?> properties) {
 		super(properties);
 	}
-
 
 	@Override
 	public void merge(List<RawPlatformClass> inputs,
@@ -73,7 +69,7 @@ public class AccessMerger extends Merger implements Opcodes {
 	public static List<AnnotationNode> visit(MultiValuedMap<Integer, PlatformId> accessFlags, boolean isClass) {
 		List<AnnotationNode> node = new ArrayList<>();
 		accessFlags.asMap().forEach((access, info) -> {
-			AnnotationNode accessAnnotation = new AnnotationNode(ACCESS);
+			AnnotationNode accessAnnotation = new AnnotationNode(Constants.ACCESS_DESC);
 			AnnotationVisitor platforms = accessAnnotation.visitArray("platforms");
 			for (PlatformId classInfo : info) {
 				platforms.visit("platforms", classInfo.createAnnotation(MergeUtil.ONLY_PLATFORM));

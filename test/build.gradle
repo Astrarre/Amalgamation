@@ -113,7 +113,6 @@ compileJava {
 import io.github.astrarre.amalgamation.gradle.tasks.RemapJar
 task outputJar(type: RemapJar) {
     from jar
-
 }
 
 task testDiff(type: JavaExec) {

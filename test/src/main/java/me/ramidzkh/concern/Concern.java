@@ -4,9 +4,14 @@ package me.ramidzkh.concern;
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 
-public class Concern {
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.EnvironmentInterface;
+import net.fabricmc.api.EnvironmentInterfaces;
+
+@EnvironmentInterface(value = EnvType.CLIENT, itf = Runnable.class)
+public class Concern implements Runnable {
     public static void main(String[] args) {
-        System.out.println("");
+        System.out.println("aaaaaaggggadwadawdafffffnnnna");
         hello();
         System.out.println(Boolean.getBoolean("fabric.development"));
     }
@@ -20,5 +25,10 @@ public class Concern {
     @Displace("hello")
     public static void hello_client() {
         System.out.println("hello from client!");
+    }
+
+    @Override
+    public void run() {
+
     }
 }

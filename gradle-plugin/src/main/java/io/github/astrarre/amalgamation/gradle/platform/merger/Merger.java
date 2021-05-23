@@ -3,7 +3,7 @@ package io.github.astrarre.amalgamation.gradle.platform.merger;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.api.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;

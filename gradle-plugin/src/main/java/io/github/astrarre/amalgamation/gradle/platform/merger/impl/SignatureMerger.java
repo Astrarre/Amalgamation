@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.api.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
 import net.devtech.signutil.v0.api.bounded.ClassSignature;

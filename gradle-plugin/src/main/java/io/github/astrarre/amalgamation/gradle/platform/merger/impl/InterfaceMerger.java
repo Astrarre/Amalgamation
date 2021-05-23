@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.platform.api.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.InterfaceAnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
@@ -21,7 +22,6 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class InterfaceMerger extends Merger {
-
 	public InterfaceMerger(Map<String, ?> properties) {
 		super(properties);
 	}
@@ -46,13 +46,17 @@ public class InterfaceMerger extends Merger {
 		}
 		interfacesByPlatform.asMap().forEach((s, names) -> {
 			if (names.size() != allPlatforms.size()) { // not fully common interface
-				List<AnnotationNode> nodes = new ArrayList<>();
-				names.forEach(id -> nodes.add(id.createAnnotation(MergeUtil.ONLY_PLATFORM))); // todo reducing
-				AnnotationNode interfaceAnnotation = new AnnotationNode(Constants.INTERFACE_DESC);
-				interfaceAnnotation.visit("parent", Type.getObjectType(s));
-				interfaceAnnotation.visit("platforms", nodes);
-				if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();
-				target.invisibleAnnotations.add(interfaceAnnotation);
+				for (AnnotationHandler handler : annotationHandlers) {
+					if(handler instanceof InterfaceAnnotationHandler) {
+						AnnotationNode node = ((InterfaceAnnotationHandler) handler).create(names, s);
+						if(node != null) {
+							if (target.invisibleAnnotations == null)
+								target.invisibleAnnotations = new ArrayList<>();
+							target.invisibleAnnotations.add(node);
+							break;
+						}
+					}
+				}
 			}
 
 			target.interfaces.add(s);

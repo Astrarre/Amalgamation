@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class PlatformId implements Identified {

@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import io.github.astrarre.amalgamation.gradle.utils.Constants;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
+import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class Platformed<T> implements Identified {
@@ -54,6 +53,8 @@ public class Platformed<T> implements Identified {
 			for (AnnotationHandler annotation : handlers) {
 				List<String> names = annotation.expand(node);
 				if(names != null) {
+					names = new ArrayList<>(names);
+					names.addAll(activePlatform.names);
 					PlatformId platform = new PlatformId(names);
 					if(platforms == null) platforms = new ArrayList<>();
 					platforms.add(platform);

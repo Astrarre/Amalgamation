@@ -24,6 +24,7 @@ public class Constants {
 	public static final Type OBJECT_TYPE = Type.getType(Object.class);
 	public static final String DISPLACE_DESC = Type.getDescriptor(Displace.class);
 	public static final String ENVIRONMENT = "Lnet/fabricmc/api/Environment;";
+	public static final String ENVIRONMENT_INTERFACE = "Lnet/fabricmc/api/EnvironmentInterface;";
 	public static final String ENV_TYPE = "Lnet/fabricmc/api/EnvType;";
 
 }
