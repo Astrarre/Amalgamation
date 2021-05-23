@@ -5,7 +5,6 @@ import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 

@@ -7,13 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.Type;
@@ -31,10 +30,10 @@ public class InterfaceMerger extends Merger {
 		Set<PlatformId> allPlatforms = new HashSet<>();
 		MultiValuedMap<String, PlatformId> interfacesByPlatform = new ArrayListValuedHashMap<>();
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<String> platformed : input.split(c -> c.interfaces, (c, s) -> AsmUtil.get(
-					AsmUtil.withDesc(c.invisibleAnnotations,
-							Classes.INTERFACE_DESC,
-							node -> AsmUtil.is(node, "parent", Type.getObjectType(s))),
+			for (Platformed<String> platformed : input.split(c -> c.interfaces, (c, s) -> MergeUtil.get(
+					MergeUtil.withDesc(c.invisibleAnnotations,
+							Constants.INTERFACE_DESC,
+							node -> MergeUtil.is(node, "parent", Type.getObjectType(s))),
 					"platforms",
 					Collections.emptyList()))) {
 				allPlatforms.add(platformed.id);
@@ -45,7 +44,7 @@ public class InterfaceMerger extends Merger {
 			if (names.size() != allPlatforms.size()) { // not fully common interface
 				List<AnnotationNode> nodes = new ArrayList<>();
 				names.forEach(id -> nodes.add(id.createAnnotation())); // todo reducing
-				AnnotationNode interfaceAnnotation = new AnnotationNode(Classes.INTERFACE_DESC);
+				AnnotationNode interfaceAnnotation = new AnnotationNode(Constants.INTERFACE_DESC);
 				interfaceAnnotation.visit("parent", Type.getObjectType(s));
 				interfaceAnnotation.visit("platforms", nodes);
 				if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();

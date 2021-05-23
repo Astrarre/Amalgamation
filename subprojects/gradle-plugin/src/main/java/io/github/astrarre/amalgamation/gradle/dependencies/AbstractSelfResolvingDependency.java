@@ -2,29 +2,17 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Iterables;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.utils.DependencyUtil;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
-import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.dependencies.AbstractDependency;
@@ -45,19 +33,6 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		this.group = group;
 		this.name = name;
 		this.version = version;
-	}
-
-	public static String hash(Iterable<File> files) {
-		Hasher hasher = Hashing.sha256().newHasher();
-		hash(hasher, files);
-		return hasher.hash().toString();
-	}
-
-	protected static void hash(Hasher hasher, Iterable<File> files) {
-		for (File file : files) {
-			hasher.putUnencodedChars(file.getAbsolutePath());
-			hasher.putLong(file.lastModified());
-		}
 	}
 
 	@Override
@@ -181,70 +156,8 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.getClass().getSimpleName();
 	}
 
-	public static <T> Iterable<T> filt(Iterable<T> incoming, Collection<T> excess, Predicate<T> test) {
-		for (T t : incoming) {
-			if(test.test(t)) {
-				excess.add(t);
-			}
-		}
-		return Iterables.filter(incoming, input -> !test.test(input));
-	}
-
 	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
-		return resolve(this.project, dependencies);
+		return DependencyUtil.resolve(this.project, dependencies);
 	}
 
-	public static Iterable<File> resolve(Project project, Iterable<Dependency> dependencies) {
-		Configuration configuration = null;
-		Iterable<File> selfResolving = null;
-		for (Dependency dependency : dependencies) {
-			if (dependency instanceof SelfResolvingDependency) {
-				if (selfResolving == null) {
-					selfResolving = ((SelfResolvingDependency) dependency).resolve();
-				} else {
-					selfResolving = Iterables.concat(((SelfResolvingDependency) dependency).resolve(), selfResolving);
-				}
-			} else {
-				if (configuration == null) {
-					configuration = project.getConfigurations().detachedConfiguration(dependency);
-				} else {
-					configuration.getDependencies().add(dependency);
-				}
-			}
-		}
-
-		if (configuration == null) {
-			if (selfResolving == null) {
-				return Collections.emptyList();
-			} else {
-				return selfResolving;
-			}
-		} else {
-			if(selfResolving == null) {
-				return configuration;
-			} else {
-				return Iterables.concat(configuration.getResolvedConfiguration().getFiles(), selfResolving);
-			}
-		}
-	}
-
-	public static boolean isResourcesJar(File file) {
-		if(file.isDirectory()) return false;
-		try(FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			if(Files.exists(system.getPath(Mergers.RESOURCES_MARKER_FILE))) {
-				return true;
-			} else {
-				Path path = system.getPath(Mergers.MERGER_META_FILE);
-				if(Files.exists(path)) {
-					Properties properties = new Properties();
-					properties.load(Files.newInputStream(path));
-					return properties.getProperty("resources", "false").equals("true");
-				} else {
-					return false;
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

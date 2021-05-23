@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class PlatformId implements Identified {
@@ -20,7 +20,7 @@ public class PlatformId implements Identified {
 	}
 
 	public AnnotationNode createAnnotation() {
-		AnnotationNode node = new AnnotationNode(Classes.PLATFORM_DESC);
+		AnnotationNode node = new AnnotationNode(Constants.PLATFORM_DESC);
 		node.visit("value", this.names);
 		return node;
 	}

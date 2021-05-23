@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.utils;
+package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +11,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.function.Supplier;
 
+import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 

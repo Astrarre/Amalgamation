@@ -10,7 +10,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
 import org.jetbrains.annotations.Nullable;
 
 public class LibraryStrippedFile extends CachedFile<Long> {

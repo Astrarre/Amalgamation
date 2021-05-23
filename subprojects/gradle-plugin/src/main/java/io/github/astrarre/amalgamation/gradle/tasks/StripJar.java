@@ -19,20 +19,24 @@
 
 package io.github.astrarre.amalgamation.gradle.tasks;
 
-import io.github.astrarre.amalgamation.gradle.utils.DelegatedFilterReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
 import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
+import io.github.astrarre.amalgamation.gradle.utils.DelegatedFilterReader;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
 
 public class StripJar extends Jar {
     private final List<String> platforms = new ArrayList<>();

@@ -22,7 +22,10 @@ package io.github.astrarre.amalgamation.gradle.tasks;
 import java.io.File;
 import java.io.IOException;
 
+import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
@@ -33,6 +36,25 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 public class RemapJar extends Jar {
 	private FileCollection classpath;
 	private FileCollection mappings;
+	private String from, to;
+
+	@Input
+	public String getFrom() {
+		return this.from;
+	}
+
+	public void setFrom(String from) {
+		this.from = from;
+	}
+
+	@Input
+	public String getTo() {
+		return this.to;
+	}
+
+	public void setTo(String to) {
+		this.to = to;
+	}
 
 	@InputFiles
 	public FileCollection getClasspath() {
@@ -48,12 +70,13 @@ public class RemapJar extends Jar {
 		return this.mappings;
 	}
 
-
 	@TaskAction
 	public void remap() throws IOException {
-		TinyRemapper remapper = TinyRemapper.newRemapper()
-		                                    //todo .withMappings(MappingUtils.createMappingProvider(mappings))
-		                                    .build();
+		MappingSet set = MappingSet.create();
+		for (File file : this.mappings.getFiles()) {
+			MappingUtil.loadMappings(set, file, this.from, this.to);
+		}
+		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(set)).build();
 
 		FileCollection inputs = this.getInputs().getFiles();
 

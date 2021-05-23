@@ -5,9 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
 import net.devtech.signutil.v0.api.bounded.ClassSignature;
 import net.devtech.signutil.v0.api.bounded.TypeParameter;
 import net.devtech.signutil.v0.api.type.reference.ClassType;

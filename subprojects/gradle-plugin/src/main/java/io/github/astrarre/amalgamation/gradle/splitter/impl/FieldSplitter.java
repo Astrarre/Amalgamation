@@ -2,11 +2,10 @@ package io.github.astrarre.amalgamation.gradle.splitter.impl;
 
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
-import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.splitter.util.SplitterUtil;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
+import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -26,15 +25,15 @@ public class FieldSplitter extends Splitter {
 				continue;
 			}
 
-			if (!SplitterUtil.matches(field.invisibleAnnotations, forPlatform)) {
+			if (!MergeUtil.matches(field.invisibleAnnotations, forPlatform)) {
 				continue;
 			}
 
 			field = copy(field);
-			field.invisibleAnnotations = SplitterUtil.stripAnnotations(field.invisibleAnnotations, forPlatform);
+			field.invisibleAnnotations = MergeUtil.stripAnnotations(field.invisibleAnnotations, forPlatform);
 			for (AnnotationNode annotation : field.invisibleAnnotations) {
-				if (Classes.DISPLACE_DESC.equals(annotation.desc)) {
-					field.name = AsmUtil.get(annotation, "value", field.name);
+				if (Constants.DISPLACE_DESC.equals(annotation.desc)) {
+					field.name = MergeUtil.get(annotation, "value", field.name);
 				}
 			}
 			target.fields.add(field);

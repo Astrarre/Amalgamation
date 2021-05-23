@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
+package io.github.astrarre.amalgamation.gradle.files.assets;
 
 public class Assets {
 	public final String assetIndex;

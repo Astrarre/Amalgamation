@@ -19,12 +19,12 @@
 
 package io.github.astrarre.amalgamation.gradle.utils;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
+
+import org.jetbrains.annotations.NotNull;
 
 public class DelegatedFilterReader extends FilterReader {
 

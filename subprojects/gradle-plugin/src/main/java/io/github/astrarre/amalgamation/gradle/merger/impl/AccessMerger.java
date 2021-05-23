@@ -6,13 +6,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
 import io.github.astrarre.amalgamation.api.Access;
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.AnnotationVisitor;
@@ -33,8 +33,8 @@ public class AccessMerger extends Merger implements Opcodes {
 	public void merge(List<RawPlatformClass> inputs, ClassNode target, Map<String, List<String>> platformCombinations) {
 		MultiValuedMap<Integer, PlatformId> accessFlags = new ArrayListValuedHashMap<>();
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<ClassNode> platformed : input.split(AsmUtil.get(AsmUtil.withDesc(input.val.invisibleAnnotations,
-					Classes.ACCESS_DESC,
+			for (Platformed<ClassNode> platformed : input.split(MergeUtil.get(MergeUtil.withDesc(input.val.invisibleAnnotations,
+					Constants.ACCESS_DESC,
 					node -> true), "platforms", Collections.emptyList()))) {
 				accessFlags.put(platformed.val.access, platformed.id);
 			}

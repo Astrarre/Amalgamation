@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.splitter;
+package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,12 +13,12 @@ import java.util.List;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
-import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
-import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
+import io.github.astrarre.amalgamation.gradle.utils.Clock;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
+import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -80,11 +80,11 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 			this.project.getLogger().lifecycle(path+"");
 			try (FileSystem readSystem = FileSystems.newFileSystem(path, null)) {
 				for (Path root : readSystem.getRootDirectories()) {
-					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), Mergers.CREATE_ZIP);
+					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergeUtil.CREATE_ZIP);
 					this.stripTo(splitters, system, root);
 				}
 			} catch (ProviderNotFoundException e) {
-				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), Mergers.CREATE_ZIP);
+				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergeUtil.CREATE_ZIP);
 				this.stripTo(splitters, system, path);
 			}
 		}

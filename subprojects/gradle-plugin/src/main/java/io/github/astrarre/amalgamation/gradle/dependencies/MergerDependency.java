@@ -18,10 +18,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
-import io.github.astrarre.amalgamation.gradle.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
@@ -50,14 +50,14 @@ public class MergerDependency extends AbstractSelfResolvingDependency {
 				hasher.putUnencodedChars(string.type);
 				hasher.putUnencodedChars(string.entry);
 			}
-			hash(hasher, dependencies);
+			FileUtil.hash(hasher, dependencies);
 		});
 		this.uniqueResolved.forEach((strings, dependencies) -> {
 			for (TypeEntry string : strings) {
 				hasher.putUnencodedChars(string.type);
 				hasher.putUnencodedChars(string.entry);
 			}
-			hash(hasher, dependencies);
+			FileUtil.hash(hasher, dependencies);
 		});
 
 		hasher.putBoolean(this.compareInstructions);
@@ -134,8 +134,8 @@ public class MergerDependency extends AbstractSelfResolvingDependency {
 		private final MergerDependency dep;
 
 		public MergerCacheFile(MergerDependency dependency, Project project) {
-			super(() -> (dependency.globalCache ? BaseAmalgamationImpl.globalCache(dependency.project.getGradle()) :
-			             BaseAmalgamationImpl.projectCache(dependency.project)).resolve("merges").resolve(dependency.getName()), Void.class);
+			super(() -> (dependency.globalCache ? FileUtil.globalCache(dependency.project.getGradle()) :
+			             FileUtil.projectCache(dependency.project)).resolve("merges").resolve(dependency.getName()), Void.class);
 			this.dep = dependency;
 			this.project = project;
 		}
@@ -163,8 +163,8 @@ public class MergerDependency extends AbstractSelfResolvingDependency {
 					contextMap.put(Lists.transform(entry.getKey(), t -> t.entry), entry.getValue());
 				}
 				Files.createDirectories(path);
-				Mergers.merge(typeEntries,
-						Mergers.defaults(config),
+				MergeUtil.merge(typeEntries,
+						MergeUtil.defaults(config),
 						path.resolve("merged.jar"),
 						contextMap,
 						strings -> CachedFile.forHash(path, sink -> strings.forEach(sink::putUnencodedChars)).resolve("resources.jar"),

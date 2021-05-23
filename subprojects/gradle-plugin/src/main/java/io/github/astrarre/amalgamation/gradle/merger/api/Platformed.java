@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class Platformed<T> implements Identified {
@@ -51,7 +51,7 @@ public class Platformed<T> implements Identified {
 		if(annotationNodes == null) return Collections.singletonList(activePlatform);
 		List<PlatformId> platforms = null;
 		for (AnnotationNode node : annotationNodes) {
-			if(Classes.PLATFORM_DESC.equals(node.desc)) {
+			if(Constants.PLATFORM_DESC.equals(node.desc)) {
 				if(platforms == null) platforms = new ArrayList<>();
 				platforms.add(getPlatform(node, activePlatform));
 			}
@@ -65,7 +65,7 @@ public class Platformed<T> implements Identified {
 	}
 
 	public static PlatformId getPlatform(AnnotationNode node, PlatformId active) {
-		List<String> names = new ArrayList<>(AsmUtil.get(node, "value", Collections.emptyList()));
+		List<String> names = new ArrayList<>(MergeUtil.get(node, "value", Collections.emptyList()));
 		names.addAll(active.names);
 		return new PlatformId(names);
 	}

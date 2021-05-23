@@ -20,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {

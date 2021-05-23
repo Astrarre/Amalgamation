@@ -14,10 +14,8 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.gradle.splitter.ClasspathSplitterDir;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
-import io.github.astrarre.amalgamation.gradle.merger.Mergers;
+import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -38,9 +36,9 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 	public FileCollection get() {
 		ConfigurableFileCollection classpath = this.project.files();
 		this.config.execute(classpath);
-		Path globalCache = BaseAmalgamationImpl.globalCache(this.project.getGradle());
+		Path globalCache = FileUtil.globalCache(this.project.getGradle());
 		String globalCachePath = globalCache.toAbsolutePath().toString();
-		Path projectCache = BaseAmalgamationImpl.projectCache(this.project);
+		Path projectCache = FileUtil.projectCache(this.project);
 		ConfigurableFileCollection split = this.project.files();
 		List<File> dirs = new ArrayList<>();
 
@@ -49,7 +47,7 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 				continue;
 			}
 
-			switch (this.get(file, Arrays.asList(this.platforms))) {
+			switch (this.getSplitBehavior(file, Arrays.asList(this.platforms))) {
 			case SPLIT:
 				String absolute = file.getAbsolutePath();
 				Path splitDir;
@@ -80,7 +78,8 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 		}
 
 		if (!dirs.isEmpty()) {
-			ClasspathSplitterDir splitter = new ClasspathSplitterDir(BaseAmalgamationImpl.projectCache(this.project).resolve("dest.jar"),
+			ClasspathSplitterDir splitter = new ClasspathSplitterDir(
+					FileUtil.projectCache(this.project).resolve("dest.jar"),
 					this.project,
 					Lists.transform(dirs, File::toPath),
 					Arrays.asList(this.platforms));
@@ -90,18 +89,18 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 		return split;
 	}
 
-	public SplitBehavior get(File file, List<String> platforms) {
+	public static SplitBehavior getSplitBehavior(File file, List<String> platforms) {
 		if(file.isDirectory()) {
 			return SplitBehavior.COMBINE;
 		}
 		try(FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			if (!Files.exists(system.getPath(Mergers.RESOURCES_MARKER_FILE))) {
-				Path path = system.getPath(Mergers.MERGER_META_FILE);
+			if (!Files.exists(system.getPath(MergeUtil.RESOURCES_MARKER_FILE))) {
+				Path path = system.getPath(MergeUtil.MERGER_META_FILE);
 				if (Files.exists(path)) {
 					Properties properties = new Properties();
 					properties.load(Files.newInputStream(path));
-					if (properties.getProperty(Mergers.RESOURCES, "false").equals("true")) {
-						String property = properties.getProperty(Mergers.PLATFORMS);
+					if (properties.getProperty(MergeUtil.RESOURCES, "false").equals("true")) {
+						String property = properties.getProperty(MergeUtil.PLATFORMS);
 						if (Arrays.asList(property.split(",")).containsAll(platforms)) {
 							return SplitBehavior.APPEND;
 						} else {
@@ -116,6 +115,7 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 			throw new RuntimeException(e);
 		}
 	}
+
 	public enum SplitBehavior {
 		COMBINE, // for directories
 		SKIP, // for invalid resources or merger files that are bad

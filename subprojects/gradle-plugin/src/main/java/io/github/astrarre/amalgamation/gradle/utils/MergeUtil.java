@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.merger;
+package io.github.astrarre.amalgamation.gradle.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -27,7 +28,9 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.google.common.collect.ImmutableMap;
+import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
 import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
 import io.github.astrarre.amalgamation.gradle.merger.api.classpath.PathsContext;
 import io.github.astrarre.amalgamation.gradle.merger.api.impl.ClassTypeSolver;
@@ -42,10 +45,14 @@ import io.github.astrarre.amalgamation.gradle.merger.impl.field.FieldMerger;
 import io.github.astrarre.amalgamation.gradle.merger.impl.method.MethodMerger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
-public class Mergers {
-
+public class MergeUtil {
+	/**
+	 * if a file in the root directory of a jar has the following name, the entire jar contains nothing but class files
+	 */
+	public static final String RESOURCES_MARKER_FILE = "resourceJar.marker";
 	/**
 	 * if the first entry of a zip file is a file with the name of this field, it is configured
 	 */
@@ -53,14 +60,8 @@ public class Mergers {
 	// start merger meta properties
 	public static final String RESOURCES = "resources";
 	public static final String PLATFORMS = "platforms";
-	// end
-
 	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
 	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
-	/**
-	 * if a file in the root directory of a jar has the following name, the entire jar contains nothing but class files
-	 */
-	public static final String RESOURCES_MARKER_FILE = "resourceJar.marker";
 
 	public static List<Merger> defaults(Map<String, ?> config) {
 		List<Merger> mergers = new ArrayList<>(); // order matters sometimes
@@ -171,6 +172,62 @@ public class Mergers {
 		}
 	}
 
+	public static boolean matches(List<AnnotationNode> nodes, PlatformId id) {
+		boolean visited = false;
+		for (PlatformId platform : Platformed.getPlatforms(nodes, PlatformId.EMPTY)) {
+			if(platform == PlatformId.EMPTY) continue;
+			visited = true;
+			if(platform.names.containsAll(id.names)) {
+				return true;
+			}
+		}
+		return !visited;
+	}
+
+	public static List<AnnotationNode> stripAnnotations(List<AnnotationNode> strip, PlatformId id) {
+		List<AnnotationNode> nodes = new ArrayList<>();
+		for (AnnotationNode node : strip) {
+			if(Constants.PLATFORM_DESC.equals(node.desc)) {
+				PlatformId platform = Platformed.getPlatform(node, PlatformId.EMPTY);
+				if(platform.names.containsAll(id.names)) {
+					List<String> stripped = new ArrayList<>(platform.names);
+					stripped.removeAll(id.names);
+					if(!stripped.isEmpty()) {
+						PlatformId created = new PlatformId(stripped);
+						nodes.add(created.createAnnotation());
+					}
+				}
+			} else {
+				nodes.add(node);
+			}
+		}
+		return nodes;
+	}
+
+	public static AnnotationNode withDesc(List<AnnotationNode> nodes, String desc, Predicate<AnnotationNode> predicate) {
+		if(nodes == null) return null;
+		for (AnnotationNode node : nodes) {
+			if(desc.equals(node.desc) && predicate.test(node)) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	public static <T> T get(AnnotationNode node, String id, T def) {
+		if(node == null) return def;
+		int index = node.values.indexOf(id);
+		if(index == -1) return def;
+		return (T) node.values.get(index + 1);
+	}
+
+	public static boolean is(AnnotationNode node, String id, Object val) {
+		if(node == null) return false;
+		int index = node.values.indexOf(id);
+		if(index == -1) return false;
+		return val.equals(node.values.get(index + 1));
+	}
+
 	static class FileEntry {
 		final String name;
 		final byte[] data;
@@ -180,5 +237,4 @@ public class Mergers {
 			this.data = data;
 		}
 	}
-
 }

@@ -4,7 +4,7 @@ import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.splitter.util.SplitterUtil;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassSplitter extends Splitter {
@@ -15,10 +15,10 @@ public class ClassSplitter extends Splitter {
 	@Override
 	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target) {
 		if(input.invisibleAnnotations != null) {
-			if(!SplitterUtil.matches(input.invisibleAnnotations, forPlatform)) {
+			if(!MergeUtil.matches(input.invisibleAnnotations, forPlatform)) {
 				return true;
 			}
-			target.invisibleAnnotations = SplitterUtil.stripAnnotations(input.invisibleAnnotations, forPlatform);
+			target.invisibleAnnotations = MergeUtil.stripAnnotations(input.invisibleAnnotations, forPlatform);
 		}
 		return false;
 	}

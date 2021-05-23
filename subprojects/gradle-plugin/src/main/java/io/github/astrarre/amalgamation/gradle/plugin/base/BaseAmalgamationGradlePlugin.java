@@ -19,7 +19,7 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

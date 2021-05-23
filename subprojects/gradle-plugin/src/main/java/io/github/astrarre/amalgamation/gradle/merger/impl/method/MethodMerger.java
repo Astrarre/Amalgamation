@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
 import io.github.astrarre.amalgamation.gradle.merger.impl.field.FieldMerger;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;

@@ -8,21 +8,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
+import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.jetbrains.annotations.Nullable;
 
-public class NativesFile extends CachedFile<Set<String>> {
+public class NativesFile extends CachedFile<Set<String>> { // todo use libraries directory, todo util to download thing by zip file
 	private final MinecraftAmalgamationImpl amalgamation;
 	private final String version;
 	private final LauncherMeta meta;
 
 	public NativesFile(MinecraftAmalgamationImpl amalgamation, String version, LauncherMeta meta) {
-		super(BaseAmalgamationImpl.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
+		super(FileUtil.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
 		this.amalgamation = amalgamation;
 		this.version = version;
 		this.meta = meta;

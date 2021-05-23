@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.ClassVisitor;
@@ -83,7 +82,7 @@ public class FieldMerger extends Merger {
 	}
 
 	public static AnnotationNode displace(String name) {
-		AnnotationNode node = new AnnotationNode(Classes.DISPLACE_DESC);
+		AnnotationNode node = new AnnotationNode(Constants.DISPLACE_DESC);
 		node.visit("value", name);
 		node.visitEnd();
 		return node;

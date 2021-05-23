@@ -4,11 +4,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
-import io.github.astrarre.amalgamation.gradle.splitter.util.SplitterUtil;
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
+import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -75,16 +74,16 @@ public class AccessSplitter extends Splitter {
 		}
 		boolean found = false;
 		for (AnnotationNode annotation : input.invisibleAnnotations) {
-			if (Classes.ACCESS_DESC.equals(annotation.desc)) {
-				List<AnnotationNode> platforms = AsmUtil.get(annotation, "platforms", Collections.emptyList());
-				if (SplitterUtil.matches(platforms, forPlatform)) {
+			if (Constants.ACCESS_DESC.equals(annotation.desc)) {
+				List<AnnotationNode> platforms = MergeUtil.get(annotation, "platforms", Collections.emptyList());
+				if (MergeUtil.matches(platforms, forPlatform)) {
 					target.access = getAccess(annotation);
 					found = true;
-					List<AnnotationNode> stripped = SplitterUtil.stripAnnotations(platforms, forPlatform);
+					List<AnnotationNode> stripped = MergeUtil.stripAnnotations(platforms, forPlatform);
 					if(!stripped.isEmpty()) {
-						AnnotationNode access = new AnnotationNode(Classes.ACCESS_DESC);
+						AnnotationNode access = new AnnotationNode(Constants.ACCESS_DESC);
 						access.values.add("flags");
-						access.values.add(AsmUtil.get(annotation, "flags", Collections.emptyList()));
+						access.values.add(MergeUtil.get(annotation, "flags", Collections.emptyList()));
 						access.values.add("platforms");
 						access.values.add(stripped);
 					}

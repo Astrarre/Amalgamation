@@ -21,9 +21,6 @@ rootProject.name = "amalgamation"
 
 include("api")
 include("gradle-plugin")
-include("platform")
-include("utils")
-include("mappings-flattener")
 
 for (project in rootProject.children) {
     project.projectDir = file("subprojects/${project.name}")

@@ -6,10 +6,10 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 import com.google.common.collect.Iterables;
-import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -42,7 +42,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 				input -> Iterables.transform(input.evaluateAllDependencies(this.rule), dependency -> {
 					Path jar;
 					if (FALLBACK.equals(this.librariesDirectory)) {
-						jar = BaseAmalgamationImpl.globalCache(this.project.getGradle()).resolve(dependency.path);
+						jar = FileUtil.globalCache(this.project.getGradle()).resolve(dependency.path);
 					} else {
 						jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
 					}

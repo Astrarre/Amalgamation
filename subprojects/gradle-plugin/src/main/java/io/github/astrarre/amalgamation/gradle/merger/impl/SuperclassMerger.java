@@ -6,13 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.utils.Classes;
-import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
-
 import io.github.astrarre.amalgamation.gradle.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.merger.api.Platformed;
-import io.github.astrarre.amalgamation.gradle.merger.util.AsmUtil;
+import io.github.astrarre.amalgamation.gradle.merger.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -29,10 +28,10 @@ public class SuperclassMerger extends Merger {
 		for (RawPlatformClass info : inputs) {
 			if(info.val.invisibleAnnotations != null) {
 				for (AnnotationNode annotation : info.val.invisibleAnnotations) {
-					if (Classes.PARENT_DESC.equals(annotation.desc)) {
-						List<AnnotationNode> platforms = AsmUtil.get(annotation, "platforms", Collections.emptyList());
+					if (Constants.PARENT_DESC.equals(annotation.desc)) {
+						List<AnnotationNode> platforms = MergeUtil.get(annotation, "platforms", Collections.emptyList());
 						for (PlatformId platform : Platformed.getPlatforms(platforms, info.id)) {
-							Type parent = AsmUtil.get(annotation, "parent", Classes.OBJECT_TYPE);
+							Type parent = MergeUtil.get(annotation, "parent", Constants.OBJECT_TYPE);
 							String name = parent.getInternalName();
 							supers.computeIfAbsent(name, s -> new ArrayList<>()).add(new Platformed<>(platform, name));
 						}
@@ -62,7 +61,7 @@ public class SuperclassMerger extends Merger {
 		supers.remove(mostCommon);
 		if (!supers.isEmpty()) {
 			supers.forEach((s, i) -> {
-				AnnotationVisitor n = target.visitAnnotation(Classes.PARENT_DESC, true);
+				AnnotationVisitor n = target.visitAnnotation(Constants.PARENT_DESC, true);
 				AnnotationVisitor visitor = n.visitArray("platform");
 				for (Platformed<String> info : i) {
 					visitor.visit("platform", info.id.createAnnotation());

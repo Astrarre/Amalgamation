@@ -1,10 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,18 +14,17 @@ import java.util.stream.Collectors;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
-import io.github.astrarre.amalgamation.gradle.utils.CachedFile;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
-import io.github.astrarre.amalgamation.gradle.utils.Mappings;
+import io.github.astrarre.amalgamation.gradle.utils.CollectionUtil;
+import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.lorenztiny.TinyMappingsReader;
-import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
@@ -45,7 +41,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		super(project, "io.github.amalgamation", null, "0.0.0");
 		this.inputs = new ArrayList<>();
 		this.classpath = new ArrayList<>();
-		this.remapper = new CachedFile<Void>(() -> BaseAmalgamationImpl.cache(project, this.globalCache).resolve("remaps").resolve(this.getName()), Void.class) {
+		this.remapper = new CachedFile<Void>(() -> FileUtil.cache(project, this.globalCache).resolve("remaps").resolve(this.getName()), Void.class) {
 			@Nullable
 			@Override
 			protected Void writeIfOutdated(Path path, @Nullable Void currentData) throws IOException {
@@ -59,10 +55,10 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 					MappingSet mappings = MappingSet.create();
 
 					for (File mapping : RemappingDependency.this.resolvedMappings) {
-						loadMappings(mappings, mapping, RemappingDependency.this.from, RemappingDependency.this.to);
+						MappingUtil.loadMappings(mappings, mapping, RemappingDependency.this.from, RemappingDependency.this.to);
 					}
 
-					TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(Mappings.createMappingProvider(mappings)).build();
+					TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(mappings)).build();
 
 					Map<File, InputTag> tags = new HashMap<>();
 					for (File file : RemappingDependency.this.resolvedDependencies) {
@@ -91,13 +87,6 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				return null;
 			}
 		};
-	}
-
-	public static void loadMappings(MappingSet mappings, File file, String from, String to) throws IOException {
-		try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(),
-				null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
-			new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), from, to).read(mappings);
-		}
 	}
 
 	public RemappingDependency(Project project,
@@ -151,8 +140,8 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
 			this.resolvedMappings = configuration.resolve();
 			List<File> resources = new ArrayList<>();
-			this.resolvedDependencies = filt(this.resolve(this.inputs), resources, MergerDependency::isResourcesJar);
-			this.resolvedClasspath = filt(this.resolve(this.classpath), resources, MergerDependency::isResourcesJar);
+			this.resolvedDependencies = CollectionUtil.filt(this.resolve(this.inputs), resources, FileUtil::isResourcesJar);
+			this.resolvedClasspath = CollectionUtil.filt(this.resolve(this.classpath), resources, FileUtil::isResourcesJar);
 			Set<File> files = Files.walk(this.remapper.getPath())
 			                       .filter(Files::isRegularFile)
 			                       .map(Path::toFile)
@@ -173,9 +162,9 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		Hasher hasher = Hashing.sha256().newHasher();
 		hasher.putUnencodedChars(this.from);
 		hasher.putUnencodedChars(this.to);
-		hash(hasher, this.resolvedMappings);
-		hash(hasher, this.resolvedDependencies);
-		hash(hasher, this.resolvedClasspath);
+		FileUtil.hash(hasher, this.resolvedMappings);
+		FileUtil.hash(hasher, this.resolvedDependencies);
+		FileUtil.hash(hasher, this.resolvedClasspath);
 
 		return hasher.hash().toString();
 	}
