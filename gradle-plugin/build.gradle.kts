@@ -47,7 +47,7 @@ repositories {
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
 
-    implementation(project(":api"))
+    implementation(rootProject.project(":api"))
     implementation("com.google.guava", "guava", "30.1-jre")
     implementation("net.devtech", "signutil", "1.0.0")
     implementation("com.google.code.gson", "gson", "2.8.6")

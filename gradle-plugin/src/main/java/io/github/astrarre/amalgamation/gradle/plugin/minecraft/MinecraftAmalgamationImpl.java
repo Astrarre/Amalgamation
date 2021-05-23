@@ -55,7 +55,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	@Override
 	public String natives(String version) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		CachedFile<Set<String>> natives = new NativesFile(this, version, meta);
+		CachedFile<Set<String>> natives = new NativesFile(this, version, meta, LauncherMeta.activeMinecraftDirectory() + "/libraries");
 		return natives.getPath().toAbsolutePath().toString();
 	}
 

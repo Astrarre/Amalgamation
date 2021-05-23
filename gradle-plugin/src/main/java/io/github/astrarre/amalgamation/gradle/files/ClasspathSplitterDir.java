@@ -13,9 +13,9 @@ import java.util.List;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
+import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.platform.splitter.impl.Splitters;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
@@ -105,7 +105,7 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 						ClassNode splitted = new ClassNode();
 						PlatformId platformId = new PlatformId(this.toSplit);
 						for (Splitter splitter : splitters) {
-							if (splitter.split(from, platformId, splitted)) {
+							if (splitter.split(from, platformId, splitted, MergeUtil.defaultHandlers())) {
 								return;
 							}
 						}

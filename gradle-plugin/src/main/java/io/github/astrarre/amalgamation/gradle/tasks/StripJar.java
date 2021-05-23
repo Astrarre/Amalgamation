@@ -28,10 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.merger.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.splitter.impl.Splitters;
+import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
+import io.github.astrarre.amalgamation.gradle.platform.splitter.impl.Splitters;
 import io.github.astrarre.amalgamation.gradle.utils.DelegatedFilterReader;
+import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.tasks.Input;
 import org.gradle.jvm.tasks.Jar;
 import org.objectweb.asm.ClassReader;
@@ -57,7 +58,7 @@ public class StripJar extends Jar {
 
             ClassNode split = new ClassNode();
             for (Splitter splitter : splitters) {
-                if(splitter.split(node, new PlatformId(this.platforms), split)) {
+                if(splitter.split(node, new PlatformId(this.platforms), split, MergeUtil.defaultHandlers())) {
                     fileCopyDetails.exclude();
                     return;
                 }

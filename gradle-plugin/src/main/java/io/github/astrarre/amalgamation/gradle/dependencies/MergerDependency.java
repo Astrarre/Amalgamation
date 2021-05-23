@@ -163,7 +163,8 @@ public class MergerDependency extends AbstractSelfResolvingDependency {
 					contextMap.put(Lists.transform(entry.getKey(), t -> t.entry), entry.getValue());
 				}
 				Files.createDirectories(path);
-				MergeUtil.merge(typeEntries,
+				MergeUtil.merge(MergeUtil.defaultHandlers(),
+						typeEntries,
 						MergeUtil.defaults(config),
 						path.resolve("merged.jar"),
 						contextMap,
