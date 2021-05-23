@@ -59,8 +59,30 @@ repositories {
     }
 }
 
+/*def artifactType = Attribute.of('artifactType', String)
+def merged = Attribute.of('merged', Boolean)
+configurations {
+    minecraftFabric {
+        afterEvaluate {
+            attributes.attribute(merged, true)
+        }
+    }
+    implementation.extendsFrom(minecraftFabric)
+}*/
+
 def mergedMappings = dependencies.create('net.fabricmc:yarn:1.16.5+build.4:mergedv2')
 dependencies {
+    /*attributesSchema {
+        attribute(merged)
+    }
+    artifactTypes.getByName("jar") {
+        attributes.attribute(merged, false)
+    }
+    registerTransform(Merger) {
+        from.attribute(merged, false).attribute(artifactType, "jar")
+        to.attribute(merged, true).attribute(artifactType, "jar")
+    }*/
+
     implementation ag.map {
         mappings(mergedMappings, 'official', 'named')
         globalCache = true
@@ -70,6 +92,9 @@ dependencies {
             include(ag.client('1.16.5'), of('side', 'client'))
             include(ag.server('1.16.5'), of('side', 'server'))
         }
+    }
+    implementation ag.deJiJ('test') {
+        add("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
     }
     implementation("net.fabricmc:fabric-loader:0.11.3")
     implementation("net.fabricmc:tiny-mappings-parser:0.2.2.14")

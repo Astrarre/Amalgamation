@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Iterables;
+import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import io.github.astrarre.amalgamation.gradle.files.SplitClasspathProvider;
 import io.github.astrarre.amalgamation.gradle.utils.DependencyUtil;
@@ -49,6 +50,13 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 			DependencyHandler handler = this.project.getDependencies();
 			return DependencyUtil.resolve(this.project, Iterables.transform(dependency, handler::create));
 		});
+	}
+
+	@Override
+	public Dependency deJiJ(String name, Action<DeJiJDependency> configuration) {
+		DeJiJDependency dependency = new DeJiJDependency(this.project, name);
+		configuration.execute(dependency);
+		return dependency;
 	}
 
 }

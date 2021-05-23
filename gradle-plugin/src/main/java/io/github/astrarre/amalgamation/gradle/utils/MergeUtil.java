@@ -65,7 +65,6 @@ public class MergeUtil {
 	public static final String RESOURCES = "resources";
 	public static final String PLATFORMS = "platforms";
 	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
-	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
 
 	public static final List<AnnotationHandler> ONLY_PLATFORM = Collections.singletonList(PlatformAnnotationHandler.INSTANCE);
 	public static List<AnnotationHandler> defaultHandlers() {
@@ -175,14 +174,6 @@ public class MergeUtil {
 		}
 	}
 
-	public static void copy(InputStream from, OutputStream to) throws IOException {
-		int read;
-		byte[] buf = BUFFER.get();
-		while ((read = from.read(buf)) != -1) {
-			to.write(buf, 0, read);
-		}
-	}
-
 	public static boolean matches(List<AnnotationNode> nodes, PlatformId id, List<AnnotationHandler> handlers) {
 		boolean visited = false;
 		for (PlatformId platform : Platformed.getPlatforms(handlers, nodes, PlatformId.EMPTY)) {
@@ -243,13 +234,4 @@ public class MergeUtil {
 		return val.equals(node.values.get(index + 1));
 	}
 
-	static class FileEntry {
-		final String name;
-		final byte[] data;
-
-		FileEntry(String name, byte[] data) {
-			this.name = name;
-			this.data = data;
-		}
-	}
 }
