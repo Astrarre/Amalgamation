@@ -13,7 +13,7 @@ import io.github.astrarre.amalgamation.utils.CachedFile;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
-public class LibrariesDependency extends AbstractSelfResolvingDependency { // todo seperate out natives
+public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	public static final String FALLBACK = "AMALGAMATION_GLOBAL";
 	/**
 	 * defaults to your .minecraft installation, if not found, uses amalgamation cache
