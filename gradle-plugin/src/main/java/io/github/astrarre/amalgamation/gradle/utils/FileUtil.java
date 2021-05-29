@@ -1,5 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.zip.ZipInputStream;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -70,5 +72,11 @@ public class FileUtil {
 		while ((read = from.read(buf)) != -1) {
 			to.write(buf, 0, read);
 		}
+	}
+
+	public static byte[] readAll(InputStream zis) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		copy(zis, baos);
+		return baos.toByteArray();
 	}
 }

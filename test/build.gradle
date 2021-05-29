@@ -46,6 +46,7 @@ buildscript {
 }
 
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 apply plugin: 'io.github.astrarre.amalgamation.minecraft'
 
 repositories {

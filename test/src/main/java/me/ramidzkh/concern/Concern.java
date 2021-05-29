@@ -8,7 +8,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.EnvironmentInterface;
 import net.fabricmc.api.EnvironmentInterfaces;
 
-@EnvironmentInterface(value = EnvType.CLIENT, itf = Runnable.class)
 public class Concern implements Runnable {
     public static void main(String[] args) {
         System.out.println("aaaaaaggggadwadawdafffffnnnna");

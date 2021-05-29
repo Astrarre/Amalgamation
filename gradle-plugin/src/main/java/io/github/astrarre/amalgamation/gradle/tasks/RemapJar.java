@@ -70,6 +70,10 @@ public class RemapJar extends Jar {
 		return this.mappings;
 	}
 
+	public void setMappings(FileCollection mappings) {
+		this.mappings = mappings;
+	}
+
 	@TaskAction
 	public void remap() throws IOException {
 		MappingSet set = MappingSet.create();
