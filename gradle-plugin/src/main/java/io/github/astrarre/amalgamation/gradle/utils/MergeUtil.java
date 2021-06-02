@@ -4,8 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -31,7 +30,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSol
 import com.google.common.collect.ImmutableMap;
 import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.EnvironmentAnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.PlatformAnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
@@ -54,25 +53,23 @@ import org.objectweb.asm.tree.ClassNode;
 
 public class MergeUtil {
 	/**
-	 * if a file in the root directory of a jar has the following name, the entire jar contains nothing but class files
-	 */
-	public static final String RESOURCES_MARKER_FILE = "resourceJar.marker";
-	/**
 	 * if the first entry of a zip file is a file with the name of this field, it is configured
 	 */
 	public static final String MERGER_META_FILE = "merger_metadata.properties";
+
 	// start merger meta properties
-	public static final String RESOURCES = "resources";
+	public static final String TYPE = "type";
 	public static final String PLATFORMS = "platforms";
 	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
-
 	public static final List<AnnotationHandler> ONLY_PLATFORM = Collections.singletonList(PlatformAnnotationHandler.INSTANCE);
+
 	public static List<AnnotationHandler> defaultHandlers() {
 		List<AnnotationHandler> handlers = new ArrayList<>();
 		handlers.add(EnvironmentAnnotationHandler.INSTANCE);
 		handlers.add(PlatformAnnotationHandler.INSTANCE);
 		return handlers;
 	}
+
 	public static List<Merger> defaults(Map<String, ?> config) {
 		List<Merger> mergers = new ArrayList<>(); // order matters sometimes
 		mergers.add(new AccessMerger(config));
@@ -116,11 +113,14 @@ public class MergeUtil {
 			ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(dest)));
 			if (shouldLeaveMarker) {
 				output.putNextEntry(new ZipEntry(MERGER_META_FILE));
+				OutputStreamWriter writer = new OutputStreamWriter(output);
+				writer.write("platforms=");
+				writer.flush();
 				output.closeEntry();
 			}
 			toClose.add(output);
 			for (String name : fileNames) {
-				if (RESOURCES_MARKER_FILE.equals(name) || MERGER_META_FILE.equals(name))
+				if (MERGER_META_FILE.equals(name))
 					continue;
 				List<RawPlatformClass> classes = new ArrayList<>();
 				for (Map.Entry<List<String>, PathsContext> entry : contexts.entrySet()) {
@@ -172,66 +172,6 @@ public class MergeUtil {
 				closeable.close();
 			}
 		}
-	}
-
-	public static boolean matches(List<AnnotationNode> nodes, PlatformId id, List<AnnotationHandler> handlers) {
-		boolean visited = false;
-		for (PlatformId platform : Platformed.getPlatforms(handlers, nodes, PlatformId.EMPTY)) {
-			if(platform == PlatformId.EMPTY) continue;
-			visited = true;
-			if(platform.names.containsAll(id.names)) {
-				return true;
-			}
-		}
-		return !visited;
-	}
-
-	public static List<AnnotationNode> stripAnnotations(List<AnnotationNode> strip, PlatformId id, List<AnnotationHandler> handler) {
-		List<AnnotationNode> nodes = new ArrayList<>();
-		outer:
-		for (AnnotationNode node : strip) {
-			for (AnnotationHandler annotation : handler) {
-				List<String> platforms = annotation.expand(node);
-				if(platforms != null) {
-					PlatformId platform = new PlatformId(platforms);
-					if(platform.names.containsAll(id.names)) {
-						List<String> stripped = new ArrayList<>(platform.names);
-						stripped.removeAll(id.names);
-						if(!stripped.isEmpty()) {
-							PlatformId created = new PlatformId(stripped);
-							nodes.add(created.createAnnotation(handler));
-						}
-					}
-					continue outer;
-				}
-			}
-			nodes.add(node);
-		}
-		return nodes;
-	}
-
-	public static AnnotationNode withDesc(List<AnnotationNode> nodes, String desc, Predicate<AnnotationNode> predicate) {
-		if(nodes == null) return null;
-		for (AnnotationNode node : nodes) {
-			if(desc.equals(node.desc) && predicate.test(node)) {
-				return node;
-			}
-		}
-		return null;
-	}
-
-	public static <T> T get(AnnotationNode node, String id, T def) {
-		if(node == null) return def;
-		int index = node.values.indexOf(id);
-		if(index == -1) return def;
-		return (T) node.values.get(index + 1);
-	}
-
-	public static boolean is(AnnotationNode node, String id, Object val) {
-		if(node == null) return false;
-		int index = node.values.indexOf(id);
-		if(index == -1) return false;
-		return val.equals(node.values.get(index + 1));
 	}
 
 }

@@ -1,6 +1,5 @@
 package io.github.astrarre.amalgamation.gradle.files;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -8,12 +7,11 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,18 +19,13 @@ public class NativesFile extends CachedFile<Set<String>> { // todo use libraries
 	private final MinecraftAmalgamationImpl amalgamation;
 	private final String version;
 	private final LauncherMeta meta;
-	private String librariesDirectory;
 
-	public NativesFile(MinecraftAmalgamationImpl amalgamation, String version, LauncherMeta meta, String librariesDirectory) {
-		super(FileUtil.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
+	public NativesFile(MinecraftAmalgamationImpl amalgamation, String version, LauncherMeta meta) {
+		super(AmalgamationIO.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
 		this.amalgamation = amalgamation;
 		this.version = version;
 		this.meta = meta;
-		this.librariesDirectory = librariesDirectory;
-		File file = new File(this.librariesDirectory);
-		if (!(file.isDirectory() && file.exists())) {
-			this.librariesDirectory = LibrariesDependency.FALLBACK;
-		}
+
 	}
 
 	@Override

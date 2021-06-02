@@ -1,5 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Set;
@@ -14,14 +15,21 @@ import io.github.astrarre.amalgamation.gradle.files.assets.AssetProvider;
 import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements MinecraftAmalgamation {
+	public String librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
+
 	public MinecraftAmalgamationImpl(Project project) {
 		super(project);
+		File file = new File(this.librariesDirectory);
+		if (!(file.isDirectory() && file.exists())) {
+			this.librariesDirectory = AmalgamationIO.globalCache(project.getGradle()).resolve("libraries").toAbsolutePath().toString();
+		}
 	}
 
 	@Override
@@ -55,7 +63,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	@Override
 	public String natives(String version) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		CachedFile<Set<String>> natives = new NativesFile(this, version, meta, LauncherMeta.activeMinecraftDirectory() + "/libraries");
+		CachedFile<Set<String>> natives = new NativesFile(this, version, meta);
 		return natives.getPath().toAbsolutePath().toString();
 	}
 
@@ -66,4 +74,13 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		return dependency;
 	}
 
+	@Override
+	public void setLibrariesCache(String directory) {
+		this.librariesDirectory = directory;
+	}
+
+	@Override
+	public String librariesCache() {
+		return this.librariesDirectory;
+	}
 }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -19,7 +19,7 @@ public class HeaderMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		ClassNode copyTo = inputs.get(0).val;
 		target.name = copyTo.name;
 		List<AnnotationNode> visible = new ArrayList<>();

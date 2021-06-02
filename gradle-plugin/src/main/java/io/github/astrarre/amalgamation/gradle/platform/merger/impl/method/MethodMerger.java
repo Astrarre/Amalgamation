@@ -6,17 +6,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.platform.merger.impl.field.FieldKey;
 import io.github.astrarre.amalgamation.gradle.platform.merger.impl.field.FieldMerger;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class MethodMerger extends Merger {
@@ -31,13 +34,27 @@ public class MethodMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		Set<PlatformId> all = new HashSet<>();
 		MultiValuedMap<MethodKey, PlatformId> methodAgreementMap = new ArrayListValuedHashMap<>();
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<MethodNode> platformed : input.split(annotationHandlers, c -> c.methods, (c, f) -> f.invisibleAnnotations)) {
-				methodAgreementMap.put(new MethodKey(this.compareInstructions, platformed.val), platformed.id);
-				all.add(platformed.id);
+			for (MethodNode method : input.val.methods) {
+				boolean visited = false;
+				if(method.invisibleAnnotations != null) {
+					for (AnnotationNode annotation : method.invisibleAnnotations) {
+						PlatformId id = handler.parseMethodPlatforms(annotation);
+						if(id != null) {
+							methodAgreementMap.put(new MethodKey(compareInstructions, method), id);
+							all.add(id);
+							visited = true;
+						}
+					}
+				}
+
+				if(!visited) {
+					methodAgreementMap.put(new MethodKey(compareInstructions, method), input.id);
+					all.add(input.id);
+				}
 			}
 		}
 
@@ -72,7 +89,7 @@ public class MethodMerger extends Merger {
 				}
 
 				for (PlatformId classInfo : ids) {
-					clone.invisibleAnnotations.add(classInfo.createAnnotation(annotationHandlers));
+					clone.invisibleAnnotations.add(handler.createMethodPlatformAnnotation(classInfo));
 				}
 			}
 

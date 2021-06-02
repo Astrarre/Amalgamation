@@ -13,7 +13,7 @@ import io.github.astrarre.amalgamation.gradle.files.LibraryStrippedFile;
 import io.github.astrarre.amalgamation.gradle.files.MinecraftFile;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.LazySet;
 import org.gradle.api.Project;
@@ -51,12 +51,12 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 					area = "server-unstripped";
 				}
 			}
-			Path jar = FileUtil.globalCache(project.getGradle()).resolve(version).resolve(area);
+			Path jar = AmalgamationIO.globalCache(project.getGradle()).resolve(version).resolve(area);
 			this.jar = new MinecraftFile(jar, url, project.getLogger(), false, isClient, doStrip);
 		} else {
 			LauncherMeta.Version v = Objects.requireNonNull(MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version),
 					"invalid version: " + version);
-			Path globalCache = FileUtil.globalCache(project.getGradle());
+			Path globalCache = AmalgamationIO.globalCache(project.getGradle());
 			Path jar = globalCache.resolve(this.getVersion() + "-" + this.getName() + ".jar");
 			Path unstripped = globalCache.resolve(this.getVersion() + "-" + this.getName() + "-unstripped.jar");
 			LauncherMeta.HashedURL url;

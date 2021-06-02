@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.InterfaceAnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -20,56 +20,31 @@ public class InterfaceSplitter extends Splitter {
 	}
 
 	@Override
-	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, List<AnnotationHandler> annotationHandlers) {
-		target.interfaces = new ArrayList<>(input.interfaces);
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, AnnotationHandler handler) {
+		List<String> interfaces = new ArrayList<>(input.interfaces);
+		Set<String> validInterfaces = new HashSet<>();
 		if (target.invisibleAnnotations != null) {
 			List<AnnotationNode> annotations = target.invisibleAnnotations;
 			for (int i = annotations.size() - 1; i >= 0; i--) {
 				AnnotationNode annotation = annotations.get(i);
-				boolean handledAnnotation = false;
-				for (AnnotationHandler handler : annotationHandlers) {
-					if (handler instanceof InterfaceAnnotationHandler) {
-						InterfaceAnnotationHandler.SidedInterface instance = ((InterfaceAnnotationHandler) handler).parseInterface(annotation);
-						if (instance != null) {
-							handledAnnotation = true;
-							boolean found = false;
-							for (PlatformId platform : instance.platforms) {
-								if (platform.names.containsAll(forPlatform.names)) {
-									found = true;
-								}
-							}
-							if (found) {
-								Set<PlatformId> newPlatforms = new HashSet<>();
-								instance.platforms.forEach(platformId -> {
-									if (platformId.names.containsAll(forPlatform.names)) {
-										List<String> newNames = new ArrayList<>(platformId.names);
-										newNames.removeAll(forPlatform.names);
-										if (!newNames.isEmpty()) {
-											newPlatforms.add(new PlatformId(newNames));
-										}
-									}
-								});
-								if (!newPlatforms.isEmpty()) {
-									if (target.invisibleAnnotations == null) {
-										target.invisibleAnnotations = new ArrayList<>();
-									}
-									target.invisibleAnnotations.add(((InterfaceAnnotationHandler) handler).create(newPlatforms,
-											instance.interfaceName));
-								}
-							} else {
-								target.interfaces.remove(instance.interfaceName);
-							}
-							break;
+				Platformed<String> ifacePlatform = handler.parseInterfacePlatforms(annotation);
+				if (ifacePlatform != null) {
+					if(ifacePlatform.id.names.containsAll(forPlatform.names)) {
+						// valid interface
+						validInterfaces.add(ifacePlatform.val);
+						List<String> newNames = new ArrayList<>(ifacePlatform.id.names);
+						newNames.removeAll(forPlatform.names);
+						if(!newNames.isEmpty()) {
+							annotations.add(handler.createInterfacePlatformAnnotation(new Platformed<>(new PlatformId(newNames), ifacePlatform.val)));
 						}
+					} else {
+						interfaces.remove(ifacePlatform.val);
 					}
-				}
-				if (!handledAnnotation) {
-					target.invisibleAnnotations.add(annotation);
-				} else {
-					target.invisibleAnnotations.remove(i);
 				}
 			}
 		}
+		interfaces.addAll(validInterfaces);
+		target.interfaces = interfaces;
 
 		return false;
 	}

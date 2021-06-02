@@ -31,7 +31,6 @@ public class AWTransformer implements Transformer {
 
 	@Override
 	public void apply(ClassNode node) {
-
 	}
 
 	@Override

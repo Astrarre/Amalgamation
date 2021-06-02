@@ -20,7 +20,7 @@
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -30,6 +30,9 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	public static LauncherMeta getLauncherMeta(Project project) {
 		return project.getExtensions().getByType(LauncherMeta.class);
 	}
+	public static String getLibrariesCache(Project project) {
+		return project.getExtensions().getByType(MinecraftAmalgamation.class).librariesCache();
+	}
 
 	@Override
 	public void apply(@NotNull Project target) {
@@ -38,7 +41,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setName("Minecraft Libraries");
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
-		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, FileUtil.globalCache(target.getGradle()), target.getLogger());
+		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgamationIO.globalCache(target.getGradle()), target.getLogger());
 
 	}
 

@@ -1,13 +1,12 @@
 package io.github.astrarre.amalgamation.gradle.platform.splitter.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.utils.Constants;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -20,25 +19,29 @@ public class FieldSplitter extends Splitter {
 	}
 
 	@Override
-	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, List<AnnotationHandler> annotationHandlers) {
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, AnnotationHandler handler) {
 		for (FieldNode field : input.fields) {
-			if (field.invisibleAnnotations == null) {
-				target.fields.add(field);
-				continue;
-			}
-
-			if (!MergeUtil.matches(field.invisibleAnnotations, forPlatform, annotationHandlers)) {
-				continue;
-			}
-
-			field = copy(field);
-			field.invisibleAnnotations = MergeUtil.stripAnnotations(field.invisibleAnnotations, forPlatform, annotationHandlers);
-			for (AnnotationNode annotation : field.invisibleAnnotations) {
-				if (Constants.DISPLACE_DESC.equals(annotation.desc)) {
-					field.name = MergeUtil.get(annotation, "value", field.name);
+			boolean visited = false;
+			FieldNode copy = copy(field);
+			if (field.invisibleAnnotations != null) {
+				for (AnnotationNode annotation : field.invisibleAnnotations) {
+					PlatformId fieldPlatform = handler.parseFieldPlatforms(annotation);
+					if(fieldPlatform != null) {
+						if(fieldPlatform.names.containsAll(forPlatform.names)) {
+							visited = true;
+							List<String> newNames = new ArrayList<>(fieldPlatform.names);
+							newNames.removeAll(forPlatform.names);
+							if(!newNames.isEmpty()) {
+								if(copy.invisibleAnnotations == null) copy.invisibleAnnotations = new ArrayList<>();
+								copy.invisibleAnnotations.add(handler.createFieldPlatformAnnotation(new PlatformId(newNames)));
+							}
+						}
+					}
 				}
 			}
-			target.fields.add(field);
+			if(!visited) {
+				target.fields.add(copy);
+			}
 		}
 		return false;
 	}

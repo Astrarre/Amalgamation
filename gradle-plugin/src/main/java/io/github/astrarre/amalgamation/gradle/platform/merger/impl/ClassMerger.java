@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
-import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassMerger extends Merger {
@@ -22,17 +22,30 @@ public class ClassMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		Set<PlatformId> computed = new HashSet<>();
+		// todo this needs to be taken out, do after refactater
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<ClassNode> platformed : input.split(annotationHandlers, n -> n.invisibleAnnotations)) {
-				computed.add(platformed.id);
+			ClassNode c = input.val;
+			boolean visited = false;
+			if(c.invisibleAnnotations != null) {
+				for (AnnotationNode annotation : c.invisibleAnnotations) {
+					PlatformId type = handler.parseClassPlatforms(annotation);
+					if(type != null) {
+						visited = true;
+						computed.add(type);
+					}
+				}
+			}
+
+			if(!visited) {
+				computed.add(input.id);
 			}
 		}
 
-		for (PlatformId ids : computed) { // todo reduce
+		for (PlatformId ids : computed) {
 			if(target.invisibleAnnotations == null) target.invisibleAnnotations = new ArrayList<>();
-			target.invisibleAnnotations.add(ids.createAnnotation(annotationHandlers));
+			target.invisibleAnnotations.add(handler.createClassPlatformAnnotation(ids));
 		}
 	}
 }

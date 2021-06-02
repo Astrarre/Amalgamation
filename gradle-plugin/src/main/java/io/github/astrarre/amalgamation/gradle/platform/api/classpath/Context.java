@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.github.javaparser.ast.body.TypeDeclaration;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface Context {
@@ -26,7 +26,7 @@ public interface Context {
 		InputStream stream = this.getResource(fileName);
 		if(stream == null) return null;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		FileUtil.copy(stream, baos);
+		AmalgamationIO.copy(stream, baos);
 		return baos.toByteArray();
 	}
 

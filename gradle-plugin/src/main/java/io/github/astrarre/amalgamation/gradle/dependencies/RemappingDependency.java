@@ -17,7 +17,7 @@ import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.CollectionUtil;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
@@ -41,7 +41,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		super(project, "io.github.amalgamation", null, "0.0.0");
 		this.inputs = new ArrayList<>();
 		this.classpath = new ArrayList<>();
-		this.remapper = new CachedFile<Void>(() -> FileUtil.cache(project, this.globalCache).resolve("remaps").resolve(this.getName()), Void.class) {
+		this.remapper = new CachedFile<Void>(() -> AmalgamationIO.cache(project, this.globalCache).resolve("remaps").resolve(this.getName()), Void.class) {
 			@Nullable
 			@Override
 			protected Void writeIfOutdated(Path path, @Nullable Void currentData) throws IOException {
@@ -140,8 +140,8 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
 			this.resolvedMappings = configuration.resolve();
 			List<File> resources = new ArrayList<>();
-			this.resolvedDependencies = CollectionUtil.filt(this.resolve(this.inputs), resources, FileUtil::isResourcesJar);
-			this.resolvedClasspath = CollectionUtil.filt(this.resolve(this.classpath), resources, FileUtil::isResourcesJar);
+			this.resolvedDependencies = CollectionUtil.filt(this.resolve(this.inputs), resources, AmalgamationIO::isResourcesJar);
+			this.resolvedClasspath = CollectionUtil.filt(this.resolve(this.classpath), resources, AmalgamationIO::isResourcesJar);
 			Set<File> files = Files.walk(this.remapper.getPath())
 			                       .filter(Files::isRegularFile)
 			                       .map(Path::toFile)
@@ -162,9 +162,9 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		Hasher hasher = Hashing.sha256().newHasher();
 		hasher.putUnencodedChars(this.from);
 		hasher.putUnencodedChars(this.to);
-		FileUtil.hash(hasher, this.resolvedMappings);
-		FileUtil.hash(hasher, this.resolvedDependencies);
-		FileUtil.hash(hasher, this.resolvedClasspath);
+		AmalgamationIO.hash(hasher, this.resolvedMappings);
+		AmalgamationIO.hash(hasher, this.resolvedDependencies);
+		AmalgamationIO.hash(hasher, this.resolvedClasspath);
 
 		return hasher.hash().toString();
 	}

@@ -1,10 +1,9 @@
 package io.github.astrarre.amalgamation.gradle.platform.splitter.impl;
 
-import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -14,11 +13,11 @@ public class HeaderSplitter extends Splitter {
 	}
 
 	@Override
-	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, List<AnnotationHandler> annotationHandlers) {
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, AnnotationHandler annotationHandlers) {
 		target.name = input.name;
 		target.version = input.version;
 		target.visibleAnnotations = input.visibleAnnotations;
-		// todo handle versions
+		// todo handle versions @Version(...)
 		return false;
 	}
 }

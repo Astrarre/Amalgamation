@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
@@ -29,13 +29,27 @@ public class FieldMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		Set<PlatformId> all = new HashSet<>();
 		MultiValuedMap<FieldKey, PlatformId> fieldAgreementMap = new ArrayListValuedHashMap<>();
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<FieldNode> platformed : input.split(annotationHandlers, c -> c.fields, (c, f) -> f.invisibleAnnotations)) {
-				fieldAgreementMap.put(new FieldKey(platformed.val), platformed.id);
-				all.add(platformed.id);
+			for (FieldNode field : input.val.fields) {
+				boolean visited = false;
+				if(field.invisibleAnnotations != null) {
+					for (AnnotationNode annotation : field.invisibleAnnotations) {
+						PlatformId id = handler.parseFieldPlatforms(annotation);
+						if(id != null) {
+							fieldAgreementMap.put(new FieldKey(field), id);
+							all.add(id);
+							visited = true;
+						}
+					}
+				}
+
+				if(!visited) {
+					fieldAgreementMap.put(new FieldKey(field), input.id);
+					all.add(input.id);
+				}
 			}
 		}
 
@@ -67,7 +81,7 @@ public class FieldMerger extends Merger {
 				}
 
 				for (PlatformId classInfo : ids) {
-					clone.invisibleAnnotations.add(classInfo.createAnnotation(annotationHandlers));
+					clone.invisibleAnnotations.add(handler.createFieldPlatformAnnotation(classInfo));
 				}
 			}
 

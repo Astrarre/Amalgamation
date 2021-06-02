@@ -3,9 +3,9 @@ package io.github.astrarre.amalgamation.gradle.platform.merger.impl;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
+import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 
@@ -18,7 +18,7 @@ public class InnerClassAttributeMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		inputs.stream()
 		      .map(RawPlatformClass::getVal)
 		      .map(node -> node.innerClasses)

@@ -9,7 +9,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import io.github.astrarre.amalgamation.gradle.utils.DependencyUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		implements FileCollectionDependency, SelfResolvingDependencyInternal {
-	protected final Project project;
+	public final Project project;
 	protected final String group, name, version;
 	protected Set<File> resolved;
 
@@ -157,7 +157,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	}
 
 	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
-		return DependencyUtil.resolve(this.project, dependencies);
+		return AmalgamationIO.resolve(this.project, dependencies);
 	}
 
 }

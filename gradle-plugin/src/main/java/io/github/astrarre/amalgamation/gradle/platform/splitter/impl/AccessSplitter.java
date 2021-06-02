@@ -1,10 +1,12 @@
 package io.github.astrarre.amalgamation.gradle.platform.splitter.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
@@ -68,25 +70,22 @@ public class AccessSplitter extends Splitter {
 	}
 
 	@Override
-	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, List<AnnotationHandler> annotationHandlers) {
-		if(input.invisibleAnnotations == null) {
-			target.access = input.access;
-			return false;
-		}
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, AnnotationHandler handler) {
 		boolean found = false;
-		for (AnnotationNode annotation : input.invisibleAnnotations) {
-			if (Constants.ACCESS_DESC.equals(annotation.desc)) {
-				List<AnnotationNode> platforms = MergeUtil.get(annotation, "platforms", Collections.emptyList());
-				if (MergeUtil.matches(platforms, forPlatform, MergeUtil.ONLY_PLATFORM)) {
-					target.access = getAccess(annotation);
-					found = true;
-					List<AnnotationNode> stripped = MergeUtil.stripAnnotations(platforms, forPlatform, MergeUtil.ONLY_PLATFORM);
-					if(!stripped.isEmpty()) {
-						AnnotationNode access = new AnnotationNode(Constants.ACCESS_DESC);
-						access.values.add("flags");
-						access.values.add(MergeUtil.get(annotation, "flags", Collections.emptyList()));
-						access.values.add("platforms");
-						access.values.add(stripped);
+		if(target.invisibleAnnotations != null) {
+			for (int i = target.invisibleAnnotations.size() - 1; i >= 0; i--) {
+				AnnotationNode annotation = target.invisibleAnnotations.get(i);
+				Platformed<Integer> access = handler.parseAccessPlatforms(annotation);
+				if (access != null) {
+					target.invisibleAnnotations.remove(i);
+					if (access.id.names.containsAll(forPlatform.names)) {
+						target.access = access.val;
+						found = true;
+						List<String> newNames = new ArrayList<>(access.id.names);
+						newNames.removeAll(forPlatform.names);
+						if (!newNames.isEmpty()) {
+							target.invisibleAnnotations.add(handler.createAccessAnnotation(new PlatformId(newNames), access.val));
+						}
 					}
 				}
 			}

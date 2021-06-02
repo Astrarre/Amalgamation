@@ -2,8 +2,11 @@ package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.logging.Logger;
@@ -31,7 +34,9 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 		Path classesJar = file.resolve("classes.jar");
 		Path resourcesJar = file.resolve("resources.jar");
 		try(ZipOutputStream classes = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(classesJar))); ZipOutputStream resources = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(resourcesJar)))) {
-			resources.putNextEntry(new ZipEntry(MergeUtil.RESOURCES_MARKER_FILE));
+			resources.putNextEntry(new ZipEntry(MergeUtil.MERGER_META_FILE));
+			Writer writer = new OutputStreamWriter(resources);
+			writer.write("type=resources");
 			resources.closeEntry();
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
@@ -53,7 +58,7 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 
 					if(toWriteTo != null) {
 						toWriteTo.putNextEntry(entry);
-						FileUtil.copy(zis, toWriteTo);
+						AmalgamationIO.copy(zis, toWriteTo);
 						toWriteTo.closeEntry();
 					}
 				}

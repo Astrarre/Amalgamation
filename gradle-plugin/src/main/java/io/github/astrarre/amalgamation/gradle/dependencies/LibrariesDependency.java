@@ -1,20 +1,18 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
+import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamation;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class LibrariesDependency extends AbstractSelfResolvingDependency {
-	public static final String FALLBACK = "AMALGAMATION_GLOBAL";
 	/**
 	 * defaults to your .minecraft installation, if not found, uses amalgamation cache
 	 */
@@ -26,11 +24,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 
 	public LibrariesDependency(Project project, String version) {
 		super(project, "net.minecraft", "minecraft-libraries", version);
-		this.librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
-		File file = new File(this.librariesDirectory);
-		if (!(file.isDirectory() && file.exists())) {
-			this.librariesDirectory = FALLBACK;
-		}
+		this.librariesDirectory = MinecraftAmalgamationGradlePlugin.getLibrariesCache(project);
 	}
 
 	@Override
@@ -40,12 +34,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 				Objects.requireNonNull(meta.getVersion(this.version), "Invalid version: " + this.version)
 				       .getLibraries(),
 				input -> Iterables.transform(input.evaluateAllDependencies(this.rule), dependency -> {
-					Path jar;
-					if (FALLBACK.equals(this.librariesDirectory)) {
-						jar = FileUtil.globalCache(this.project.getGradle()).resolve(dependency.path);
-					} else {
-						jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
-					}
+					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
 					return CachedFile.forUrl(dependency, jar, this.project.getLogger(), false).getOutdatedPath();
 				})));
 	}

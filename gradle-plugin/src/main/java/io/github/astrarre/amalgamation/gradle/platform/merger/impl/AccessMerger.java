@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
@@ -30,10 +30,11 @@ public class AccessMerger extends Merger implements Opcodes {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		MultiValuedMap<Integer, PlatformId> accessFlags = new ArrayListValuedHashMap<>();
 		for (RawPlatformClass input : inputs) {
-			for (Platformed<ClassNode> platformed : input.split(MergeUtil.ONLY_PLATFORM, MergeUtil.get(MergeUtil.withDesc(input.val.invisibleAnnotations,
+
+			for (Platformed<ClassNode> platformed : input.split(MergeUtil.ONLY_PLATFORM, Platformed.get(Platformed.withDesc(input.val.invisibleAnnotations,
 					Constants.ACCESS_DESC,
 					node -> true), "platforms", Collections.emptyList()))) {
 				accessFlags.put(platformed.val.access, platformed.id);

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.merger.Merger;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
 import net.devtech.signutil.v0.api.bounded.ClassSignature;
@@ -23,7 +23,7 @@ public class SignatureMerger extends Merger {
 	public void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers) {
+			AnnotationHandler handler) {
 		Map<String, TypeParameter> typeArguments = new HashMap<>();
 		ClassType superClass = ClassType.create("L" + target.superName + ";");
 		Map<String, ClassType> interfaces = new HashMap<>();

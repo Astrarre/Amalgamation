@@ -7,7 +7,7 @@ import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import io.github.astrarre.amalgamation.gradle.files.SplitClasspathProvider;
-import io.github.astrarre.amalgamation.gradle.utils.DependencyUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -48,7 +48,7 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	public Provider<Iterable<File>> resolve(Iterable<Object> dependency) {
 		return this.provideLazy(() -> {
 			DependencyHandler handler = this.project.getDependencies();
-			return DependencyUtil.resolve(this.project, Iterables.transform(dependency, handler::create));
+			return AmalgamationIO.resolve(this.project, Iterables.transform(dependency, handler::create));
 		});
 	}
 

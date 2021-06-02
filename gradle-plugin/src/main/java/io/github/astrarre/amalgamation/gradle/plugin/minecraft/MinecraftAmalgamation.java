@@ -67,4 +67,11 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @return a list of the remapped dependencies
 	 */
 	Dependency map(Action<RemappingDependency> mappings);
+
+	/**
+	 * defaults to the minecraft libraries directory, if it fails, it uses <\global amalgamation cache>/libraries
+	 */
+	void setLibrariesCache(String directory);
+
+	String librariesCache();
 }

@@ -1,10 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.platform.api;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import org.objectweb.asm.tree.AnnotationNode;
 
 public class PlatformId implements Identified {
@@ -15,13 +16,20 @@ public class PlatformId implements Identified {
 		this.names = Collections.unmodifiableList(names);
 	}
 
+	public PlatformId(PlatformId platform, List<String> and) {
+		List<String> names = new ArrayList<>(platform.names);
+		names.addAll(and);
+		this.names = Collections.unmodifiableList(names);
+	}
+
 	public static PlatformId of(String... names) {
 		return new PlatformId(Arrays.asList(names));
 	}
 
+
 	public AnnotationNode createAnnotation(List<AnnotationHandler> annotationHandlers) {
 		for (AnnotationHandler handler : annotationHandlers) {
-			AnnotationNode node = handler.condense(this);
+			AnnotationNode node = handler.createClassPlatformAnnotation(this);
 			if(node != null) {
 				return node;
 			}

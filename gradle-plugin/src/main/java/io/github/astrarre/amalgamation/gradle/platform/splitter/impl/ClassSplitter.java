@@ -1,12 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.platform.splitter.impl;
 
-import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.Platformed;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassSplitter extends Splitter {
@@ -15,12 +14,12 @@ public class ClassSplitter extends Splitter {
 	}
 
 	@Override
-	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, List<AnnotationHandler> annotationHandlers) {
-		if(input.invisibleAnnotations != null) {
-			if(!MergeUtil.matches(input.invisibleAnnotations, forPlatform, annotationHandlers)) {
+	public boolean split(ClassNode input, PlatformId forPlatform, ClassNode target, AnnotationHandler annotationHandlers) {
+		if(input.invisibleAnnotations != null) { // todo take this out, not a splitter, make sure to adjust forPlatform
+			if(!Platformed.matches(input.invisibleAnnotations, forPlatform, annotationHandlers)) {
 				return true;
 			}
-			target.invisibleAnnotations = MergeUtil.stripAnnotations(input.invisibleAnnotations, forPlatform, annotationHandlers);
+			target.invisibleAnnotations = Platformed.stripAnnotations(input.invisibleAnnotations, forPlatform, annotationHandlers);
 		}
 		return false;
 	}

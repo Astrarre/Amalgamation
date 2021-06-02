@@ -9,8 +9,8 @@ import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
 public class Splitters {
 	public static List<Splitter> defaults(Map<String, ?> properties) {
 		List<Splitter> splitters = new ArrayList<>();
-		splitters.add(new AccessSplitter(properties));
 		splitters.add(new ClassSplitter(properties));
+		splitters.add(new AccessSplitter(properties));
 		splitters.add(new HeaderSplitter(properties));
 		splitters.add(new InnerClassAttributeSplitter(properties));
 		splitters.add(new InterfaceSplitter(properties));

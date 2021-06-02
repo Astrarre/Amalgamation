@@ -14,7 +14,7 @@ import java.util.Properties;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import io.github.astrarre.amalgamation.gradle.utils.FileUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -36,9 +36,9 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 	public FileCollection get() {
 		ConfigurableFileCollection classpath = this.project.files();
 		this.config.execute(classpath);
-		Path globalCache = FileUtil.globalCache(this.project.getGradle());
+		Path globalCache = AmalgamationIO.globalCache(this.project.getGradle());
 		String globalCachePath = globalCache.toAbsolutePath().toString();
-		Path projectCache = FileUtil.projectCache(this.project);
+		Path projectCache = AmalgamationIO.projectCache(this.project);
 		ConfigurableFileCollection split = this.project.files();
 		List<File> dirs = new ArrayList<>();
 
@@ -61,7 +61,8 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 					sink.putUnencodedChars(file.getAbsolutePath());
 					sink.putLong(file.lastModified());
 				}).resolve(file.getName());
-				ClasspathSplitterDir splitter = new ClasspathSplitterDir(dest, this.project,
+				ClasspathSplitterDir splitter = new ClasspathSplitterDir(dest,
+						this.project,
 						Collections.singletonList(file.toPath()),
 						Arrays.asList(this.platforms));
 				split.from(splitter.getPath());
@@ -78,8 +79,7 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 		}
 
 		if (!dirs.isEmpty()) {
-			ClasspathSplitterDir splitter = new ClasspathSplitterDir(
-					FileUtil.projectCache(this.project).resolve("dest.jar"),
+			ClasspathSplitterDir splitter = new ClasspathSplitterDir(AmalgamationIO.projectCache(this.project).resolve("dest.jar"),
 					this.project,
 					Lists.transform(dirs, File::toPath),
 					Arrays.asList(this.platforms));
@@ -90,25 +90,23 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 	}
 
 	public static SplitBehavior getSplitBehavior(File file, List<String> platforms) {
-		if(file.isDirectory()) {
+		if (file.isDirectory()) {
 			return SplitBehavior.COMBINE;
 		}
-		try(FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			if (!Files.exists(system.getPath(MergeUtil.RESOURCES_MARKER_FILE))) {
-				Path path = system.getPath(MergeUtil.MERGER_META_FILE);
-				if (Files.exists(path)) {
-					Properties properties = new Properties();
-					properties.load(Files.newInputStream(path));
-					if (properties.getProperty(MergeUtil.RESOURCES, "false").equals("true")) {
-						String property = properties.getProperty(MergeUtil.PLATFORMS);
-						if (Arrays.asList(property.split(",")).containsAll(platforms)) {
-							return SplitBehavior.APPEND;
-						} else {
-							return SplitBehavior.SKIP;
-						}
+		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
+			Path path = system.getPath(MergeUtil.MERGER_META_FILE);
+			if (Files.exists(path)) {
+				Properties properties = new Properties();
+				properties.load(Files.newInputStream(path));
+				if (properties.getProperty(MergeUtil.TYPE, "all").equals("resources")) {
+					String property = properties.getProperty(MergeUtil.PLATFORMS);
+					if (property == null || Arrays.asList(property.split(",")).containsAll(platforms)) {
+						return SplitBehavior.APPEND;
+					} else {
+						return SplitBehavior.SKIP;
 					}
-					return SplitBehavior.SPLIT;
 				}
+				return SplitBehavior.SPLIT;
 			}
 			return SplitBehavior.APPEND;
 		} catch (IOException e) {

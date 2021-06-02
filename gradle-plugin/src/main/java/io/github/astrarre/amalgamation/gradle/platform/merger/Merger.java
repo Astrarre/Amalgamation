@@ -3,7 +3,7 @@ package io.github.astrarre.amalgamation.gradle.platform.merger;
 import java.util.List;
 import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.platform.annotationHandler.AnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.platform.api.annotation.AnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.platform.api.classes.RawPlatformClass;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -18,5 +18,5 @@ public abstract class Merger implements Opcodes {
 	public abstract void merge(List<RawPlatformClass> inputs,
 			ClassNode target,
 			Map<String, List<String>> platformCombinations,
-			List<AnnotationHandler> annotationHandlers);
+			AnnotationHandler handler);
 }
