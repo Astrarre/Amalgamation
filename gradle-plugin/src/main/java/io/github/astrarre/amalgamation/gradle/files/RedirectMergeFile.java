@@ -7,7 +7,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import joptsimple.internal.Strings;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,23 +40,23 @@ public class RedirectMergeFile extends CachedFile<String> {
 
 		try (FileSystem system = FileSystems.newFileSystem(
 				new URI("jar:" + path.toUri()),
-				MergeUtil.CREATE_ZIP);
+				AmalgamationIO.CREATE_ZIP);
 		     FileSystem input = FileSystems.newFileSystem(this.src, null)) {
 			for (Path directory : system.getRootDirectories()) {
 				for (Path rootDirectory : input.getRootDirectories()) {
 					Files.copy(rootDirectory, directory);
 				}
 			}
-			Path merger = system.getPath(MergeUtil.MERGER_META_FILE);
+			Path merger = system.getPath(AmalgamationIO.MERGER_META_FILE);
 			if(Files.exists(merger)) {
 				Properties properties = new Properties();
 				try(BufferedReader reader = Files.newBufferedReader(merger)) {
 					properties.load(reader);
 				}
-				String platforms = properties.getProperty(MergeUtil.PLATFORMS, "");
+				String platforms = properties.getProperty(AmalgamationIO.PLATFORMS, "");
 				Set<String> split = new HashSet<>(this.names);
 				split.addAll(Arrays.asList(platforms.split(",")));
-				properties.setProperty(MergeUtil.PLATFORMS, Strings.join(split, ","));
+				properties.setProperty(AmalgamationIO.PLATFORMS, Strings.join(split, ","));
 				try(BufferedWriter writer = Files.newBufferedWriter(merger)) {
 					properties.store(writer, "merger metadata file for resources jar");
 				}

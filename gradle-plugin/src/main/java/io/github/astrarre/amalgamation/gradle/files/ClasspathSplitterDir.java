@@ -16,6 +16,7 @@ import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.platform.api.PlatformId;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.Splitter;
 import io.github.astrarre.amalgamation.gradle.platform.splitter.impl.Splitters;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
@@ -80,11 +81,11 @@ public class ClasspathSplitterDir extends CachedFile<String> {
 			this.project.getLogger().lifecycle(path+"");
 			try (FileSystem readSystem = FileSystems.newFileSystem(path, null)) {
 				for (Path root : readSystem.getRootDirectories()) {
-					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergeUtil.CREATE_ZIP);
+					if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), AmalgamationIO.CREATE_ZIP);
 					this.stripTo(splitters, system, root);
 				}
 			} catch (ProviderNotFoundException e) {
-				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), MergeUtil.CREATE_ZIP);
+				if(system == null) system = FileSystems.newFileSystem(new URI("jar:" + jarPath.toUri()), AmalgamationIO.CREATE_ZIP);
 				this.stripTo(splitters, system, path);
 			}
 		}

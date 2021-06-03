@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -94,12 +93,12 @@ public class SplitClasspathProvider implements Supplier<FileCollection> {
 			return SplitBehavior.COMBINE;
 		}
 		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			Path path = system.getPath(MergeUtil.MERGER_META_FILE);
+			Path path = system.getPath(AmalgamationIO.MERGER_META_FILE);
 			if (Files.exists(path)) {
 				Properties properties = new Properties();
 				properties.load(Files.newInputStream(path));
-				if (properties.getProperty(MergeUtil.TYPE, "all").equals("resources")) {
-					String property = properties.getProperty(MergeUtil.PLATFORMS);
+				if (properties.getProperty(AmalgamationIO.TYPE, "all").equals("resources")) {
+					String property = properties.getProperty(AmalgamationIO.PLATFORMS);
 					if (property == null || Arrays.asList(property.split(",")).containsAll(platforms)) {
 						return SplitBehavior.APPEND;
 					} else {

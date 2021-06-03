@@ -10,8 +10,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -23,17 +25,25 @@ import org.gradle.api.invocation.Gradle;
 
 public class AmalgamationIO {
 	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
+	/**
+	 * if the first entry of a zip file is a file with the name of this field, it is configured
+	 */
+	public static final String MERGER_META_FILE = "merger_metadata.properties";
+	// start merger meta properties
+	public static final String TYPE = "type"; // resources, java, classes, all
+	public static final String PLATFORMS = "platforms";
+	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
 
 	public static boolean isResourcesJar(File file) {
 		if (file.isDirectory()) {
 			return false;
 		}
 		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
-			Path path = system.getPath(MergeUtil.MERGER_META_FILE);
+			Path path = system.getPath(MERGER_META_FILE);
 			if (Files.exists(path)) {
 				Properties properties = new Properties();
 				properties.load(Files.newInputStream(path));
-				return properties.getProperty(MergeUtil.TYPE, "all").equals("resources");
+				return properties.getProperty(TYPE, "all").equals("resources");
 			} else {
 				return false;
 			}

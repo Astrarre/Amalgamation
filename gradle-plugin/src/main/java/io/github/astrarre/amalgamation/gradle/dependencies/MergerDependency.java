@@ -20,7 +20,6 @@ import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.files.MergeFile;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
 import io.github.astrarre.amalgamation.gradle.utils.CollectionUtil;
-import io.github.astrarre.amalgamation.gradle.utils.MergeUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 

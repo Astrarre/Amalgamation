@@ -55,7 +55,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 				File process = toProcess.remove(i);
 				Path cache = AmalgamationIO.projectCache(this.project).resolve("de-jij").resolve(this.name).resolve(AmalgamationIO.hash(Collections.singleton(process)));
 				DeJiJCachedFile cachedFile = new DeJiJCachedFile(cache, process);
-				for(Path path : UnsafeIterable.walkPath(cachedFile.getPath())) {
+				for(Path path : UnsafeIterable.walkFiles(cachedFile.getPath())) {
 					if(!path.endsWith("original.jar")) {
 						toProcess.add(path.toFile());
 					}
@@ -66,7 +66,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 				}
 			}
 		}
-		return UnsafeIterable.walkPath(AmalgamationIO.projectCache(this.project).resolve("de-jij").resolve(this.name));
+		return UnsafeIterable.walkFiles(AmalgamationIO.projectCache(this.project).resolve("de-jij").resolve(this.name));
 	}
 
 	@Override
