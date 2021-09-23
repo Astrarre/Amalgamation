@@ -4,6 +4,8 @@ package me.ramidzkh.concern;
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 
+import net.minecraft.client.MinecraftClient;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.EnvironmentInterface;
 import net.fabricmc.api.EnvironmentInterfaces;

@@ -64,12 +64,12 @@ dependencies {
     implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("org.cadixdev", "lorenz", "0.5.6")
     implementation("org.apache.commons", "commons-collections4", "4.4")
-    implementation("net.fabricmc", "tiny-remapper", "0.3.2")
+    implementation("net.fabricmc", "tiny-remapper", "0.6.0")
     implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
     implementation("net.fabricmc", "dev-launch-injector", "0.2.1+build.8")
-    implementation("com.github.javaparser:javaparser-core:3.22.0")
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
-    implementation("net.fabricmc", "fieldPlatform-widener", "1.0.2")
+    //implementation("com.github.javaparser:javaparser-core:3.22.0")
+    //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
+    implementation("net.fabricmc", "access-widener", "1.0.2")
     implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
 }
 

@@ -19,7 +19,7 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.gson.JsonObject;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -53,7 +53,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 		while (!toProcess.isEmpty()) {
 			for (int i = toProcess.size() - 1; i >= 0; i--) {
 				File process = toProcess.remove(i);
-				Path cache = AmalgamationIO.projectCache(this.project).resolve("de-jij").resolve(this.name).resolve(AmalgamationIO.hash(Collections.singleton(process)));
+				Path cache = AmalgIO.projectCache(this.project).resolve("de-jij").resolve(this.name).resolve(AmalgIO.hash(Collections.singleton(process)));
 				DeJiJCachedFile cachedFile = new DeJiJCachedFile(cache, process);
 				for(Path path : UnsafeIterable.walkFiles(cachedFile.getPath())) {
 					if(!path.endsWith("original.jar")) {
@@ -66,7 +66,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 				}
 			}
 		}
-		return UnsafeIterable.walkFiles(AmalgamationIO.projectCache(this.project).resolve("de-jij").resolve(this.name));
+		return UnsafeIterable.walkFiles(AmalgIO.projectCache(this.project).resolve("de-jij").resolve(this.name));
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 						Files.copy(zis, toWrite);
 					} else {
 						zos.putNextEntry(new ZipEntry(entry.getName()));
-						AmalgamationIO.copy(zis, zos);
+						AmalgIO.copy(zis, zos);
 						zos.closeEntry();
 					}
 				}

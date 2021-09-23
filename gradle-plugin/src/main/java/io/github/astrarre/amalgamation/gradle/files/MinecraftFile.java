@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.logging.Logger;
 
@@ -32,7 +32,7 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 		Path classesJar = file.resolve("classes.jar");
 		Path resourcesJar = file.resolve("resources.jar");
 		try(ZipOutputStream classes = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(classesJar))); ZipOutputStream resources = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(resourcesJar)))) {
-			resources.putNextEntry(new ZipEntry(AmalgamationIO.MERGER_META_FILE));
+			resources.putNextEntry(new ZipEntry(AmalgIO.MERGER_META_FILE));
 			Writer writer = new OutputStreamWriter(resources);
 			writer.write("type=resources");
 			resources.closeEntry();
@@ -56,7 +56,7 @@ public class MinecraftFile extends URLCachedFile.Hashed {
 
 					if(toWriteTo != null) {
 						toWriteTo.putNextEntry(entry);
-						AmalgamationIO.copy(zis, toWriteTo);
+						AmalgIO.copy(zis, toWriteTo);
 						toWriteTo.closeEntry();
 					}
 				}

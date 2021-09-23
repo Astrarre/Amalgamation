@@ -7,11 +7,12 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public class NativesFile extends CachedFile<Set<String>> { // todo use libraries
 	private final LauncherMeta meta;
 
 	public NativesFile(MinecraftAmalgamationImpl amalgamation, String version, LauncherMeta meta) {
-		super(AmalgamationIO.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
+		super(AmalgIO.globalCache(amalgamation.project.getGradle()).resolve("natives").resolve(version), MinecraftAmalgamationImpl.SET);
 		this.amalgamation = amalgamation;
 		this.version = version;
 		this.meta = meta;

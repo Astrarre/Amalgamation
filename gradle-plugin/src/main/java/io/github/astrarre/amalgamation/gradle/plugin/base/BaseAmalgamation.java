@@ -23,18 +23,11 @@ import java.io.File;
 import java.util.function.Supplier;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.MergerDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 
 public interface BaseAmalgamation {
-    Dependency merge(Action<MergerDependency> configuration);
-
-    Provider<FileCollection> splitClasspath(Action<ConfigurableFileCollection> config, String... platforms);
-
     //todo void runConfig(RunConfigSettings settings);
 
     //todo Iterable<RunConfigSettings> getRunConfigs();

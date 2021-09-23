@@ -51,7 +51,6 @@ apply plugin: 'io.github.astrarre.amalgamation.minecraft'
 
 repositories {
     mavenCentral()
-    jcenter()
     maven { url 'https://maven.fabricmc.net/' }
     maven { url 'https://files.minecraftforge.net/maven/' }
     maven {
@@ -60,40 +59,27 @@ repositories {
     }
 }
 
-/*def artifactType = Attribute.of('artifactType', String)
-def merged = Attribute.of('merged', Boolean)
-configurations {
-    minecraftFabric {
-        afterEvaluate {
-            attributes.attribute(merged, true)
-        }
-    }
-    implementation.extendsFrom(minecraftFabric)
-}*/
-
-def mergedMappings = dependencies.create('net.fabricmc:yarn:1.16.5+build.4:mergedv2')
+def mergedMappings = dependencies.create('net.fabricmc:yarn:1.17.1+build.61:mergedv2')
 dependencies {
-    /*attributesSchema {
-        attribute(merged)
-    }
-    artifactTypes.getByName("jar") {
-        attributes.attribute(merged, false)
-    }
-    registerTransform(Merger) {
-        from.attribute(merged, false).attribute(artifactType, "jar")
-        to.attribute(merged, true).attribute(artifactType, "jar")
-    }*/
-
     implementation ag.map {
-        mappings(mergedMappings, 'official', 'named')
+        mappings(mergedMappings, 'intermediary', 'named')
         globalCache = true
-        remap ag.merge {
-            globalCache = true
-            compareInstructions = false
-            include(ag.client('1.16.5'), of('side', 'client'))
-            include(ag.server('1.16.5'), of('side', 'server'))
+        remap ag.merged('1.17.1') {
+            client ag.map {
+                mappings(mergedMappings, 'official', 'intermediary')
+                remap ag.client('1.17.1')
+                globalCache = true
+            }
+            server ag.map {
+                mappings(mergedMappings, 'official', 'intermediary')
+                remap ag.server('1.17.1')
+                globalCache = true
+            }
         }
     }
+
+    implementation ag.libraries('1.17.1')
+
     implementation ag.deJiJ('test') {
         add("net.fabricmc.fabric-api:fabric-api:0.25.1+build.416-1.16")
     }
@@ -101,7 +87,7 @@ dependencies {
     implementation("net.fabricmc:tiny-mappings-parser:0.2.2.14")
     implementation("net.fabricmc:sponge-mixin:0.9.2+mixin.0.8.2")
     implementation("net.fabricmc:tiny-remapper:0.3.0.70")
-    implementation("net.fabricmc:fieldPlatform-widener:1.0.0")
+    implementation("net.fabricmc:access-widener:1.0.0")
     implementation("net.fabricmc:fabric-loader-sat4j:2.3.5.4")
     implementation("com.google.jimfs:jimfs:1.2-fabric")
     implementation("org.ow2.asm:asm:9.1")
@@ -109,7 +95,6 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("org.ow2.asm:asm-tree:9.1")
     implementation("org.ow2.asm:asm-util:9.1")
-    implementation ag.libraries('1.16.5')
     annotationProcessor("net.fabricmc:fabric-mixin-compile-extensions:0.4.3")
 }
 
@@ -144,16 +129,14 @@ task outputJar(type: RemapJar) {
 task testDiff(type: JavaExec) {
     group = "tests"
     description = "Test Diff:tm:"
-    classpath ag.splitClasspath({
-        it.from sourceSets.main.runtimeClasspath
-    }, 'client')
+    classpath sourceSets.main.runtimeClasspath
     main = "net.fabricmc.loader.launch.knot.KnotClient"
-    def natives = ag.natives('1.16.5')
+    def natives = ag.natives('1.17.1')
     systemProperty("fabric.development", true)
-    systemProperty("fabric.gameVersion", '1.16.5')
+    systemProperty("fabric.gameVersion", '1.17.1')
     systemProperty("java.library.globalCache", natives)
     systemProperty("org.lwjgl.librarypath", natives)
-    def assets = ag.assets('1.16.5')
+    def assets = ag.assets('1.17.1')
     args("--assetIndex", assets.assetIndex, "--assetsDir", assets.assetsDir)
     workingDir("$rootDir/run")
     dependsOn tasks.classes

@@ -11,10 +11,8 @@ import java.util.function.Predicate;
 
 public class ForgeInstalls {
 	public static class Client extends ClientInstall {
-
 		private final Path libraries;
 		private final File client;
-
 		public Client(Install profile, ProgressCallback monitor, Path libraries, File client) {
 			super(profile, monitor);
 			this.libraries = libraries;

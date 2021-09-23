@@ -9,7 +9,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
@@ -157,7 +157,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	}
 
 	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
-		return AmalgamationIO.resolve(this.project, dependencies);
+		return AmalgIO.resolve(this.project, dependencies);
 	}
 
 }

@@ -18,7 +18,7 @@ import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradle
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
 
@@ -31,7 +31,7 @@ public class AssetProvider { // todo log config
 			amalgamation.logger.lifecycle("Found .minecraft assets folder");
 		} else {
 			amalgamation.logger.lifecycle("No .minecraft assets folder, using global cache!");
-			assetsDir = AmalgamationIO.globalCache(amalgamation.project.getGradle()).resolve("assetsDir");
+			assetsDir = AmalgIO.globalCache(amalgamation.project.getGradle()).resolve("assetsDir");
 		}
 
 		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(amalgamation.project).getVersion(version);

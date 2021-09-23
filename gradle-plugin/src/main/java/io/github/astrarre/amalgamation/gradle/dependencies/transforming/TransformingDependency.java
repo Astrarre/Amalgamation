@@ -13,7 +13,7 @@ import java.util.zip.ZipOutputStream;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +53,8 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 	protected Iterable<Path> resolvePaths() {
 		List<Path> transformed = new ArrayList<>();
 		for (File file : this.resolve(this.dependencies)) {
-			TransformingCachedFile cached = new TransformingCachedFile(file.toPath(), AmalgamationIO.projectCache(this.project).resolve(this.name).resolve(file.getName()),
-					this.transformers);
+			TransformingCachedFile cached = new TransformingCachedFile(file.toPath(), AmalgIO.projectCache(this.project).resolve(this.name).resolve(file.getName()),
+			                                                           this.transformers);
 			transformed.add(cached.getPath());
 		}
 		return transformed;
@@ -90,7 +90,7 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 					}
 
 					if(transforms) {
-						byte[] read = AmalgamationIO.readAll(zis);
+						byte[] read = AmalgIO.readAll(zis);
 						for (Transformer transformer : this.transformers) {
 							read = transformer.processResource(name, read);
 						}
@@ -111,7 +111,7 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 						}
 					} else {
 						zos.putNextEntry(new ZipEntry(entry.getName()));
-						AmalgamationIO.copy(zis, zos);
+						AmalgIO.copy(zis, zos);
 						zos.closeEntry();
 					}
 				}

@@ -24,7 +24,6 @@ import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {
-	public static final Set<String> OS_CLASSIFIERS = ImmutableSet.of("natives-linux", "natives-windows", "natives-osx");
 	private final Path globalCache;
 	private final Logger logger;
 	private Map<String, Version> versions;

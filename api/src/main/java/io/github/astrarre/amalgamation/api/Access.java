@@ -36,7 +36,6 @@ public @interface Access {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD})
     @interface Accesses {
-
         Access[] value();
     }
 }

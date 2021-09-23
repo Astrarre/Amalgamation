@@ -22,8 +22,9 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
 
-public class AmalgamationIO {
+public class AmalgIO {
 	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
 	/**
 	 * if the first entry of a zip file is a file with the name of this field, it is configured
@@ -31,8 +32,6 @@ public class AmalgamationIO {
 	public static final String MERGER_META_FILE = "merger_metadata.properties";
 	// start merger meta properties
 	public static final String TYPE = "type"; // resources, java, classes, all
-	public static final String PLATFORMS = "platforms";
-	public static final Map<String, ?> CREATE_ZIP = ImmutableMap.of("create", "true");
 
 	public static boolean isResourcesJar(File file) {
 		if (file.isDirectory()) {
@@ -60,9 +59,13 @@ public class AmalgamationIO {
 
 	public static void hash(Hasher hasher, Iterable<File> files) {
 		for (File file : files) {
-			hasher.putUnencodedChars(file.getAbsolutePath());
-			hasher.putLong(file.lastModified());
+			hash(hasher, file);
 		}
+	}
+
+	public static void hash(Hasher hasher, File file) {
+		hasher.putUnencodedChars(file.getAbsolutePath());
+		hasher.putLong(file.lastModified());
 	}
 
 	public static Path cache(Project project, boolean global) {
@@ -93,6 +96,10 @@ public class AmalgamationIO {
 		while ((read = from.read(buf)) != -1) {
 			to.write(buf, 0, read);
 		}
+	}
+
+	public static File resolve(Project project, Dependency dependencies) {
+		return Iterables.getOnlyElement(resolve(project, Collections.singleton(dependencies)));
 	}
 
 	public static Iterable<File> resolve(Project project, Iterable<Dependency> dependencies) {

@@ -7,43 +7,29 @@ import net.minecraftforge.installer.json.Util;
 import net.minecraftforge.installer.json.Version;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Properties;
 
 public class ForgeUtil {
-	public static final String MINECRAFT_VERSION;
-	public static final String FORGE_VERSION;
-
-	static {
-		try {
-			Properties properties = new Properties();
-			properties.load(ForgeUtil.class.getResourceAsStream("/gradle_data.properties"));
-			MINECRAFT_VERSION = properties.getProperty("minecraft_version");
-			FORGE_VERSION = properties.getProperty("forge_version");
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	/**
 	 * @param libs   the folder for caching libraries
 	 * @param client the vanilla client jar
-	 * @return the unmapped client forge jar
 	 */
-	public static File getForgeClient(File libs, File client) {
+	public static void getForgeClient(File libs, File client) {
 		installLibs(libs);
 		new ForgeInstalls.Client(Util.loadInstallProfile(), (m, p) -> {
 			if (p == ProgressCallback.MessagePriority.NORMAL) {
 				System.out.println(m);
 			}
 		}, libs.toPath(), client).run(null, i -> true);
-		return new File(libs, String.format("net/minecraftforge/forge/%s/forge-%1$s-client.jar", FORGE_VERSION));
+	}
+
+	public static void getForgeServer(File libs, File server) {
+		installLibs(libs);
+		new ForgeInstalls.Server(Util.loadInstallProfile(), (m, p) -> {
+			if (p == ProgressCallback.MessagePriority.NORMAL) {
+				System.out.println(m);
+			}
+		}, libs.toPath(), server).run(null, i -> true);
 	}
 
 	private static void installLibs(File forgeLibs) {

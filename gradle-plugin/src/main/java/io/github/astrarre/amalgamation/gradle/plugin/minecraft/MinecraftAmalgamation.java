@@ -19,10 +19,12 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
+import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 
@@ -46,17 +48,23 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 */
 	Dependency client(String version);
 
+	default Dependency server(String version) {
+		return this.server(version, true);
+	}
+
 	/**
 	 * @param version the minecraft version string, should match up with launchermeta
 	 * @return a dependency for the obfuscated server jar (dependencies stripped)
 	 */
-	Dependency server(String version);
+	Dependency server(String version, boolean strip);
 
-	default Dependency libraries(String version) {
+	Dependency merged(String version, Action<CASMergedDependency.Config> configurate);
+
+	default LibrariesDependency libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
 
-	Dependency libraries(String version, Action<LibrariesDependency> configure);
+	LibrariesDependency libraries(String version, Action<LibrariesDependency> configure);
 
 	Assets assets(String version);
 

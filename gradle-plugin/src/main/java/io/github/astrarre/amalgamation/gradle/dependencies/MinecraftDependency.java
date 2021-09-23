@@ -13,7 +13,7 @@ import io.github.astrarre.amalgamation.gradle.files.LibraryStrippedFile;
 import io.github.astrarre.amalgamation.gradle.files.MinecraftFile;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgamationIO;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.LazySet;
 import org.gradle.api.Project;
@@ -22,6 +22,7 @@ import org.gradle.api.artifacts.Dependency;
 public class MinecraftDependency extends AbstractSelfResolvingDependency {
 	private final CachedFile<?> jar;
 	private final boolean doSplit, doStrip;
+	public final boolean isClient;
 
 	/**
 	 * @param doSplit if the jar should be split into a classes jar and resources jar, improves dev init time
@@ -31,6 +32,7 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 		super(project, "net.minecraft", version, isClient ? "minecraft-client" : "minecraft-server");
 		this.doSplit = doSplit;
 		this.doStrip = doSplit;
+		this.isClient = isClient;
 		if (doSplit) {
 			LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 			LauncherMeta.Version vers = meta.getVersion(version);
@@ -51,12 +53,12 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 					area = "server-unstripped";
 				}
 			}
-			Path jar = AmalgamationIO.globalCache(project.getGradle()).resolve(version).resolve(area);
+			Path jar = AmalgIO.globalCache(project.getGradle()).resolve(version).resolve(area);
 			this.jar = new MinecraftFile(jar, url, project.getLogger(), false, isClient, doStrip);
 		} else {
 			LauncherMeta.Version v = Objects.requireNonNull(MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version),
 					"invalid version: " + version);
-			Path globalCache = AmalgamationIO.globalCache(project.getGradle());
+			Path globalCache = AmalgIO.globalCache(project.getGradle());
 			Path jar = globalCache.resolve(this.getVersion() + "-" + this.getName() + ".jar");
 			Path unstripped = globalCache.resolve(this.getVersion() + "-" + this.getName() + "-unstripped.jar");
 			LauncherMeta.HashedURL url;
@@ -75,10 +77,11 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 		}
 	}
 
-	public MinecraftDependency(Project project, String group, String name, String version, CachedFile<?> jar, boolean doSplit, boolean doStrip) {
+	public MinecraftDependency(Project project, String group, String name, String version, CachedFile<?> jar, boolean doSplit, boolean doStrip, boolean isClient) {
 		super(project, group, name, version);
 		this.doSplit = doSplit;
 		this.doStrip = doStrip;
+		this.isClient = isClient;
 		this.jar = jar;
 	}
 
@@ -86,7 +89,7 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 	protected Set<File> path() {
 		if (this.resolved == null) {
 			this.resolved = new LazySet(CompletableFuture.supplyAsync(() -> {
-				if(doSplit) {
+				if(this.doSplit) {
 					Set<File> files = new HashSet<>(2);
 					files.add(this.jar.getPath().resolve("classes.jar").toFile());
 					files.add(this.jar.getPath().resolve("resources.jar").toFile());
@@ -106,6 +109,6 @@ public class MinecraftDependency extends AbstractSelfResolvingDependency {
 
 	@Override
 	public Dependency copy() {
-		return new MinecraftDependency(this.project, this.group, this.name, this.version, this.jar, this.doSplit, this.doStrip);
+		return new MinecraftDependency(this.project, this.group, this.name, this.version, this.jar, this.doSplit, this.doStrip, this.isClient);
 	}
 }

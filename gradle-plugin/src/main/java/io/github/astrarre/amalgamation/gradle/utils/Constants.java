@@ -17,14 +17,4 @@ public class Constants {
 		thread.setDaemon(true);
 		return thread;
 	}, null, true);
-	public static final String PLATFORM_DESC = Type.getDescriptor(Platform.class);
-	public static final String INTERFACE_DESC = Type.getDescriptor(Interface.class);
-	public static final String ACCESS_DESC = Type.getDescriptor(Access.class);
-	public static final String PARENT_DESC = Type.getDescriptor(Parent.class);
-	public static final Type OBJECT_TYPE = Type.getType(Object.class);
-	public static final String DISPLACE_DESC = Type.getDescriptor(Displace.class);
-	public static final String ENVIRONMENT = "Lnet/fabricmc/api/Environment;";
-	public static final String ENVIRONMENT_INTERFACE = "Lnet/fabricmc/api/EnvironmentInterface;";
-	public static final String ENV_TYPE = "Lnet/fabricmc/api/EnvType;";
-
 }
