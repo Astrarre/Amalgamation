@@ -15,53 +15,59 @@ import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
-import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMergerUtil;
+import io.github.astrarre.amalgamation.gradle.utils.mojmerge.MojMergerUtil;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Server Client Merged
- */
-public class CASMergedFile extends CachedFile<String> {
+public class MojMergedFile extends CachedFile<String> {
 	public final Project project;
 	public final String version;
 	public final CASMerger.Handler handler;
-	public final int classReaderSettings;
-	public final boolean checkForServerOnly;
-	public final Supplier<File> client;
-	public final Supplier<File> server;
-	public CASMergedFile(Path file, Project project, String version, CASMerger.Handler handler, int settings, boolean only,
-			Supplier<File> client, Supplier<File> server) {
+	public final Supplier<File> clientJar;
+	public final Supplier<Path> serverMappings;
+
+	public MojMergedFile(Path file,
+			Project project,
+			String version,
+			CASMerger.Handler handler,
+			Supplier<File> clientJar,
+			Supplier<Path> serverMappings) {
 		super(file, String.class);
 		this.project = project;
 		this.version = version;
 		this.handler = handler;
-		this.classReaderSettings = settings;
-		this.checkForServerOnly = only;
-		this.client = client;
-		this.server = server;
+		this.clientJar = clientJar;
+		this.serverMappings = serverMappings;
 	}
 
 	@Override
 	protected @Nullable String writeIfOutdated(Path path, @Nullable String currentData) throws Throwable {
 		Files.createDirectories(path.getParent());
-		File clientF = this.client.get(), serverF = this.server.get();
-		String hash = MojMergedFile.getHash(clientF, serverF);
+		File clientF = this.clientJar.get(), serverMappings = this.serverMappings.get().toFile();
+		String hash = getHash(clientF, serverMappings);
 		if(Objects.equal(currentData, hash)) {
 			return currentData;
 		}
 
 		Logger logger = this.project.getLogger();
-		logger.lifecycle("Merging " + this.version);
+		logger.lifecycle("Moj Merging " + this.version);
 
-		try (Clock ignored = new Clock("Merged " + this.version + " in %dms", logger);
+		try (Clock ignored = new Clock("Moj Merged " + this.version + " in %dms", logger);
 		     ZipOutputStream merged = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(path)));
-		     FileSystem client = FileSystems.newFileSystem(clientF.toPath(), (ClassLoader) null);
-		     FileSystem server = FileSystems.newFileSystem(serverF.toPath(), (ClassLoader) null)) {
-			CASMergerUtil.merge(this.handler, client, server, merged, this.classReaderSettings, this.checkForServerOnly);
+		     FileSystem client = FileSystems.newFileSystem(clientF.toPath(), (ClassLoader) null)) {
+			MojMergerUtil.merge(client, serverMappings.toPath(), merged, this.handler);
 		}
 
 		return hash;
+	}
+
+	@NotNull
+	public static String getHash(File clientF, File serverMappings) {
+		Hasher hasher = Hashing.sha256().newHasher();
+		AmalgIO.hash(hasher, clientF);
+		AmalgIO.hash(hasher, serverMappings);
+		return hasher.hash().toString();
 	}
 }

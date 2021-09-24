@@ -121,7 +121,7 @@ public class LauncherMeta {
 		private boolean initialized;
 		private HashedURL assetIndexUrl;
 		private String assetIndexPath;
-		private HashedURL clientJar, serverJar;
+		private HashedURL clientJar, serverJar, serverMojmap, clientMojMap;
 		private List<Library> libraries;
 
 		public Version(int index, String version, String manifestUrl) {
@@ -151,6 +151,8 @@ public class LauncherMeta {
 				JsonObject downloads = versionJson.getAsJsonObject("downloads");
 				this.clientJar = new HashedURL(downloads.getAsJsonObject("client"), this.version + "-client.jar");
 				this.serverJar = new HashedURL(downloads.getAsJsonObject("server"), this.version + "-server.jar");
+				this.serverMojmap = new HashedURL(downloads.getAsJsonObject("server_mappings"), this.version + "-client_mappings.txt");
+				this.clientMojMap = new HashedURL(downloads.getAsJsonObject("client_mappings"), this.version + "-server_mappings.txt");
 
 				List<Library> libraries = new ArrayList<>();
 				for (JsonElement element : versionJson.getAsJsonArray("libraries")) {
@@ -199,6 +201,16 @@ public class LauncherMeta {
 			}
 		}
 
+		public HashedURL getServerMojmap() {
+			this.init();
+			return this.serverMojmap;
+		}
+
+		public HashedURL getClientMojMap() {
+			this.init();
+			return this.clientMojMap;
+		}
+
 		public HashedURL getServerJar() {
 			this.init();
 			return this.serverJar;
@@ -215,7 +227,7 @@ public class LauncherMeta {
 		public final List<Rule> rules;
 		public final Map<String, HashedURL> classifierUrls;
 		public final Map<String, String> nativesOsToClassifier;
-		protected Map<NativesRule, List<HashedURL>> evaluatedDependencies;
+		private Map<NativesRule, List<HashedURL>> evaluatedDependencies;
 
 		public Library(HashedURL artifact, List<Rule> rules, Map<String, HashedURL> urls, Map<String, String> classifier) {
 			this.mainDownloadUrl = artifact;

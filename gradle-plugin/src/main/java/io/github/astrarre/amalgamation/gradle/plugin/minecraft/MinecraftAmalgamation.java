@@ -60,6 +60,12 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Dependency merged(String version, Action<CASMergedDependency.Config> configurate);
 
+	Dependency mojmerged(String version, CASMerger.Handler handler);
+
+	default Dependency mojmerged(String version) {
+		return this.mojmerged(version, CASMerger.FABRIC);
+	}
+
 	default LibrariesDependency libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
@@ -77,7 +83,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	Dependency map(Action<RemappingDependency> mappings);
 
 	/**
-	 * defaults to the minecraft libraries directory, if it fails, it uses <\global amalgamation cache>/libraries
+	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries
 	 */
 	void setLibrariesCache(String directory);
 

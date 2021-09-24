@@ -7,12 +7,11 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,32 +30,31 @@ public class NativesFile extends CachedFile<Set<String>> { // todo use libraries
 
 	@Override
 	protected @Nullable Set<String> writeIfOutdated(Path path, @Nullable Set<String> currentData) throws Throwable {
-		try (Clock ignored = new Clock(
-				"Cache validation / download for natives-" + this.version + " took %sms",
+		try(Clock ignored = new Clock("Cache validation / download for natives-" + this.version + " took %sms",
 				this.amalgamation.project.getLogger())) {
-			if (BaseAmalgamationGradlePlugin.offlineMode) {
+			if(BaseAmalgamationGradlePlugin.offlineMode) {
 				return null;
 			}
 
-			if (currentData != null) {
+			if(currentData != null) {
 				boolean allContained = true;
-				for (LauncherMeta.Library library : this.meta.getVersion(this.version).getLibraries()) {
-					for (LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY)) {
-						if (!currentData.contains(dependency.hash)) {
+				for(LauncherMeta.Library library : this.meta.getVersion(this.version).getLibraries()) {
+					for(LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY)) {
+						if(!currentData.contains(dependency.hash)) {
 							allContained = false;
 							break;
 						}
 					}
 				}
 
-				if (allContained) {
+				if(allContained) {
 					return null;
 				}
 			}
 
 			Set<String> hashes = new HashSet<>();
-			for (LauncherMeta.Library library : this.meta.getVersion(this.version).getLibraries()) {
-				for (LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY)) {
+			for(LauncherMeta.Library library : this.meta.getVersion(this.version).getLibraries()) {
+				for(LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY)) {
 					hashes.add(dependency.hash);
 					DownloadUtil.Result result = DownloadUtil.read(dependency.getUrl(),
 							null,
@@ -64,22 +62,24 @@ public class NativesFile extends CachedFile<Set<String>> { // todo use libraries
 							this.amalgamation.project.getLogger(),
 							BaseAmalgamationGradlePlugin.offlineMode,
 							false);
-					if (result == null) {
+					if(result == null) {
 						throw new IllegalStateException("unable to download natives!");
 					}
-					try (ZipInputStream input = new ZipInputStream(result.stream)) {
+					try(ZipInputStream input = new ZipInputStream(result.stream)) {
 						ZipEntry entry;
-						while ((entry = input.getNextEntry()) != null) {
-							if (entry.isDirectory()) {
+						while((entry = input.getNextEntry()) != null) {
+							if(entry.isDirectory()) {
 								continue;
 							}
-							Path toFile = path.resolve(entry.getName());
-							if (Files.exists(toFile)) {
-								this.amalgamation.project.getLogger().warn(toFile + " already exists!");
+							Path toFile = path.resolve(entry.getName()); // todo apparently this should be flattened linux?
+							if(Files.exists(toFile)) {
+								if(!toFile.toString().contains("META-INF")) {
+									this.amalgamation.project.getLogger().warn(toFile + " already exists!");
+								}
 								continue;
 							}
 							Path parent = toFile.getParent();
-							if (parent != null && !Files.exists(parent)) {
+							if(parent != null && !Files.exists(parent)) {
 								Files.createDirectories(parent);
 							}
 							Files.copy(input, toFile);

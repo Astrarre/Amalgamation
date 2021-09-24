@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
@@ -10,8 +11,10 @@ import com.google.gson.reflect.TypeToken;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
+import io.github.astrarre.amalgamation.gradle.files.MojmapFile;
 import io.github.astrarre.amalgamation.gradle.files.NativesFile;
 import io.github.astrarre.amalgamation.gradle.files.assets.AssetProvider;
 import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
@@ -61,6 +64,12 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 				config.checkForServerOnly,
 				() -> AmalgIO.resolve(project, client),
 				() -> AmalgIO.resolve(project, server));
+	}
+
+	@Override
+	public Dependency mojmerged(String version, CASMerger.Handler handler) {
+		CachedFile<?> file = new MojmapFile(this.project, version, true);
+		return new MojMergedDependency(this.project, version, handler, this.client(version), file);
 	}
 
 	@Override

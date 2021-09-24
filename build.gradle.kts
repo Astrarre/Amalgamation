@@ -23,7 +23,7 @@ plugins {
 
 allprojects {
     group = "io.github.astrarre.amalgamation"
-    version = "1.0.0-SNAPSHOT"
+    version = "1.0.0"
 }
 
 // Projects to configure standard publishing
@@ -79,7 +79,19 @@ subprojects {
                 val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
                 val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
                 name = "Project"
-                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+                url = if (version.toString()
+                        .endsWith("SNAPSHOT")
+                ) snapshotsRepoUrl else releasesRepoUrl
+            }
+            maven {
+                val mavenUrl = if(project.hasProperty("maven_url")) project.property("maven_url") else ""
+                url = java.net.URI(mavenUrl as String)
+                if (mavenUrl.startsWith("http")) {
+                    credentials {
+                        username = if(project.hasProperty ("maven_username")) project.property("maven_username") as String else ""
+                        password = if(project.hasProperty ("maven_password")) project.property("maven_password") as String else ""
+                    }
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
@@ -71,10 +73,11 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 						remapper.readClassPathAsync(file.toPath());
 					}
 
+					int id = 0;
 					for (Map.Entry<File, InputTag> entry : tags.entrySet()) {
 						InputTag tag = entry.getValue();
 						File file = entry.getKey();
-						Path destination = path.resolve(Hashing.sha256().hashUnencodedChars(file.getAbsolutePath()).toString() + ".jar");
+						Path destination = path.resolve("&" + (id++) + ".jar");
 						try (OutputConsumerPath output = new OutputConsumerPath.Builder(destination).build()) {
 							output.addNonClassFiles(file.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
 							remapper.apply(output, tag);
@@ -134,6 +137,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	}
 
 	private Iterable<File> resolvedMappings, resolvedDependencies, resolvedClasspath;
+
 	@Override
 	protected Set<File> path() throws IOException {
 		if (this.resolved == null) {
@@ -165,8 +169,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		AmalgIO.hash(hasher, this.resolvedMappings);
 		AmalgIO.hash(hasher, this.resolvedDependencies);
 		AmalgIO.hash(hasher, this.resolvedClasspath);
-
-		return hasher.hash().toString();
+		return Base64.getUrlEncoder().encodeToString(hasher.hash().asBytes());
 	}
 
 	@Override

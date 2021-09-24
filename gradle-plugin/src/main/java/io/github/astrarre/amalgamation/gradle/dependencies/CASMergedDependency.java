@@ -5,13 +5,14 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import io.github.astrarre.amalgamation.gradle.files.CASMergedFile;
+import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class CASMergedDependency extends AbstractSingleFileSelfResolvingDependency {
-	final CASMergedFile file;
+	final CachedFile<?> file;
 
 	public CASMergedDependency(Project project,
 			String version,
@@ -25,7 +26,7 @@ public class CASMergedDependency extends AbstractSingleFileSelfResolvingDependen
 		this.file = new CASMergedFile(jar, project, version, handler, settings, only, client, server);
 	}
 
-	public CASMergedDependency(Project project, String group, String name, String version, CASMergedFile file) {
+	public CASMergedDependency(Project project, String group, String name, String version, CachedFile<?> file) {
 		super(project, group, name, version);
 		this.file = file;
 	}

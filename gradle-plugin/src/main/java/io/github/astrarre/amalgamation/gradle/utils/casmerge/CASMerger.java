@@ -45,7 +45,7 @@ public class CASMerger extends ClassVisitor {
 						serverOnly = new ArrayList<>();
 					}
 					serverOnly.add(iface);
-					this.handler.visitInterface(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, false);
+					this.handler.accept(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, false);
 				}
 			}
 		}
@@ -64,7 +64,7 @@ public class CASMerger extends ClassVisitor {
 		for(String iface : interfaces) {
 			int index = this.indexOf(serverInterfaces, iface);
 			if(index == -1) {
-				this.handler.visitInterface(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, true);
+				this.handler.accept(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, true);
 			}
 		}
 	}
@@ -160,7 +160,7 @@ public class CASMerger extends ClassVisitor {
 
 		void accept(AnnotationVisitor visitor, boolean isClient);
 
-		void visitInterface(AnnotationVisitor visitor, String iface, boolean isClient);
+		void accept(AnnotationVisitor visitor, String iface, boolean isClient);
 	}
 
 	public static final FabricHandler FABRIC = new FabricHandler("Lnet/fabricmc/api/Environment;", "Lnet/fabricmc/api/EnvironmentInterface;", "Lnet/fabricmc/api/EnvType;");
@@ -190,7 +190,7 @@ public class CASMerger extends ClassVisitor {
 		}
 
 		@Override
-		public void visitInterface(AnnotationVisitor visitor, String iface, boolean isClient) {
+		public void accept(AnnotationVisitor visitor, String iface, boolean isClient) {
 			visitor.visit("itf", Type.getObjectType(iface));
 			visitor.visitEnum("value", this.enumDesc, this.forSide(isClient));
 		}

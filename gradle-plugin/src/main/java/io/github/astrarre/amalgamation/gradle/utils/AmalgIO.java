@@ -37,7 +37,7 @@ public class AmalgIO {
 		if (file.isDirectory()) {
 			return false;
 		}
-		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), null)) {
+		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
 			Path path = system.getPath(MERGER_META_FILE);
 			if (Files.exists(path)) {
 				Properties properties = new Properties();

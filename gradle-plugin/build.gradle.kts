@@ -67,6 +67,10 @@ dependencies {
     implementation("net.fabricmc", "tiny-remapper", "0.6.0")
     implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
     implementation("net.fabricmc", "dev-launch-injector", "0.2.1+build.8")
+    implementation("it.unimi.dsi:fastutil:8.5.6")
+    implementation("org.ow2.asm:asm-commons:9.1")
+    implementation("net.fabricmc:mapping-io:0.2.1")
+
     //implementation("com.github.javaparser:javaparser-core:3.22.0")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
     implementation("net.fabricmc", "access-widener", "1.0.2")
@@ -76,12 +80,12 @@ dependencies {
 gradlePlugin {
     plugins {
         create("base") {
-            id = "io.github.astrarre.amalgamation.base"
+            id = "amalgamation-base"
             implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin"
         }
 
         create("minecraft") {
-            id = "io.github.astrarre.amalgamation.minecraft"
+            id = "amalgamation-minecraft"
             implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin"
         }
     }

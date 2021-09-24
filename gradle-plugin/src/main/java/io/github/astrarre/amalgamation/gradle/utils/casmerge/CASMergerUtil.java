@@ -17,7 +17,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 /**
- * Client & Server Merger Utility
+ * Client Server Merger Utility
  */
 public class CASMergerUtil {
 	public static void merge(CASMerger.Handler handler,
@@ -32,7 +32,7 @@ public class CASMergerUtil {
 			while(files.hasNext()) {
 				Path clientFile = files.next();
 				Path relative = directory.relativize(clientFile);
-				if(clientFile.toString().endsWith(".class")) { // todo why this brok
+				if(clientFile.toString().endsWith(".class")) {
 					Path serverFile = server.getPath(relative.toString());
 					if(Files.exists(serverFile)) {
 						byte code[];
@@ -108,7 +108,7 @@ public class CASMergerUtil {
 		return reusedBuffer;
 	}
 
-	static byte[] writeAll(InputStream stream, OutputStream out, byte[] curr) throws IOException {
+	public static byte[] writeAll(InputStream stream, OutputStream out, byte[] curr) throws IOException {
 		int offset = 0, read;
 		while((read = stream.read(curr, offset, curr.length - offset)) != -1) {
 			if((read + offset) >= curr.length) { // if buffer is full
@@ -120,7 +120,7 @@ public class CASMergerUtil {
 		return curr;
 	}
 
-	static byte[] readAll(InputStream stream, byte[] curr) throws IOException {
+	public static byte[] readAll(InputStream stream, byte[] curr) throws IOException {
 		int offset = 0, read;
 		while((read = stream.read(curr, offset, curr.length - offset)) != -1) {
 			if((read + offset) >= curr.length) { // if buffer is full
