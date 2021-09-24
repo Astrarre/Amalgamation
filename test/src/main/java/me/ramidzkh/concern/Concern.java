@@ -6,9 +6,8 @@ import io.github.astrarre.amalgamation.api.Platform;
 
 import net.minecraft.client.MinecraftClient;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.EnvironmentInterface;
-import net.fabricmc.api.EnvironmentInterfaces;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+
 
 public class Concern implements Runnable {
     public static void main(String[] args) {

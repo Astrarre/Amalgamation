@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies.transforming;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,12 +42,16 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 		this.transformers = transformer;
 	}
 
-	public void add(Object depNotation) {
+	public void transform(Object depNotation) {
 		this.dependencies.add(this.project.getDependencies().create(depNotation));
 	}
 
-	public void addTransformer(Transformer transformer) {
+	public void transformer(Transformer transformer) {
 		this.transformers.add(transformer);
+	}
+
+	public void accessWidener(Object depNotation) throws IOException {
+		this.transformer(new AWTransformer(AmalgIO.resolve(this.project, depNotation)));
 	}
 
 	@Override

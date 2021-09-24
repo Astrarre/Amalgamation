@@ -22,6 +22,8 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transforming.Transformer;
+import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
@@ -61,6 +63,16 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	Dependency merged(String version, Action<CASMergedDependency.Config> configurate);
 
 	Dependency mojmerged(String version, CASMerger.Handler handler);
+
+	/**
+	 * @param name a unique name for this transformed dependency
+	 */
+	Dependency transformed(String name, Action<TransformingDependency> configure);
+
+	/**
+	 * @param name a unique name for this access widened dependency
+	 */
+	Dependency accessWidener(String name, Dependency dependency, Object accessWidener);
 
 	default Dependency mojmerged(String version) {
 		return this.mojmerged(version, CASMerger.FABRIC);

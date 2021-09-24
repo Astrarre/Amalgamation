@@ -133,7 +133,7 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	}
 
 	public void classpath(Object object) {
-		this.inputs.add(this.project.getDependencies().create(object));
+		this.classpath.add(this.project.getDependencies().create(object));
 	}
 
 	private Iterable<File> resolvedMappings, resolvedDependencies, resolvedClasspath;

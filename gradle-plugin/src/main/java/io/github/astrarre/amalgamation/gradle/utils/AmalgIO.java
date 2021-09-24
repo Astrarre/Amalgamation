@@ -135,4 +135,9 @@ public class AmalgIO {
 			}
 		}
 	}
+
+	public static File resolve(Project project, Object notation) {
+		Dependency dependency = project.getDependencies().create(notation);
+		return resolve(project, dependency);
+	}
 }

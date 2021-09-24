@@ -13,6 +13,8 @@ import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transforming.Transformer;
+import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.files.MojmapFile;
 import io.github.astrarre.amalgamation.gradle.files.NativesFile;
@@ -62,14 +64,33 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 				config.handler,
 				config.classReaderSettings,
 				config.checkForServerOnly,
-				() -> AmalgIO.resolve(project, client),
-				() -> AmalgIO.resolve(project, server));
+				() -> AmalgIO.resolve(this.project, client),
+				() -> AmalgIO.resolve(this.project, server));
 	}
 
 	@Override
 	public Dependency mojmerged(String version, CASMerger.Handler handler) {
 		CachedFile<?> file = new MojmapFile(this.project, version, true);
 		return new MojMergedDependency(this.project, version, handler, this.client(version), file);
+	}
+
+	@Override
+	public Dependency transformed(String name, Action<TransformingDependency> transformer) {
+		TransformingDependency dep = new TransformingDependency(this.project, name);
+		transformer.execute(dep);
+		return dep;
+	}
+
+	@Override
+	public Dependency accessWidener(String name, Dependency dependency, Object accessWidener) {
+		return this.transformed(name, d -> {
+			try {
+				d.accessWidener(accessWidener);
+				d.transform(dependency);
+			} catch(IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 	@Override

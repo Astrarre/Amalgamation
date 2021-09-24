@@ -75,14 +75,14 @@ subprojects {
         }
 
         repositories {
-            maven {
+            /*maven {
                 val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
                 val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
                 name = "Project"
                 url = if (version.toString()
                         .endsWith("SNAPSHOT")
                 ) snapshotsRepoUrl else releasesRepoUrl
-            }
+            }*/
             maven {
                 val mavenUrl = if(project.hasProperty("maven_url")) project.property("maven_url") else ""
                 url = java.net.URI(mavenUrl as String)
