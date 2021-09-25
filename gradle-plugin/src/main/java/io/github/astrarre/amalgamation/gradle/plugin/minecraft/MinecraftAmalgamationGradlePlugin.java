@@ -30,6 +30,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	public static LauncherMeta getLauncherMeta(Project project) {
 		return project.getExtensions().getByType(LauncherMeta.class);
 	}
+
 	public static String getLibrariesCache(Project project) {
 		return project.getExtensions().getByType(MinecraftAmalgamation.class).librariesCache();
 	}

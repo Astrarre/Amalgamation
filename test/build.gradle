@@ -63,18 +63,12 @@ def mergedMappings = dependencies.create('net.fabricmc:yarn:1.17.1+build.61:merg
 dependencies {
     def intermediaryMinecraft = ag.map {
         mappings(mergedMappings, 'official', 'intermediary')
-        globalCache = true
-        remap ag.mojmerged('1.17.1')
+        remap(ag.mojmerged('1.17.1'), true)
     }
     implementation ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
-        globalCache = true // todo allow per remap config settings
-        remap intermediaryMinecraft
-    }
-    implementation ag.map {
-        mappings(mergedMappings, 'intermediary', 'named')
-        remap "net.fabricmc.fabric-api:fabric-api:0.40.1+1.17"
-        classpath intermediaryMinecraft
+        remap(intermediaryMinecraft, true)
+        remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false)
     }
 
     implementation ag.libraries('1.17.1')

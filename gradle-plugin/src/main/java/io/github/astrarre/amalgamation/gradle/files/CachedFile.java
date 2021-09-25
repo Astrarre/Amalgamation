@@ -26,8 +26,8 @@ import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CachedFile<T> {
-	public static boolean refreshAmalgamationCaches, offlineMode;
 	public static final Gson GSON = new Gson();
+	public static boolean refreshAmalgamationCaches, offlineMode;
 	private final Supplier<Path> file;
 	private final Lock lock = new ReentrantLock();
 	private final Type value;
@@ -40,7 +40,7 @@ public abstract class CachedFile<T> {
 		this(() -> file, value);
 		try {
 			Files.createDirectories(file.getParent());
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -52,7 +52,7 @@ public abstract class CachedFile<T> {
 			@Override
 			public Path get() {
 				Path lazy = this.lazy;
-				if (lazy == null) {
+				if(lazy == null) {
 					lazy = this.lazy = file.get();
 				}
 				return lazy;
@@ -70,7 +70,7 @@ public abstract class CachedFile<T> {
 	public static CachedFile<String> forUrl(String url, Path path, Logger logger, boolean compress) {
 		try {
 			return forUrl(new URL(url), path, logger, compress);
-		} catch (MalformedURLException e) {
+		} catch(MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -90,27 +90,31 @@ public abstract class CachedFile<T> {
 	 * @return The given number of bytes formatted to kilobytes, megabytes or gigabytes if appropriate
 	 */
 	public static String toNiceSize(long bytes) {
-		if (bytes < 1024) {
+		if(bytes < 1024) {
 			return bytes + " B";
-		} else if (bytes < 1024 * 1024) {
+		} else if(bytes < 1024 * 1024) {
 			return bytes / 1024 + " KB";
-		} else if (bytes < 1024 * 1024 * 1024) {
+		} else if(bytes < 1024 * 1024 * 1024) {
 			return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
 		} else {
 			return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
 		}
 	}
 
+	public static void deleteCached(Path path) throws IOException {
+		Files.deleteIfExists(path.getParent().resolve(path.getFileName() + ".data"));
+		Files.deleteIfExists(path);
+	}
+
 	public void delete() throws IOException {
-		Files.deleteIfExists(this.file.get().getParent().resolve(this.file.get().getFileName() + ".data"));
-		Files.deleteIfExists(this.file.get());
+		deleteCached(this.file.get());
 	}
 
 	public Reader getReader() {
 		try {
 			this.getPath();
 			return Files.newBufferedReader(this.file.get());
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -118,16 +122,16 @@ public abstract class CachedFile<T> {
 	public Path getOutdatedPath() {
 		try {
 			Path path = this.file.get();
-			if (refreshAmalgamationCaches) {
+			if(refreshAmalgamationCaches) {
 				Files.deleteIfExists(path);
 			}
 
-			if (Files.exists(path)) {
+			if(Files.exists(path)) {
 				return path;
 			}
 
 			return this.getPath();
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -135,7 +139,7 @@ public abstract class CachedFile<T> {
 	public Path getPath() {
 		try {
 			Path path = this.file.get();
-			if (refreshAmalgamationCaches) {
+			if(refreshAmalgamationCaches) {
 				Files.deleteIfExists(path.toAbsolutePath().getParent().resolve(path.getFileName() + ".data"));
 				if(Files.isDirectory(path)) {
 					delete(path);
@@ -147,30 +151,27 @@ public abstract class CachedFile<T> {
 			this.lock.lock();
 			T old = this.getData();
 			T data = this.writeIfOutdated(path, old);
-			if (data != null) {
+			if(data != null) {
 				this.setData(data);
 			}
 			this.lock.unlock();
 			return this.file.get();
-		} catch (Throwable throwable) {
+		} catch(Throwable throwable) {
 			throw new RuntimeException(throwable);
 		}
 	}
 
-	@Nullable
-	protected abstract T writeIfOutdated(Path path, @Nullable T currentData) throws Throwable;
-
 	public T getData() {
 		try {
 			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
-			if (Files.exists(path)) {
+			if(Files.exists(path)) {
 				try(BufferedReader reader = Files.newBufferedReader(path)) {
 					return GSON.fromJson(reader, this.value);
 				}
 			} else {
 				return null;
 			}
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -181,15 +182,15 @@ public abstract class CachedFile<T> {
 			try(BufferedWriter writer = Files.newBufferedWriter(path)) {
 				GSON.toJson(data, writer);
 			}
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public static void delete(Path path) throws IOException {
-		if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-			try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
-				for (Path entry : entries) {
+		if(Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+			try(DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
+				for(Path entry : entries) {
 					delete(entry);
 				}
 			}
@@ -197,20 +198,19 @@ public abstract class CachedFile<T> {
 		Files.deleteIfExists(path);
 	}
 
-
 	/**
-	 * if the file exists, it will return the reader, else it will update the file and get the reader.
-	 * refresh dependencies overrides this behavior
+	 * if the file exists, it will return the reader, else it will update the file and get the reader. refresh dependencies overrides this behavior
+	 *
 	 * @return a reader for the file that may not be up to date
 	 */
 	public Reader getOutdatedReader() {
 		try {
 			Path path = this.file.get();
-			if (!Files.exists(path) || refreshAmalgamationCaches) {
+			if(!Files.exists(path) || refreshAmalgamationCaches) {
 				this.getPath();
 			}
 			return Files.newBufferedReader(path);
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -219,9 +219,12 @@ public abstract class CachedFile<T> {
 		try {
 			this.getPath();
 			return Files.newInputStream(this.file.get());
-		} catch (IOException e) {
+		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Nullable
+	protected abstract T writeIfOutdated(Path path, @Nullable T currentData) throws Throwable;
 
 }

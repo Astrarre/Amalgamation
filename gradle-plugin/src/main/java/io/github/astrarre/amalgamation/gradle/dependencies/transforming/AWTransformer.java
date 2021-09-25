@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -31,6 +33,11 @@ public class AWTransformer implements Transformer {
 
 	@Override
 	public void apply(ClassNode node) {
+	}
+
+	@Override
+	public void hash(Hasher hasher) {
+		AmalgIO.hash(hasher, this.aw);
 	}
 
 	@Override

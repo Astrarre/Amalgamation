@@ -41,6 +41,9 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		CachedFile.offlineMode = offlineMode;
 		CachedFile.refreshAmalgamationCaches = refreshAmalgamationCaches;
 		this.registerProvider(target);
+		target.getGradle().buildFinished(result -> {
+
+		});
 
 		/*IdeaModel ideaModel = (IdeaModel) target.getExtensions().getByName("idea");
 		ideaModel.getModule().getExcludeDirs().addAll(target.files(".gradle", "build", ".idea", "out").getFiles());
