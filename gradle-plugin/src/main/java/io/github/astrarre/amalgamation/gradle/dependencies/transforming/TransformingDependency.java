@@ -15,11 +15,13 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -48,6 +50,10 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 
 	public void transform(Object depNotation) {
 		this.dependencies.add(this.project.getDependencies().create(depNotation));
+	}
+
+	public void transform(Object depNotation, Closure<ModuleDependency> config) {
+		this.dependencies.add(this.project.getDependencies().create(depNotation, config));
 	}
 
 	public void transformer(Transformer transformer) {

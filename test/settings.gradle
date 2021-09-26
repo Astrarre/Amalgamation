@@ -17,4 +17,26 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+pluginManagement {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "FabricMC"
+            url = uri("https://maven.fabricmc.net/")
+        }
+
+        maven {
+            name = "MinecraftForge"
+            url = uri("https://files.minecraftforge.net/maven")
+        }
+        maven {
+            name = "HalfOf2"
+            url = uri("https://storage.googleapis.com/devan-maven/")
+        }
+        maven {
+            url = uri("https://jitpack.io")
+        }
+    }
+}
+
 includeBuild '..'

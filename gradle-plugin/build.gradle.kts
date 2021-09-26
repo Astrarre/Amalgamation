@@ -44,6 +44,11 @@ repositories {
     }
 }
 
+extensions.getByType<JavaPluginExtension>().apply {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
+
 val minecraft_version: String by project
 val forge_version: String by project
 tasks.processResources {
@@ -70,7 +75,7 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
-
+    implementation("net.devtech:zip-io:1.0.0")
     //implementation("com.github.javaparser:javaparser-core:3.22.0")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
     implementation("net.fabricmc", "access-widener", "1.0.2")

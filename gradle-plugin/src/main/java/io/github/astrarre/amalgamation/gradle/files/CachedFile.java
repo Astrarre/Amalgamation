@@ -20,6 +20,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.PrimitiveSink;
 import com.google.gson.Gson;
+import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
 import org.gradle.api.logging.Logger;
@@ -157,7 +158,7 @@ public abstract class CachedFile<T> {
 			this.lock.unlock();
 			return this.file.get();
 		} catch(Throwable throwable) {
-			throw new RuntimeException(throwable);
+			throw Clock.rethrow(throwable);
 		}
 	}
 

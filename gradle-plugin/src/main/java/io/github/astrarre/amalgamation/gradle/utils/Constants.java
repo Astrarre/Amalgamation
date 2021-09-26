@@ -12,9 +12,5 @@ import io.github.astrarre.amalgamation.api.Platform;
 import org.objectweb.asm.Type;
 
 public class Constants {
-	public static final ExecutorService SERVICE = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), pool -> {
-		ForkJoinWorkerThread thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-		thread.setDaemon(true);
-		return thread;
-	}, null, true);
+	public static final ExecutorService SERVICE = ForkJoinPool.commonPool();
 }

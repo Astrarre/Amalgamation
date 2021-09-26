@@ -32,27 +32,8 @@ subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
 
-    extensions.getByType<JavaPluginExtension>().apply {
-        withJavadocJar()
-        withSourcesJar()
-
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
     tasks.withType<AbstractArchiveTask> {
         from(rootProject.file("LICENSE"))
-    }
-
-    tasks.withType<JavaCompile> {
-        options.encoding = "UTF-8"
-
-        if (JavaVersion.current().isJava9Compatible) {
-            options.release.set(8)
-        } else {
-            sourceCompatibility = "8"
-            targetCompatibility = "8"
-        }
     }
 
     tasks.withType<Javadoc> {

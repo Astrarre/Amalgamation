@@ -54,10 +54,9 @@ public class MojMergedFile extends CachedFile<String> {
 		Logger logger = this.project.getLogger();
 		logger.lifecycle("Moj Merging " + this.version);
 
-		try (Clock ignored = new Clock("Moj Merged " + this.version + " in %dms", logger);
-		     ZipOutputStream merged = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(path)));
-		     FileSystem client = FileSystems.newFileSystem(clientF.toPath(), (ClassLoader) null)) {
-			MojMergerUtil.merge(client, serverMappings.toPath(), merged, this.handler);
+		try (Clock ignored = new Clock("Moj Merged " + this.version + " in %dms", logger)) {
+			MojMergerUtil merger = new MojMergerUtil(clientF.toPath(), serverMappings.toPath(), path, this.handler);
+			merger.merge();
 		}
 
 		return hash;

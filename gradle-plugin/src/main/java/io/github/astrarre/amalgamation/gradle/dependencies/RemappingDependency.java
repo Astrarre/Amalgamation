@@ -2,6 +2,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,23 +19,36 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.CollectionUtil;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.jetbrains.annotations.Nullable;
 
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.NonClassCopyMode;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
+import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
 public class RemappingDependency extends AbstractSelfResolvingDependency {
+	public static final Field EXECUTOR;
+	static {
+		try {
+			EXECUTOR = TinyRemapper.class.getDeclaredField("threadPool");
+			EXECUTOR.setAccessible(true);
+		} catch(NoSuchFieldException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	private final List<ToRemap<Dependency>> inputs;
 	private final List<Dependency> classpath;
 	public boolean globalCache = false;
@@ -87,8 +101,16 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		this.inputs.add(new ToRemap<>(this.project.getDependencies().create(object), useGlobalCache));
 	}
 
+	public void remap(Object object, boolean useGlobalCache, Closure<ModuleDependency> config) {
+		this.inputs.add(new ToRemap<>(this.project.getDependencies().create(object, config), useGlobalCache));
+	}
+
 	public void classpath(Object object) {
 		this.classpath.add(this.project.getDependencies().create(object));
+	}
+
+	public void classpath(Object object, Closure<ModuleDependency> config) {
+		this.classpath.add(this.project.getDependencies().create(object, config));
 	}
 
 	@Override
@@ -117,13 +139,12 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		Set<File> out = new HashSet<>();
 		try(Clock ignored = new Clock("Remapped in %dms", this.project.getLogger())) {
 			Hasher mappingsHasher = Hashing.sha256().newHasher();
-
 			for(File mapping : this.resolvedMappings) {
 				AmalgIO.hash(mappingsHasher, mapping);
 			}
 			byte[] mappingsHash = mappingsHasher.hash().asBytes();
-			Map<ToRemap<File>, Path> toMap = new HashMap<>();
 
+			Map<ToRemap<File>, Path> toMap = new HashMap<>();
 			List<Path> lastSecondClasspath = new ArrayList<>();
 			for(ToRemap<File> dependency : this.resolvedDependencies) {
 				Hasher hasher = Hashing.sha256().newHasher();
@@ -149,6 +170,13 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			}
 
 			TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(mappings)).build();
+			try {
+				EXECUTOR.set(remapper, Constants.SERVICE);
+			} catch(IllegalAccessException e) {
+				this.project.getLogger().lifecycle("Unable to set executor for TinyRemapper");
+			}
+			// use reflection to set threadpool
+
 			lastSecondClasspath.forEach(remapper::readClassPathAsync);
 			Map<ToRemap<File>, InputTag> tags = new HashMap<>();
 			for(ToRemap<File> file : toMap.keySet()) {

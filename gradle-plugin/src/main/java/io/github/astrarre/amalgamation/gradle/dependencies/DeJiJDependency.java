@@ -18,11 +18,13 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.google.gson.JsonObject;
+import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.jetbrains.annotations.Nullable;
 
 public class DeJiJDependency extends AbstractSelfResolvingDependency {
@@ -39,6 +41,10 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 
 	public void add(Object dependency) {
 		this.dependencies.add(this.project.getDependencies().create(dependency));
+	}
+
+	public void add(Object dependency, Closure<ModuleDependency> config) {
+		this.dependencies.add(this.project.getDependencies().create(dependency, config));
 	}
 
 	@Override

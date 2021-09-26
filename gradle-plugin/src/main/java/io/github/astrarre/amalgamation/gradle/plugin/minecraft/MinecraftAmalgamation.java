@@ -19,6 +19,8 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.util.List;
+
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
@@ -63,6 +65,8 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	Dependency merged(String version, Action<CASMergedDependency.Config> configurate);
 
 	Dependency mojmerged(String version, CASMerger.Handler handler);
+
+	List<Dependency> fabricLoader(String version);
 
 	/**
 	 * @param name a unique name for this transformed dependency

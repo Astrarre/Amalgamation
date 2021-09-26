@@ -23,7 +23,7 @@ public class MojMerger extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		super.visit(version, access, name, signature, superName, interfaces);
-		MappingTreeView.ClassMappingView view = this.serverMappings.getClass(name);
+		MappingTreeView.ClassMappingView view = this.serverMappings.getClass(name, 0);
 		if(view == null) {
 			this.handler.accept(this.visitAnnotation(this.handler.normalDesc(), false), true);
 		} else {
@@ -41,7 +41,7 @@ public class MojMerger extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
 		MethodVisitor visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-		if(this.owner != null && this.owner.getMethod(name, descriptor) == null) {
+		if(this.owner != null && this.owner.getMethod(name, descriptor, 0) == null) {
 			this.handler.accept(visitor.visitAnnotation(this.handler.normalDesc(), false), true);
 		}
 		return visitor;
@@ -50,7 +50,7 @@ public class MojMerger extends ClassVisitor {
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		FieldVisitor visitor = super.visitField(access, name, descriptor, signature, value);
-		if(this.owner != null && this.owner.getField(name, descriptor) == null) {
+		if(this.owner != null && this.owner.getField(name, descriptor, 0) == null) {
 			this.handler.accept(visitor.visitAnnotation(this.handler.normalDesc(), false), true);
 		}
 		return visitor;

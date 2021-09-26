@@ -21,7 +21,6 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
 import java.util.function.Supplier;
-
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;

@@ -20,4 +20,13 @@ public class Clock implements AutoCloseable {
 			this.logger.lifecycle(String.format(this.message, System.currentTimeMillis() - this.start));
 		}
 	}
+
+	/**
+	 * @return nothing, because it throws
+	 * @throws T rethrows {@code throwable}
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends Throwable> RuntimeException rethrow(Throwable throwable) throws T {
+		throw (T) throwable;
+	}
 }
