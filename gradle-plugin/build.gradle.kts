@@ -36,10 +36,6 @@ tasks.processResources {
     }
 }
 
-repositories {
-    mavenLocal()
-}
-
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
 
@@ -60,7 +56,7 @@ dependencies {
     //implementation("com.github.javaparser:javaparser-core:3.22.0")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
     implementation("net.fabricmc", "access-widener", "1.0.2")
-    implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
+    //implementation("net.minecraftforge:forge:$minecraft_version-$forge_version:installer")
 }
 
 gradlePlugin {

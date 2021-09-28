@@ -1,20 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.forge;
 
-import net.minecraftforge.installer.DownloadUtils;
-import net.minecraftforge.installer.actions.ProgressCallback;
-import net.minecraftforge.installer.json.Install;
-import net.minecraftforge.installer.json.Util;
-import net.minecraftforge.installer.json.Version;
-
-import java.io.File;
-import java.util.ArrayList;
-
 public class ForgeUtil {
 	/**
 	 * @param libs   the folder for caching libraries
 	 * @param client the vanilla client jar
 	 */
-	public static void getForgeClient(File libs, File client) {
+	/*public static void getForgeClient(File libs, File client) {
 		installLibs(libs);
 		new ForgeInstalls.Client(Util.loadInstallProfile(), (m, p) -> {
 			if (p == ProgressCallback.MessagePriority.NORMAL) {
@@ -43,5 +34,5 @@ public class ForgeUtil {
 				}, profile.getMirror(), lib, forgeLibs, t -> true, new ArrayList<>());
 			}
 		}
-	}
+	}*/
 }

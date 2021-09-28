@@ -2,11 +2,10 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamation;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
@@ -28,19 +27,22 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolvePaths() {
-		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		return Iterables.concat(Iterables.transform(
-				Objects.requireNonNull(meta.getVersion(this.version), "Invalid version: " + this.version)
-				       .getLibraries(),
-				input -> Iterables.transform(input.evaluateAllDependencies(this.rule), dependency -> {
-					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
-					return CachedFile.forUrl(dependency, jar, this.project.getLogger(), false).getOutdatedPath();
-				})));
+	public Dependency copy() {
+		return new LibrariesDependency(this.project, this.version);
 	}
 
 	@Override
-	public Dependency copy() {
-		return new LibrariesDependency(this.project, this.version);
+	protected Iterable<Path> resolvePaths() {
+		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
+		return meta.getVersion(this.version)
+				.getLibraries()
+				.stream()
+				.map(i -> i.evaluateAllDependencies(this.rule))
+				.flatMap(Collection::stream)
+				.map(dependency -> {
+					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
+					return CachedFile.forUrl(dependency, jar, this.project.getLogger(), false).getOutdatedPath();
+				})
+				.collect(Collectors.toList());
 	}
 }

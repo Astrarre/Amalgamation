@@ -51,6 +51,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 
 	@Override
 	protected Iterable<Path> resolvePaths() {
+		// todo this can be a zip process
 		List<File> toProcess = new ArrayList<>();
 		Set<File> doNotRemove = new HashSet<>();
 		for (File file : this.resolve(this.dependencies)) {

@@ -17,6 +17,7 @@ import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
 import net.devtech.zipio.VirtualZipEntry;
 import net.devtech.zipio.ZipOutput;
@@ -159,6 +160,11 @@ public class RemappingDependency extends AbstractSelfResolvingDependency impleme
 		}
 
 		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(mappings)).build();
+		try {
+			EXECUTOR.set(remapper, Constants.SERVICE);
+		} catch(IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
 		for(ZipTransform transform : ZipProcessable.add(this.project, builder, this.classpath, path -> null)) {
 			transform.setPreEntryProcessor(buffer -> {
 				if(buffer.path().endsWith(".class")) {
