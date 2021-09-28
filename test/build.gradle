@@ -44,6 +44,7 @@ configurations {
 
     }
 }
+
 dependencies {
     def intermediaryMinecraft = ag.map {
         mappings(mergedMappings, 'official', 'intermediary')
@@ -52,9 +53,9 @@ dependencies {
     aaaaa ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
         remap(intermediaryMinecraft, true)
-        remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
+        /*remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
             exclude module: 'fabric-loader'
-        }
+        }*/
     }
 
     aaaaa ag.fabricLoader("0.11.7")
@@ -120,9 +121,9 @@ task fabric_1_16(type: RemapJar) {
     mappings = amalgamation.createMappings(MappingTarget.INTERMEDIARY, '1.16')
 }*/
 
-task doNothing {
+task loadMcEnv {
     doLast {
-        Thread.sleep(10_000)
+        //Thread.sleep(10_000)
         configurations.aaaaa.resolve()
     }
 }
