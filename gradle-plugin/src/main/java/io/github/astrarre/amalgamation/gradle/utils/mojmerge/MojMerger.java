@@ -31,7 +31,7 @@ public class MojMerger extends ClassVisitor {
 		}
 
 		for(String iface : interfaces) {
-			if(this.serverMappings.getClass(iface) == null) {
+			if(this.serverMappings.getClass(iface, 0) == null) {
 				// interface not present on server
 				this.handler.accept(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, true);
 			}

@@ -59,7 +59,7 @@ public class LauncherMeta {
 
 	private void init(String lookingFor) {
 		Map<String, Version> vers = this.versions;
-		CachedFile<?> cache = null;
+		CachedFile cache = null;
 		if (vers == null) {
 			this.logger.lifecycle("downloading manifest . . .");
 			cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
@@ -104,7 +104,7 @@ public class LauncherMeta {
 	}
 
 	public JsonObject read(String output, String url) {
-		CachedFile<?> cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger, true);
+		CachedFile cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger, true);
 		try (Reader reader = cache.getOutdatedReader()) {
 			return CachedFile.GSON.fromJson(reader, JsonObject.class);
 		} catch (IOException e) {

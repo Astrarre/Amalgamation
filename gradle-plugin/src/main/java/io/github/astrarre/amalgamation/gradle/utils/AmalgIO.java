@@ -67,8 +67,17 @@ public class AmalgIO {
 	}
 
 	public static void hash(Hasher hasher, File file) {
-		hasher.putUnencodedChars(file.getAbsolutePath());
-		hasher.putLong(file.lastModified());
+		if(!file.exists()) {
+			hasher.putLong(System.currentTimeMillis());
+		} else {
+			hasher.putUnencodedChars(file.getAbsolutePath());
+			hasher.putLong(file.lastModified());
+		}
+	}
+
+	public static void hash(Project project, Hasher hasher, Dependency dependency) {
+		// todo add hashable
+		hash(hasher, resolve(project, Collections.singletonList(dependency)));
 	}
 
 	public static String hash(Hasher hasher) {

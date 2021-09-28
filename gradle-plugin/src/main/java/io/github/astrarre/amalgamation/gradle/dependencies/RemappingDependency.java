@@ -3,43 +3,45 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
-import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
-import io.github.astrarre.amalgamation.gradle.utils.CollectionUtil;
-import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
+import net.devtech.zipio.VirtualZipEntry;
+import net.devtech.zipio.ZipOutput;
+import net.devtech.zipio.impl.util.U;
+import net.devtech.zipio.processes.ZipProcess;
+import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.processors.entry.ProcessResult;
+import net.devtech.zipio.processors.entry.ZipEntryProcessor;
+import net.devtech.zipio.processors.zip.PostZipProcessor;
+import net.devtech.zipio.stage.LinkedProcessTransform;
+import net.devtech.zipio.stage.ZipTransform;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import net.fabricmc.tinyremapper.InputTag;
-import net.fabricmc.tinyremapper.NonClassCopyMode;
-import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
-import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
-public class RemappingDependency extends AbstractSelfResolvingDependency {
+@SuppressWarnings({
+		"unchecked",
+		"UnstableApiUsage"
+})
+public class RemappingDependency extends AbstractSelfResolvingDependency implements ZipProcessable {
 	public static final Field EXECUTOR;
 	static {
 		try {
@@ -49,17 +51,15 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			throw new RuntimeException(e);
 		}
 	}
-	private final List<ToRemap<Dependency>> inputs;
+	private final List<Dependency> inputsLocal, inputsGlobal;
 	private final List<Dependency> classpath;
-	public boolean globalCache = false;
 	private Dependency mappings;
 	private String from, to;
-	private List<ToRemap<File>> resolvedDependencies;
-	private Iterable<File> resolvedMappings, resolvedClasspath;
 
 	public RemappingDependency(Project project) {
-		super(project, "io.github.amalgamation", null, "0.0.0");
-		this.inputs = new ArrayList<>();
+		super(project, "io.github.amalgamation", "test" /*todo see if unique name is needed*/, "0.0.0");
+		this.inputsGlobal = new ArrayList<>();
+		this.inputsLocal = new ArrayList<>();
 		this.classpath = new ArrayList<>();
 	}
 
@@ -70,13 +70,15 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 			Dependency mappings,
 			String from,
 			String to,
-			List<ToRemap<Dependency>> inputs,
+			List<Dependency> inputsLocal,
+			List<Dependency> inputsGlobal,
 			List<Dependency> classpath) {
 		super(project, group, name, version);
 		this.mappings = mappings;
 		this.from = from;
 		this.to = to;
-		this.inputs = inputs;
+		this.inputsLocal = inputsLocal;
+		this.inputsGlobal = inputsGlobal;
 		this.classpath = classpath;
 	}
 
@@ -97,12 +99,13 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 		throw new IllegalStateException("cannot layer mappings like that yet");
 	}
 
+	// todo remapAndClasspath
 	public void remap(Object object, boolean useGlobalCache) {
-		this.inputs.add(new ToRemap<>(this.project.getDependencies().create(object), useGlobalCache));
+		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(this.project.getDependencies().create(object));
 	}
 
 	public void remap(Object object, boolean useGlobalCache, Closure<ModuleDependency> config) {
-		this.inputs.add(new ToRemap<>(this.project.getDependencies().create(object, config), useGlobalCache));
+		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(this.project.getDependencies().create(object, config));
 	}
 
 	public void classpath(Object object) {
@@ -114,126 +117,101 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	public String getName() {
+	public Iterable<Path> resolvePaths() throws IOException {
+		return ZipProcessable.super.resolvePaths();
+	}
+
+	static final class Remap implements ZipEntryProcessor, PostZipProcessor {
+		final TinyRemapper remapper;
+		final InputTag input;
+
+		Remap(TinyRemapper remapper) {
+			this.remapper = remapper;
+			this.input = remapper.createInputTag();
+		}
+
+		@Override
+		public ProcessResult apply(VirtualZipEntry buffer) {
+			if(buffer.path().endsWith(".class")) {
+				ByteBuffer read = buffer.read();
+				this.remapper.readFileToInput(this.input, buffer.path(), read.array(), read.arrayOffset(), read.limit());
+			} else {
+				buffer.copyToOutput();
+			}
+			return ProcessResult.HANDLED;
+		}
+
+		@Override
+		public void apply(ZipOutput output) {
+			this.remapper.apply((s, b) -> output.write(s + ".class", ByteBuffer.wrap(b)), this.input);
+		}
+	}
+
+	@Override
+	public ZipProcess process() {
+		// todo autoappend files that exist to classpath
+		ZipProcessBuilder builder = ZipProcess.builder();
+		MappingSet mappings = MappingSet.create();
+		List<File> resolved = new ArrayList<>();
+		for(File file : this.resolve(List.of(this.mappings))) {
+			MappingUtil.loadMappings(mappings, file, this.from, this.to);
+			resolved.add(file);
+		}
+
+		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(mappings)).build();
+		for(ZipTransform transform : ZipProcessable.add(this.project, builder, this.classpath, path -> null)) {
+			transform.setPreEntryProcessor(buffer -> {
+				if(buffer.path().endsWith(".class")) {
+					ByteBuffer read = buffer.read();
+					remapper.readFileToClassPath(null, buffer.path(), read.array(), read.arrayOffset(), read.position());
+				}
+				return ProcessResult.HANDLED; // prevent classpath from being written
+			});
+		}
+
+		this.extracted(builder, resolved, remapper, this.inputsGlobal, true);
+		this.extracted(builder, resolved, remapper, this.inputsLocal, false);
+
+		return builder;
+	}
+
+	private void extracted(ZipProcessBuilder builder, List<File> map, TinyRemapper remapper, List<Dependency> inputs, boolean global) {
+		for(var transform : ZipProcessable.add(this.project, builder, inputs, path -> this.getRemapFile(map, path, global))) {
+			if(transform instanceof LinkedProcessTransform t) {
+				Map<Path, Remap> cache = new HashMap<>();
+				var proc = (Function<Path, ?>) p -> cache.computeIfAbsent(p, ig -> new Remap(remapper));
+
+				// hm problemo.
+				t.setPreEntryProcessor((Function) proc);
+				t.setPostZipProcessor((Function) proc);
+			} else {
+				Remap remap = new Remap(remapper);
+				transform.setPreEntryProcessor(remap);
+				transform.setPostZipProcessor(remap);
+			}
+		}
+	}
+
+	@NotNull
+	private Path getRemapFile(List<File> map, Path path, boolean global) {
 		Hasher hasher = Hashing.sha256().newHasher();
+		AmalgIO.hash(hasher, map);
 		hasher.putUnencodedChars(this.from);
 		hasher.putUnencodedChars(this.to);
-		AmalgIO.hash(hasher, this.resolvedMappings);
-		AmalgIO.hash(hasher, Iterables.transform(this.resolvedDependencies, ToRemap::dep));
-		AmalgIO.hash(hasher, this.resolvedClasspath);
-		return Base64.getUrlEncoder().encodeToString(hasher.hash().asBytes());
-	}
-
-	public List<ToRemap<File>> resolvePreserveConfig(Iterable<ToRemap<Dependency>> dependencies) {
-		Iterable<Dependency> global, local;
-		global = Iterables.transform(Iterables.filter(dependencies, d -> d.globalCache), ToRemap::dep);
-		local = Iterables.transform(Iterables.filter(dependencies, d -> !d.globalCache), ToRemap::dep);
-		Iterable<File> globalResolved = this.resolve(global), localResolved = this.resolve(local);
-		List<ToRemap<File>> toRemaps = new ArrayList<>();
-		globalResolved.forEach(f -> toRemaps.add(new ToRemap<>(f, true)));
-		localResolved.forEach(f -> toRemaps.add(new ToRemap<>(f, false)));
-		return toRemaps;
-	}
-
-	public Set<File> remap() throws IOException {
-		Set<File> out = new HashSet<>();
-		try(Clock ignored = new Clock("Remapped in %dms", this.project.getLogger())) {
-			Hasher mappingsHasher = Hashing.sha256().newHasher();
-			for(File mapping : this.resolvedMappings) {
-				AmalgIO.hash(mappingsHasher, mapping);
-			}
-			byte[] mappingsHash = mappingsHasher.hash().asBytes();
-
-			Map<ToRemap<File>, Path> toMap = new HashMap<>();
-			List<Path> lastSecondClasspath = new ArrayList<>();
-			for(ToRemap<File> dependency : this.resolvedDependencies) {
-				Hasher hasher = Hashing.sha256().newHasher();
-				AmalgIO.hash(hasher, dependency.dep);
-				hasher.putBytes(mappingsHash);
-				String unique = AmalgIO.hash(hasher);
-				Path cached = AmalgIO.cache(this.project, dependency.globalCache).resolve("remaps").resolve(unique+"_"+dependency.dep.getName());
-				if(!Files.exists(cached)) {
-					toMap.put(dependency, cached);
-				} else {
-					lastSecondClasspath.add(cached);
-				}
-				out.add(cached.toFile());
-			}
-
-			this.project.getLogger().lifecycle("Remapping " + toMap.size() + " dependencies");
-			if(toMap.isEmpty()) {
-				return out;
-			}
-			MappingSet mappings = MappingSet.create();
-			for(File mapping : this.resolvedMappings) {
-				MappingUtil.loadMappings(mappings, mapping, this.from, this.to);
-			}
-
-			TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(mappings)).build();
-			try {
-				EXECUTOR.set(remapper, Constants.SERVICE);
-			} catch(IllegalAccessException e) {
-				this.project.getLogger().lifecycle("Unable to set executor for TinyRemapper");
-			}
-			// use reflection to set threadpool
-
-			lastSecondClasspath.forEach(remapper::readClassPathAsync);
-			Map<ToRemap<File>, InputTag> tags = new HashMap<>();
-			for(ToRemap<File> file : toMap.keySet()) {
-				InputTag tag = remapper.createInputTag();
-				tags.put(file, tag);
-				remapper.readInputsAsync(tag, file.dep.toPath());
-			}
-
-			for(File file : RemappingDependency.this.resolvedClasspath) {
-				remapper.readClassPathAsync(file.toPath());
-			}
-
-			for(Map.Entry<ToRemap<File>, InputTag> entry : tags.entrySet()) {
-				InputTag tag = entry.getValue();
-				File file = entry.getKey().dep;
-				Path destination = toMap.get(entry.getKey());
-				try(OutputConsumerPath output = new OutputConsumerPath.Builder(destination).build()) {
-					output.addNonClassFiles(file.toPath(), NonClassCopyMode.FIX_META_INF, remapper);
-					remapper.apply(output, tag);
-				}
-			}
-
-			remapper.finish();
+		try {
+			hasher.putUnencodedChars(path.toRealPath().toString());
+		} catch(IOException e) {
+			throw U.rethrow(e);
 		}
-		return out;
-	}
-
-	@Override
-	protected Set<File> path() throws IOException {
-		if(this.resolved == null) {
-			Configuration configuration = this.project.getConfigurations().detachedConfiguration(RemappingDependency.this.mappings);
-			this.resolvedMappings = configuration.resolve();
-			List<File> resources = new ArrayList<>();
-
-			List<ToRemap<File>> toRemap = this.resolvePreserveConfig(this.inputs);
-			Iterator<ToRemap<File>> iterator = toRemap.iterator();
-			while(iterator.hasNext()) {
-				ToRemap<File> file = iterator.next();
-				if(AmalgIO.isResourcesJar(file.dep)) {
-					resources.add(file.dep);
-					iterator.remove();
-				}
-			}
-
-			this.resolvedDependencies = toRemap;
-			//CollectionUtil.filt(this.resolve(this.classpath), resources, AmalgIO::isResourcesJar);
-			this.resolvedClasspath = Iterables.filter(this.resolve(this.classpath), AmalgIO::jarContainsClasses);
-			Set<File> output = this.remap();
-			output.addAll(resources);
-			this.resolved = output;
+		String dir = AmalgIO.hash(hasher);
+		Path main = AmalgIO.cache(this.project, global);
+		Path at = main.resolve("remaps").resolve(this.mappings.getName() + "-" + this.mappings.getVersion());
+		try {
+			Files.createDirectories(at);
+		} catch(IOException e) {
+			throw new RuntimeException(e);
 		}
-		return this.resolved;
-	}
-
-	@Override
-	protected Iterable<Path> resolvePaths() {
-		throw new IllegalStateException("wat");
+		return at.resolve(dir + "-" + path.getFileName());
 	}
 
 	@Override
@@ -246,21 +224,8 @@ public class RemappingDependency extends AbstractSelfResolvingDependency {
 				this.mappings,
 				this.from,
 				this.to,
-				new ArrayList<>(this.inputs),
+				new ArrayList<>(this.inputsLocal),
+				new ArrayList<>(this.inputsGlobal),
 				new ArrayList<>(this.classpath));
-	}
-
-	static class ToRemap<T> {
-		final T dep;
-		final boolean globalCache;
-
-		ToRemap(T dependency, boolean cache) {
-			this.dep = dependency;
-			this.globalCache = cache;
-		}
-
-		public T dep() {
-			return this.dep;
-		}
 	}
 }

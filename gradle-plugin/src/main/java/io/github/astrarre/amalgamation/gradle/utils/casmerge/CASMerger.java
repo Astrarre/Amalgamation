@@ -4,29 +4,30 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.Set;
 
+import groovy.lang.Closure;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.InnerClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
 // todo test heuristic on identical classes, mc and mine
 public class CASMerger extends ClassVisitor {
 	static final FieldVisitor FIELD_VISITOR = new FieldVisitor(Opcodes.ASM9, null) {};
 	static final MethodVisitor METHOD_VISITOR = new MethodVisitor(Opcodes.ASM9, null) {};
 
-	final ClassNode server;
+	final CASMergerUtil.ClassEntry server;
 	final Handler handler;
 	final boolean checkForServerOnly;
 
-	public CASMerger(ClassVisitor visitor, int api, ClassNode server, Handler handler, boolean checkForServerOnly) {
+	public CASMerger(ClassVisitor visitor, int api, CASMergerUtil.ClassEntry server, Handler handler, boolean checkForServerOnly) {
 		super(api, visitor);
 		this.server = server;
 		this.handler = handler;
@@ -36,7 +37,7 @@ public class CASMerger extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, final String[] interfaces) {
 		List<String> serverOnly = null;
-		List<String> serverInterfaces = this.server.interfaces;
+		Set<String> serverInterfaces = this.server.interfaces();
 		if(this.checkForServerOnly) {
 			for(String iface : serverInterfaces) {
 				int index = this.indexOf(interfaces, iface);
@@ -62,31 +63,17 @@ public class CASMerger extends ClassVisitor {
 		}
 
 		for(String iface : interfaces) {
-			int index = this.indexOf(serverInterfaces, iface);
-			if(index == -1) {
+			if(!serverInterfaces.contains(iface)) {
 				this.handler.accept(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, true);
 			}
 		}
 	}
 
-	@Override
-	public void visitInnerClass(String name, String outerName, String innerName, int access) {
-		List<InnerClassNode> inners = this.server.innerClasses;
-		if(inners != null) {
-			for(InnerClassNode inner : inners) {
-				if(Objects.equals(inner.name, name)) {
-					return;
-				}
-			}
-			// not found in client, can add
-		}
-		super.visitInnerClass(name, outerName, innerName, access);
-	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		if(this.inServer(this.server.fields, f -> f.name, f -> f.desc, name, descriptor)) {
-			return FIELD_VISITOR;
+		if(this.server.fields().contains(name, descriptor)) {
+			return super.visitField(access, name, descriptor, signature, value);
 		} else {
 			FieldVisitor visitor = super.visitField(access, name, descriptor, signature, value);
 			this.handler.accept(visitor.visitAnnotation(this.handler.normalDesc(), false), true);
@@ -96,30 +83,12 @@ public class CASMerger extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-		if(this.inServer(this.server.methods, f -> f.name, f -> f.desc, name, descriptor)) {
-			return METHOD_VISITOR;
+		if(this.server.methods().contains(name, descriptor)) {
+			return super.visitMethod(access, name, descriptor, signature, exceptions);
 		} else {
 			MethodVisitor visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
 			this.handler.accept(visitor.visitAnnotation(this.handler.normalDesc(), false), true);
-			return super.visitMethod(access, name, descriptor, signature, exceptions);
-		}
-	}
-
-	@Override
-	public void visitEnd() {
-		List<InnerClassNode> inners = this.server.innerClasses;
-		if(inners != null) {
-			for(InnerClassNode inner : inners) {
-				super.visitInnerClass(inner.name, inner.outerName, inner.innerName, inner.access);
-			}
-		}
-
-		for(MethodNode method : this.server.methods) {
-			method.accept(this);
-		}
-
-		for(FieldNode field : this.server.fields) {
-			field.accept(this);
+			return visitor;
 		}
 	}
 
@@ -130,27 +99,6 @@ public class CASMerger extends ClassVisitor {
 			}
 		}
 		return -1;
-	}
-
-	int indexOf(final List<String> strings, String string) {
-		for(int i = 0, len = strings.size(); i < len; i++) {
-			if(Objects.equals(strings.get(i), string)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private <T> boolean inServer(List<T> list, Function<T, String> nameGetter, Function<T, String> descGetter, String name, String descriptor) {
-		if(list != null) {
-			for(T node : list) {
-				if(Objects.equals(nameGetter.apply(node), name) && Objects.equals(descGetter.apply(node), descriptor)) {
-					return true;
-				}
-			}
-			// not found in client, can add
-		}
-		return false;
 	}
 
 	public interface Handler {
@@ -200,4 +148,35 @@ public class CASMerger extends ClassVisitor {
 		}
 	}
 
+	public static class Config {
+		final DependencyHandler project;
+		public String version;
+		public Handler handler = FABRIC;
+		public int clsReaderFlags = 0;
+		public boolean checkForServerOnly = false;
+		public Dependency client;
+		public Dependency server;
+
+		public Config(Project project) {this.project = project.getDependencies();}
+
+		public Config client(Object client, Closure<ModuleDependency> config) {
+			this.client = this.project.create(client, config);
+			return this;
+		}
+
+		public Config server(Object server, Closure<ModuleDependency> config) {
+			this.server = this.project.create(server, config);
+			return this;
+		}
+
+		public Config client(Object client) {
+			this.client = this.project.create(client);
+			return this;
+		}
+
+		public Config server(Object server) {
+			this.server = this.project.create(server);
+			return this;
+		}
+	}
 }

@@ -23,6 +23,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven { url 'https://maven.fabricmc.net/' }
     maven { url 'https://files.minecraftforge.net/maven/' }
@@ -38,12 +39,17 @@ targetCompatibility = JavaVersion.VERSION_16
 def mc_vers = "1.17.1"
 def mergedMappings = dependencies.create('net.fabricmc:yarn:1.17.1+build.61:mergedv2')
 
+configurations {
+    aaaaa {
+
+    }
+}
 dependencies {
     def intermediaryMinecraft = ag.map {
         mappings(mergedMappings, 'official', 'intermediary')
         remap(ag.mojmerged(mc_vers), true)
     }
-    implementation ag.map {
+    aaaaa ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
         remap(intermediaryMinecraft, true)
         remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
@@ -51,8 +57,8 @@ dependencies {
         }
     }
 
-    implementation ag.fabricLoader("0.11.7")
-    implementation ag.libraries(mc_vers)
+    aaaaa ag.fabricLoader("0.11.7")
+    aaaaa ag.libraries(mc_vers)
     annotationProcessor("net.fabricmc:fabric-mixin-compile-extensions:0.4.3")
 }
 
@@ -114,4 +120,9 @@ task fabric_1_16(type: RemapJar) {
     mappings = amalgamation.createMappings(MappingTarget.INTERMEDIARY, '1.16')
 }*/
 
-task doNothing {}
+task doNothing {
+    doLast {
+        Thread.sleep(10_000)
+        configurations.aaaaa.resolve()
+    }
+}

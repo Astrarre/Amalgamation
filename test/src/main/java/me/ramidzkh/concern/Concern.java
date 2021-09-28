@@ -4,11 +4,6 @@ package me.ramidzkh.concern;
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 
-import net.minecraft.client.MinecraftClient;
-
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-
-
 public class Concern implements Runnable {
     public static void main(String[] args) {
         System.out.println("aaaaaaggggadwadawdafffffnnnna");
@@ -29,6 +24,5 @@ public class Concern implements Runnable {
 
     @Override
     public void run() {
-
     }
 }

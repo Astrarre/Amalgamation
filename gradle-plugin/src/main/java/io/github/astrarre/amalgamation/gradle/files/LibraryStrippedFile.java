@@ -1,45 +1,39 @@
 package io.github.astrarre.amalgamation.gradle.files;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 
-import org.jetbrains.annotations.Nullable;
+import com.google.common.hash.Hasher;
+import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.processors.entry.ProcessResult;
+import org.gradle.api.Project;
 
-public class LibraryStrippedFile extends CachedFile<Long> {
-	private final CachedFile<?> serverJar;
-	public LibraryStrippedFile(Path file, CachedFile<?> serverJar) {
-		super(file, Long.class);
+public class LibraryStrippedFile extends ZipProcessCachedFile {
+	private final CachedFile serverJar;
+
+	public LibraryStrippedFile(Project project, Path file, CachedFile serverJar) {
+		super(file, project);
 		this.serverJar = serverJar;
 	}
 
-	@Nullable
 	@Override
-	protected Long writeIfOutdated(Path path, @Nullable Long currentData) throws Throwable {
-		Path serverJar = this.serverJar.getOutdatedPath();
-		if(currentData == null || Files.getLastModifiedTime(serverJar).toMillis() > currentData) {
-			Files.copy(serverJar, path, StandardCopyOption.REPLACE_EXISTING);
-			try (FileSystem fileSystem = FileSystems.newFileSystem(path, (ClassLoader) null)) {
-				Path root = fileSystem.getPath("/");
-				Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						String name = root.relativize(file).toString();
-						if (!name.startsWith("net/minecraft/") && name.contains("/")) {
-							Files.delete(file);
-						}
-						return FileVisitResult.CONTINUE;
-					}
-				});
+	public void init(ZipProcessBuilder process, Path outputFile) throws IOException {
+		process.setEntryProcessor(buffer -> {
+			String name = buffer.path();
+			if(!name.endsWith(".class") || // copy non-classes
+			   !name.contains("/") || // copy root dir files
+			   name.startsWith("/") && !name.substring(1).contains("/") || // copy root dir files
+			   name.contains("net/minecraft")
+			) {
+				buffer.copyToOutput();
 			}
-			return Files.getLastModifiedTime(serverJar).toMillis();
-		}
-		return null;
+			return ProcessResult.HANDLED;
+		});
+		process.addZip(this.serverJar.getOutput(), outputFile);
+	}
+
+	@Override
+	public void hashInputs(Hasher hasher) {
+		this.serverJar.hashInputs(hasher);
 	}
 }

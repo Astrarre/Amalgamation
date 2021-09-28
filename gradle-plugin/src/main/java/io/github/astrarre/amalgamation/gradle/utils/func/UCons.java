@@ -1,6 +1,10 @@
 package io.github.astrarre.amalgamation.gradle.utils.func;
 
-public interface UnsafeConsumer<T> {
+public interface UCons<T> {
+	static void run(UCons<?> consumer) {
+		consumer.acceptFailException(null);
+	}
+
 	void accept(T t) throws Throwable;
 
 	default void acceptFailException(T t) {

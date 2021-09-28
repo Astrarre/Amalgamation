@@ -16,29 +16,29 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.hash.PrimitiveSink;
 import com.google.gson.Gson;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeConsumer;
+import io.github.astrarre.amalgamation.gradle.utils.Lazy;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CachedFile<T> {
+@SuppressWarnings("UnstableApiUsage")
+public abstract class CachedFile {
 	public static final Gson GSON = new Gson();
 	public static boolean refreshAmalgamationCaches, offlineMode;
-	private final Supplier<Path> file;
-	private final Lock lock = new ReentrantLock();
-	private final Type value;
+	final Lazy<Path> output;
+	final Lazy<Path> data;
 
 	/**
 	 * @param file the location of the file
-	 * @param value the type so gson can deserialize the data
 	 */
-	public CachedFile(Path file, Type value) {
-		this(() -> file, value);
+	public CachedFile(Path file) {
+		this(() -> file);
 		try {
 			Files.createDirectories(file.getParent());
 		} catch(IOException e) {
@@ -46,29 +46,12 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public CachedFile(Supplier<Path> file, Type value) {
-		this.file = new Supplier<Path>() {
-			Path lazy;
-
-			@Override
-			public Path get() {
-				Path lazy = this.lazy;
-				if(lazy == null) {
-					lazy = this.lazy = file.get();
-				}
-				return lazy;
-			}
-		};
-		this.value = value;
+	public CachedFile(Supplier<Path> file) {
+		this.output = Lazy.of(file);
+		this.data = this.output.map(p -> p.getParent().resolve(p.getFileName() + ".data"));
 	}
 
-	public static Path forHash(Path dir, UnsafeConsumer<PrimitiveSink> hashing) {
-		Hasher hasher = Hashing.sha256().newHasher();
-		hashing.acceptFailException(hasher);
-		return dir.resolve(hasher.hash().toString());
-	}
-
-	public static CachedFile<String> forUrl(String url, Path path, Logger logger, boolean compress) {
+	public static CachedFile forUrl(String url, Path path, Logger logger, boolean compress) {
 		try {
 			return forUrl(new URL(url), path, logger, compress);
 		} catch(MalformedURLException e) {
@@ -76,11 +59,11 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public static CachedFile<String> forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compress) {
+	public static CachedFile forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compress) {
 		return new URLCachedFile.Hashed(path, url, logger, compress);
 	}
 
-	public static CachedFile<String> forUrl(URL url, Path path, Logger logger, boolean compress) {
+	public static CachedFile forUrl(URL url, Path path, Logger logger, boolean compress) {
 		return new URLCachedFile.Normal(path, url, logger, compress);
 	}
 
@@ -102,27 +85,28 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public static void deleteCached(Path path) throws IOException {
-		Files.deleteIfExists(path.getParent().resolve(path.getFileName() + ".data"));
-		Files.deleteIfExists(path);
+	public abstract void hashInputs(Hasher hasher);
+
+	protected abstract void write(Path output) throws IOException;
+
+	public boolean isOutdated() {
+		Hasher hasher = Hashing.sha256().newHasher();
+		this.hashInputs(hasher);
+		HashCode code = hasher.hash();
+		HashCode current = this.currentHash();
+		return current == null || current.equals(code);
 	}
 
-	public void delete() throws IOException {
-		deleteCached(this.file.get());
-	}
-
-	public Reader getReader() {
-		try {
-			this.getPath();
-			return Files.newBufferedReader(this.file.get());
-		} catch(IOException e) {
-			throw new RuntimeException(e);
-		}
+	protected void updateHash() {
+		Hasher hasher = Hashing.sha256().newHasher();
+		this.hashInputs(hasher);
+		HashCode code = hasher.hash();
+		this.setHash(code);
 	}
 
 	public Path getOutdatedPath() {
 		try {
-			Path path = this.file.get();
+			Path path = this.path();
 			if(refreshAmalgamationCaches) {
 				Files.deleteIfExists(path);
 			}
@@ -131,61 +115,75 @@ public abstract class CachedFile<T> {
 				return path;
 			}
 
-			return this.getPath();
+			return this.getOutput();
 		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public Path getPath() {
+	public Path getOutput() {
 		try {
-			Path path = this.file.get();
+			boolean refresh = false;
+			Path path = this.path();
 			if(refreshAmalgamationCaches) {
-				Files.deleteIfExists(path.toAbsolutePath().getParent().resolve(path.getFileName() + ".data"));
+				Files.deleteIfExists(this.data());
 				if(Files.isDirectory(path)) {
 					delete(path);
 				} else {
 					Files.deleteIfExists(path);
 				}
+				refresh = true;
 			}
 
-			this.lock.lock();
-			T old = this.getData();
-			T data = this.writeIfOutdated(path, old);
-			if(data != null) {
-				this.setData(data);
-			}
-			this.lock.unlock();
-			return this.file.get();
-		} catch(Throwable throwable) {
-			throw Clock.rethrow(throwable);
+			return this.getPath(refresh);
+		} catch(Exception e) {
+			throw U.rethrow(e);
 		}
 	}
 
-	public T getData() {
-		try {
-			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
-			if(Files.exists(path)) {
-				try(BufferedReader reader = Files.newBufferedReader(path)) {
-					return GSON.fromJson(reader, this.value);
-				}
-			} else {
-				return null;
+	protected Path getPath(boolean refresh) throws IOException {
+		Hasher hasher = Hashing.sha256().newHasher();
+		this.hashInputs(hasher);
+		HashCode code = hasher.hash();
+		if(!refresh) {
+			HashCode old = this.currentHash();
+			refresh = old == null || !old.equals(code);
+		}
+		if(refresh) {
+			this.write(this.path());
+			this.setHash(code);
+		}
+		return this.path();
+	}
+
+	@Nullable
+	public HashCode currentHash() {
+		Path data = this.data();
+		if(Files.exists(data)) {
+			try {
+				return HashCode.fromBytes(Files.readAllBytes(data));
+			} catch(IOException e) {
+				throw U.rethrow(e);
 			}
-		} catch(IOException e) {
-			throw new RuntimeException(e);
+		} else {
+			return null;
 		}
 	}
 
-	public void setData(T data) {
+	protected void setHash(HashCode code) {
 		try {
-			Path path = this.file.get().getParent().resolve(this.file.get().getFileName() + ".data");
-			try(BufferedWriter writer = Files.newBufferedWriter(path)) {
-				GSON.toJson(data, writer);
-			}
+			Files.write(this.data(), code.asBytes());
 		} catch(IOException e) {
-			throw new RuntimeException(e);
+			throw U.rethrow(e);
 		}
+	}
+
+	public Path path() {
+		return this.output.get();
+	}
+
+	protected Path data() {
+		return this.data.get();
 	}
 
 	public static void delete(Path path) throws IOException {
@@ -206,9 +204,9 @@ public abstract class CachedFile<T> {
 	 */
 	public Reader getOutdatedReader() {
 		try {
-			Path path = this.file.get();
+			Path path = this.path();
 			if(!Files.exists(path) || refreshAmalgamationCaches) {
-				this.getPath();
+				this.getOutput();
 			}
 			return Files.newBufferedReader(path);
 		} catch(IOException e) {
@@ -216,16 +214,34 @@ public abstract class CachedFile<T> {
 		}
 	}
 
-	public InputStream getInputStream() {
+	public Reader getReader() {
 		try {
-			this.getPath();
-			return Files.newInputStream(this.file.get());
+			return Files.newBufferedReader(this.getOutput());
 		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	@Nullable
-	protected abstract T writeIfOutdated(Path path, @Nullable T currentData) throws Throwable;
+	public InputStream getInputStream() {
+		try {
+			return Files.newInputStream(this.getOutput());
+		} catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
+
+	public void delete() {
+		try {
+			delete(this.data());
+			delete(this.path());
+		} catch(IOException e) {
+			throw U.rethrow(e);
+		}
+	}
+
+	public static void deleteCached(Path path) throws IOException {
+		delete(path.getParent().resolve(path.getFileName() + ".data"));
+		delete(path);
+	}
 }

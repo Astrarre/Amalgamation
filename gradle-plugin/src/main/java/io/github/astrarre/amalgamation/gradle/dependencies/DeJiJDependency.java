@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import com.google.common.hash.Hasher;
 import com.google.gson.JsonObject;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.files.CachedFile;
@@ -61,7 +63,7 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 				File process = toProcess.remove(i);
 				Path cache = AmalgIO.projectCache(this.project).resolve("de-jij").resolve(this.name).resolve(AmalgIO.hash(Collections.singleton(process)));
 				DeJiJCachedFile cachedFile = new DeJiJCachedFile(cache, process);
-				for(Path path : UnsafeIterable.walkFiles(cachedFile.getPath())) {
+				for(Path path : UnsafeIterable.walkFiles(cachedFile.getOutput())) {
 					if(!path.endsWith("original.jar")) {
 						toProcess.add(path.toFile());
 					}
@@ -80,15 +82,20 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 		return new DeJiJDependency(this.project, this.name, new ArrayList<>(this.dependencies));
 	}
 
-	public static class DeJiJCachedFile extends CachedFile<String> {
+	public static class DeJiJCachedFile extends CachedFile {
 		public final File toDeJiJ;
 		public DeJiJCachedFile(Path file, File toDeJiJ) {
-			super(file, String.class);
+			super(file);
 			this.toDeJiJ = toDeJiJ;
 		}
 
 		@Override
-		protected @Nullable String writeIfOutdated(Path path, @Nullable String currentData) throws Throwable {
+		public void hashInputs(Hasher hasher) {
+			AmalgIO.hash(hasher, this.toDeJiJ);
+		}
+
+		@Override
+		protected void write(Path path) throws IOException {
 			Files.createDirectories(path);
 			try(ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(this.toDeJiJ))); ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(path.resolve("original.jar"))))) {
 				ZipEntry entry;
@@ -115,8 +122,6 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 					}
 				}
 			}
-			return null;
 		}
-
 	}
 }

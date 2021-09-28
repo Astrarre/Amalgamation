@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import net.devtech.zipio.impl.util.U;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.lorenz.model.ClassMapping;
 import org.cadixdev.lorenz.model.FieldMapping;
@@ -22,9 +23,11 @@ import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.tinyremapper.IMappingProvider;
 
 public class MappingUtil {
-	public static void loadMappings(MappingSet mappings, File file, String from, String to) throws IOException {
+	public static void loadMappings(MappingSet mappings, File file, String from, String to) {
 		try (FileSystem fileSystem = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null); BufferedReader reader = Files.newBufferedReader(fileSystem.getPath("/mappings/mappings.tiny"))) {
 			new TinyMappingsReader(TinyMappingFactory.loadWithDetection(reader), from, to).read(mappings);
+		} catch(IOException e) {
+			throw U.rethrow(e);
 		}
 	}
 

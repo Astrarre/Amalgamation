@@ -50,6 +50,10 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		};
 	}
 
+	public Project getProject() {
+		return this.project;
+	}
+
 	@Nullable
 	@Override
 	public String getGroup() {
@@ -88,7 +92,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return this.resolved;
 	}
 
-	protected abstract Iterable<Path> resolvePaths();
+	protected abstract Iterable<Path> resolvePaths() throws IOException;
 
 	@Override
 	public Set<File> resolve(boolean b) {

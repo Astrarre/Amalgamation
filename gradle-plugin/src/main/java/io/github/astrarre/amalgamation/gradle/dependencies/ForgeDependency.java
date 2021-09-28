@@ -1,13 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
-import java.nio.file.Path;
-
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.files.ForgeFile;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
-
-public class ForgeDependency extends AbstractSingleFileSelfResolvingDependency {
+public class ForgeDependency {} /*extends AbstractSingleFileSelfResolvingDependency {
 	public final MinecraftDependency minecraft;
 	public final LibrariesDependency libraries;
 	public final CachedFile<?> file;
@@ -28,11 +21,11 @@ public class ForgeDependency extends AbstractSingleFileSelfResolvingDependency {
 
 	@Override
 	protected Path resolvePath() {
-		return this.file.getPath();
+		return this.file.getOutput();
 	}
 
 	@Override
 	public Dependency copy() {
 		return new ForgeDependency(this.project, this.group, this.name, this.version, this.minecraft, this.libraries, this.forgeVersion);
 	}
-}
+}*/

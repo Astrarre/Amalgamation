@@ -4,7 +4,7 @@ package io.github.astrarre.amalgamation.gradle.utils;
 import org.gradle.api.logging.Logger;
 
 public class Clock implements AutoCloseable {
-	private final Logger logger;
+	private Logger logger;
 	private final long start;
 	public String message;
 
@@ -18,6 +18,7 @@ public class Clock implements AutoCloseable {
 	public void close() {
 		if (this.logger != null) {
 			this.logger.lifecycle(String.format(this.message, System.currentTimeMillis() - this.start));
+			this.logger = null;
 		}
 	}
 

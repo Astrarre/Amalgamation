@@ -1,72 +1,66 @@
 package io.github.astrarre.amalgamation.gradle.files;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Supplier;
-import java.util.zip.ZipOutputStream;
 
-import com.google.common.base.Objects;
 import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
-import io.github.astrarre.amalgamation.gradle.utils.mojmerge.MojMergerUtil;
+import io.github.astrarre.amalgamation.gradle.utils.mojmerge.MojMerger;
+import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.processors.entry.ProcessResult;
 import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.gradle.api.artifacts.Dependency;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
-public class MojMergedFile extends CachedFile<String> {
-	public final Project project;
+import net.fabricmc.mappingio.format.ProGuardReader;
+import net.fabricmc.mappingio.tree.MemoryMappingTree;
+
+public class MojMergedFile extends ZipProcessCachedFile {
+	public final Dependency client;
 	public final String version;
 	public final CASMerger.Handler handler;
-	public final Supplier<File> clientJar;
-	public final Supplier<Path> serverMappings;
+	public final CachedFile serverMappings;
 
-	public MojMergedFile(Path file,
-			Project project,
-			String version,
-			CASMerger.Handler handler,
-			Supplier<File> clientJar,
-			Supplier<Path> serverMappings) {
-		super(file, String.class);
-		this.project = project;
+	public MojMergedFile(Path file, Project project, Dependency client, String version, CASMerger.Handler handler, CachedFile serverMappings) {
+		super(file, project);
+		this.client = client;
 		this.version = version;
 		this.handler = handler;
-		this.clientJar = clientJar;
 		this.serverMappings = serverMappings;
 	}
 
 	@Override
-	protected @Nullable String writeIfOutdated(Path path, @Nullable String currentData) throws Throwable {
-		Files.createDirectories(path.getParent());
-		File clientF = this.clientJar.get(), serverMappings = this.serverMappings.get().toFile();
-		String hash = getHash(clientF, serverMappings);
-		if(Objects.equal(currentData, hash)) {
-			return currentData;
-		}
-
-		Logger logger = this.project.getLogger();
-		logger.lifecycle("Moj Merging " + this.version);
-
-		try (Clock ignored = new Clock("Moj Merged " + this.version + " in %dms", logger)) {
-			MojMergerUtil merger = new MojMergerUtil(clientF.toPath(), serverMappings.toPath(), path, this.handler);
-			merger.merge();
-		}
-
-		return hash;
+	public void hashInputs(Hasher hasher) {
+		this.serverMappings.hashInputs(hasher);
+		AmalgIO.hash(this.project, hasher, this.client);
 	}
 
-	@NotNull
-	public static String getHash(File clientF, File serverMappings) {
-		Hasher hasher = Hashing.sha256().newHasher();
-		AmalgIO.hash(hasher, clientF);
-		AmalgIO.hash(hasher, serverMappings);
-		return hasher.hash().toString();
+	@Override
+	public void init(ZipProcessBuilder process, Path outputFile) throws IOException {
+		final MemoryMappingTree mappingTree = new MemoryMappingTree(true);
+		try(Reader reader = Files.newBufferedReader(this.serverMappings.getOutput())) {
+			ProGuardReader.read(reader, mappingTree);
+		}
+		process.setEntryProcessor(buffer -> {
+			if(buffer.path().endsWith(".class")) {
+				ByteBuffer buf = buffer.read();
+				ClassReader clientReader = new ClassReader(buf.array(), buf.arrayOffset(), buf.limit());
+				ClassWriter writer = new ClassWriter(0);
+				MojMerger merger = new MojMerger(Opcodes.ASM9, writer, this.handler, mappingTree);
+				clientReader.accept(merger, 0);
+				buffer.writeToOutput(ByteBuffer.wrap(writer.toByteArray()));
+			} else {
+				buffer.copyToOutput();
+			}
+			return ProcessResult.HANDLED;
+		});
+		ZipProcessable.add(this.project, process, this.client, p -> outputFile);
 	}
 }

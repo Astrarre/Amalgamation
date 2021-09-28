@@ -24,6 +24,30 @@ plugins {
 allprojects {
     group = "io.github.astrarre.amalgamation"
     version = "1.0.0"
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+
+        maven {
+            name = "FabricMC"
+            url = uri("https://maven.fabricmc.net/")
+        }
+
+        maven {
+            name = "MinecraftForge"
+            url = uri("https://files.minecraftforge.net/maven")
+        }
+
+        maven {
+            name = "HalfOf2"
+            url = uri("https://storage.googleapis.com/devan-maven/")
+        }
+
+        maven {
+            url = uri("https://jitpack.io")
+        }
+    }
 }
 
 // Projects to configure standard publishing

@@ -21,29 +21,6 @@ plugins {
     `java-gradle-plugin`
 }
 
-repositories {
-    mavenCentral()
-
-    maven {
-        name = "FabricMC"
-        url = uri("https://maven.fabricmc.net/")
-    }
-
-    maven {
-        name = "MinecraftForge"
-        url = uri("https://files.minecraftforge.net/maven")
-    }
-
-    maven {
-        name = "HalfOf2"
-        url = uri("https://storage.googleapis.com/devan-maven/")
-    }
-
-    maven {
-        url = uri("https://jitpack.io")
-    }
-}
-
 extensions.getByType<JavaPluginExtension>().apply {
     sourceCompatibility = JavaVersion.VERSION_16
     targetCompatibility = JavaVersion.VERSION_16
@@ -59,6 +36,10 @@ tasks.processResources {
     }
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
 
@@ -69,13 +50,13 @@ dependencies {
     implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("org.cadixdev", "lorenz", "0.5.6")
     implementation("org.apache.commons", "commons-collections4", "4.4")
-    implementation("net.fabricmc", "tiny-remapper", "0.6.0")
+    implementation("io.github.astrarre", "tiny-remapper", "1.0.0")
     implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
     implementation("net.fabricmc", "dev-launch-injector", "0.2.1+build.8")
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
-    implementation("net.devtech:zip-io:1.0.0")
+    implementation("net.devtech:zip-io:3.0.7")
     //implementation("com.github.javaparser:javaparser-core:3.22.0")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
     implementation("net.fabricmc", "access-widener", "1.0.2")

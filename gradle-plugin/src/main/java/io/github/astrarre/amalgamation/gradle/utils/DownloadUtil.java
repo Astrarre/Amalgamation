@@ -45,10 +45,11 @@ public class DownloadUtil {
 
 		long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
 
+		String nEtag = connection.getHeaderField("ETag");
 		if (currentLastModifyDate != -1 && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && currentLastModifyDate >= modifyTime)) {
 			if(logger != null) logger.lifecycle("'{}' Not Modified, skipping.", url);
 			clock.close();
-			return null; //What we've got is already fine
+			return new Result(null, currentLastModifyDate, clock, nEtag); //What we've got is already fine
 		}
 
 		long contentLength = connection.getContentLengthLong();
@@ -59,7 +60,7 @@ public class DownloadUtil {
 
 		try { // Try download to the output
 			InputStream stream = connection.getInputStream();
-			return new Result(stream, modifyTime, clock, connection.getHeaderField("ETag"));
+			return new Result(stream, modifyTime, clock, nEtag);
 		} catch (IOException e) {
 			clock.close();
 			throw e;
