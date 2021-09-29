@@ -46,7 +46,7 @@ public class CASMergedFile extends ZipProcessCachedFile {
 	@Override
 	public void init(ZipProcessBuilder process, Path outputFile) throws IOException {
 		CASMergerUtil merger = new CASMergerUtil(this.handler, this.checkForServerOnly);
-		// todo zip process tags for server scan continuity, though, on second thought, is it even needed?
+		// todo use intermediary to detect lib classes to avoid annotating them
 		ZipProcessBuilder scan = ZipProcess.builder();
 		ZipProcessable.add(this.project, scan, this.server, p -> null);
 		scan.setEntryProcessor(merger.serverScan());

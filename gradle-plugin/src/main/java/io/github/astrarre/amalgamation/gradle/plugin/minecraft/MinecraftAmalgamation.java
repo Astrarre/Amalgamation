@@ -31,8 +31,6 @@ import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 
 // todo support looms caches
-// todo natives (dlls)
-// todo assets
 
 @SuppressWarnings ({
 		"rawtypes",
@@ -44,21 +42,33 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 		return NOTHING;
 	}
 
+	default Dependency client(String version) {
+		return this.client(version, true);
+	}
+
 	/**
 	 * @param version the minecraft version string, should match up with launchermeta
 	 * @return a dependency for the obfuscated client jar
 	 */
-	Dependency client(String version);
+	Dependency client(String version, boolean split);
 
 	default Dependency server(String version) {
 		return this.server(version, true);
 	}
 
 	/**
+	 * @param strip strip included dependencies
+	 */
+	default Dependency server(String version, boolean strip) {
+		return this.server(version, strip, true);
+	}
+
+	/**
 	 * @param version the minecraft version string, should match up with launchermeta
+	 * @param split split jar into resources and classes jar for speed
 	 * @return a dependency for the obfuscated server jar (dependencies stripped)
 	 */
-	Dependency server(String version, boolean strip);
+	Dependency server(String version, boolean strip, boolean split);
 
 	Dependency merged(String version, Action<CASMerger.Config> configurate);
 

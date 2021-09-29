@@ -1,29 +1,26 @@
 package io.github.astrarre.amalgamation.gradle.files;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import net.devtech.zipio.impl.util.U;
+import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,11 +57,11 @@ public abstract class CachedFile {
 	}
 
 	public static CachedFile forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compress) {
-		return new URLCachedFile.Hashed(path, url, logger, compress);
+		return new Normal.Hashed(path, logger, url, compress);
 	}
 
 	public static CachedFile forUrl(URL url, Path path, Logger logger, boolean compress) {
-		return new URLCachedFile.Normal(path, url, logger, compress);
+		return new Normal(path, url, logger, compress);
 	}
 
 	/**
@@ -88,6 +85,15 @@ public abstract class CachedFile {
 	public abstract void hashInputs(Hasher hasher);
 
 	protected abstract void write(Path output) throws IOException;
+
+	public static TaskTransform add(CachedFile file, ZipProcessBuilder builder, UnaryOperator<Path> path) {
+		if(file instanceof ZipProcessCachedFile f && f.isOutdated()) {
+			return builder.linkProcess(f.createProcess(), path);
+		} else {
+			Path out = file.getOutput();
+			return builder.addZip(file.getOutput(), path.apply(out));
+		}
+	}
 
 	public boolean isOutdated() {
 		Hasher hasher = Hashing.sha256().newHasher();
@@ -244,4 +250,5 @@ public abstract class CachedFile {
 		delete(path.getParent().resolve(path.getFileName() + ".data"));
 		delete(path);
 	}
+
 }

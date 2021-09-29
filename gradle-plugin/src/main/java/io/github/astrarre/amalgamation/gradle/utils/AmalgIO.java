@@ -76,7 +76,7 @@ public class AmalgIO {
 	}
 
 	public static void hash(Project project, Hasher hasher, Dependency dependency) {
-		// todo add hashable
+		// todo add ZipProcessable
 		hash(hasher, resolve(project, Collections.singletonList(dependency)));
 	}
 

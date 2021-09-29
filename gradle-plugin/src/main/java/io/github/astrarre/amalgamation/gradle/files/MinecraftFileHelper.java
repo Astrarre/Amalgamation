@@ -8,7 +8,6 @@ import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 
 public class MinecraftFileHelper {
-
 	public static CachedFile mojmap(Project project, String version, boolean isClient) {
 		Path path = AmalgIO.globalCache(project.getGradle()).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
 		var url = forVers(project, version, isClient);
@@ -20,7 +19,8 @@ public class MinecraftFileHelper {
 		return isClient ? vers.getClientMojMap() : vers.getServerMojmap();
 	}
 
-	public static CachedFile file(Project project, String version, boolean isClient, boolean doStrip) {
+
+	public static CachedFile file(Project project, String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 		LauncherMeta.Version vers = meta.getVersion(version);
 		LauncherMeta.HashedURL url;
@@ -44,6 +44,13 @@ public class MinecraftFileHelper {
 		Path globalCache = AmalgIO.globalCache(project.getGradle());
 		Path jar = globalCache.resolve(version + "-" + area + ".jar");
 		Path unstripped = globalCache.resolve(version + "-" + area + ".jar");
+		if(doSplit) {
+			SplitMcFile split = new SplitMcFile(unstripped, project.getLogger(), url);
+			if(doStrip) {
+
+			}
+
+		}
 		CachedFile file = CachedFile.forUrl(url, unstripped, project.getLogger(), false);
 		if(doStrip) {
 			return new LibraryStrippedFile(project, jar, file);

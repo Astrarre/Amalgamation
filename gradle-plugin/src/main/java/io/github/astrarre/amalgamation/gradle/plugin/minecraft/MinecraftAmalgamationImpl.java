@@ -3,7 +3,6 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -43,19 +42,21 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		}
 	}
 
+
 	@Override
-	public Dependency client(String version) {
-		return this.mc(version, true, false);
+	public Dependency client(String version, boolean split) {
+		return this.mc(version, true, false, split);
 	}
 
 	@Override
-	public Dependency server(String version, boolean doStrip) {
-		return this.mc(version, false, doStrip);
+	public Dependency server(String version, boolean strip, boolean split) {
+		return this.mc(version, false, strip, split);
 	}
 
-	Dependency mc(String version, boolean isClient, boolean doStrip) {
+	Dependency mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		CachedFileDependency dependency = new CachedFileDependency(this.project, "net.minecraft", isClient ? "minecraft-client" : "minecraft-server", version);
-		dependency.add(MinecraftFileHelper.file(this.project, version, isClient, doStrip));
+		CachedFile file = MinecraftFileHelper.file(this.project, version, isClient, doStrip, doSplit);
+		dependency.add(file);
 		return dependency;
 	}
 

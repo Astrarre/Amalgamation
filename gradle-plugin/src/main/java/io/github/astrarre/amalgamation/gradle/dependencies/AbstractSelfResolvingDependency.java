@@ -19,6 +19,7 @@ import org.gradle.api.internal.artifacts.dependencies.AbstractDependency;
 import org.gradle.api.internal.artifacts.dependencies.SelfResolvingDependencyInternal;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.TaskDependency;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,6 +91,10 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 			this.resolved = files;
 		}
 		return this.resolved;
+	}
+
+	public Logger getLogger() {
+		return this.project.getLogger();
 	}
 
 	protected abstract Iterable<Path> resolvePaths() throws IOException;

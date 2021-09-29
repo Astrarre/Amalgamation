@@ -104,6 +104,7 @@ public class LauncherMeta {
 	}
 
 	public JsonObject read(String output, String url) {
+		// todo pull from .minecraft
 		CachedFile cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger, true);
 		try (Reader reader = cache.getOutdatedReader()) {
 			return CachedFile.GSON.fromJson(reader, JsonObject.class);
@@ -143,6 +144,10 @@ public class LauncherMeta {
 		public String getAssetIndexVersion() {
 			this.init();
 			return this.assetIndexPath;
+		}
+
+		public HashedURL getJar(boolean client) {
+			return client ? getClientJar() : getServerJar();
 		}
 
 		private void init() {
