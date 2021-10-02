@@ -11,7 +11,7 @@ public class MinecraftFileHelper {
 	public static CachedFile mojmap(Project project, String version, boolean isClient) {
 		Path path = AmalgIO.globalCache(project.getGradle()).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
 		var url = forVers(project, version, isClient);
-		return CachedFile.forUrl(url, path, project.getLogger(), true);
+		return CachedFile.forUrl(url, path, project, true);
 	}
 
 	public static LauncherMeta.HashedURL forVers(Project project, String version, boolean isClient) {
@@ -44,16 +44,18 @@ public class MinecraftFileHelper {
 		Path globalCache = AmalgIO.globalCache(project.getGradle());
 		Path jar = globalCache.resolve(version + "-" + area + ".jar");
 		Path unstripped = globalCache.resolve(version + "-" + area + ".jar");
+		URLCachedFile.Hashed file = CachedFile.forUrl(url, unstripped, project, false);
+		CachedFile f;
 		if(doSplit) {
-			SplitMcFile split = new SplitMcFile(unstripped, project.getLogger(), url);
-			if(doStrip) {
-
-			}
-
+			file.shouldOutput = false;
+			f = new SplitMcFile(unstripped, project, file);
+		} else {
+			f = file;
 		}
-		CachedFile file = CachedFile.forUrl(url, unstripped, project.getLogger(), false);
+
 		if(doStrip) {
-			return new LibraryStrippedFile(project, jar, file);
+			file.shouldOutput = false;
+			return new LibraryStrippedFile(project, jar, f);
 		} else {
 			return file;
 		}

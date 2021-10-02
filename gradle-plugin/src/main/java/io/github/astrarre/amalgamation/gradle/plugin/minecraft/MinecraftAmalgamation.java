@@ -72,7 +72,11 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Dependency merged(String version, Action<CASMerger.Config> configurate);
 
-	Dependency mojmerged(String version, CASMerger.Handler handler);
+	default Dependency mojmerged(String version, CASMerger.Handler handler) {
+		return this.mojmerged(version, handler, true);
+	}
+
+	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split);
 
 	List<Dependency> fabricLoader(String version);
 

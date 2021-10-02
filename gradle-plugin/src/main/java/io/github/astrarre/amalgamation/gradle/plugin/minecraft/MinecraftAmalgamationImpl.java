@@ -74,10 +74,10 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency mojmerged(String version, CASMerger.Handler handler) {
+	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split) {
 		CachedFile file = MinecraftFileHelper.mojmap(this.project, version, false);
 		Path jar = AmalgIO.globalCache(this.project.getGradle()).resolve(version).resolve("moj-merged.jar");
-		var moj = new MojMergedFile(jar, this.project, this.client(version), version, handler, file);
+		var moj = new MojMergedFile(jar, this.project, this.client(version, split), version, handler, file);
 		CachedFileDependency dependency = new CachedFileDependency(this.project, "net.minecraft", "moj-merged", version);
 		dependency.add(moj);
 		return dependency;

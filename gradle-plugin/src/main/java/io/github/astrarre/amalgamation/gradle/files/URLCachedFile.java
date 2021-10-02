@@ -25,50 +25,27 @@ import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
+import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
-public class Normal extends CommonStateCachedFile {
+public class URLCachedFile extends CommonStateCachedFile {
 	private final URL url;
 	private final Logger logger;
 	private final boolean compress;
 
-	public Normal(Supplier<Path> output, URL url, Logger logger, boolean compress) {
+	public URLCachedFile(Supplier<Path> output, URL url, Logger logger, boolean compress) {
 		super(output);
 		this.url = url;
 		this.logger = logger;
 		this.compress = compress;
 	}
 
-	public Normal(Path file, URL url, Logger logger, boolean compress) {
+	public URLCachedFile(Path file, URL url, Logger logger, boolean compress) {
 		super(file);
 		this.url = url;
 		this.logger = logger;
 		this.compress = compress;
-	}
-
-	public ZipProcess process(boolean shouldOutput) {
-		ZipProcessBuilder builder = ZipProcess.builder();
-		Path h = this.path();
-		Path path = shouldOutput ? h : null;
-		if(this.isOutdated()) {
-			ZipTag tag = builder.createZipTag(path);
-			builder.afterExecute(() -> {
-				try(ZipInputStream zis = new ZipInputStream(this.getResult(this.etag()))) {
-					ReadableByteChannel channel = Channels.newChannel(zis);
-					ZipEntry entry;
-					while((entry = zis.getNextEntry()) != null) {
-						ByteBuffer buffer = U.read(channel);
-						tag.write(entry.getName(), buffer);
-					}
-				} catch(IOException e) {
-					throw U.rethrow(e);
-				}
-			});
-		} else if(shouldOutput) {
-			builder.addProcessed(path);
-		}
-		return builder;
 	}
 
 	protected void hash(Hasher hasher, String etag) {
@@ -135,14 +112,13 @@ public class Normal extends CommonStateCachedFile {
 		return input;
 	}
 
-	public static class Hashed extends CachedFile {
-		public final Logger logger;
+	public static class Hashed extends ZipProcessCachedFile {
 		protected final LauncherMeta.HashedURL value;
 		public final boolean compress;
+		public boolean shouldOutput = true;
 
-		public Hashed(Path file, Logger logger, LauncherMeta.HashedURL value, boolean compress) {
-			super(file);
-			this.logger = logger;
+		public Hashed(Path file, Project project, LauncherMeta.HashedURL value, boolean compress) {
+			super(file, project);
 			this.value = value;
 			this.compress = compress;
 		}
@@ -150,6 +126,29 @@ public class Normal extends CommonStateCachedFile {
 		@Override
 		public void hashInputs(Hasher hasher) {
 			hasher.putString(this.value.hash, StandardCharsets.UTF_8);
+		}
+
+		@Override
+		public void init(ZipProcessBuilder builder, Path outputFile) {
+			Path h = this.path();
+			Path path = this.shouldOutput ? h : null;
+			if(this.isOutdated()) {
+				ZipTag tag = builder.createZipTag(path);
+				builder.afterExecute(() -> {
+					try(ZipInputStream zis = new ZipInputStream(this.getRead().stream)) {
+						ReadableByteChannel channel = Channels.newChannel(zis);
+						ZipEntry entry;
+						while((entry = zis.getNextEntry()) != null) {
+							ByteBuffer buffer = U.read(channel);
+							tag.write(entry.getName(), buffer);
+						}
+					} catch(IOException e) {
+						throw U.rethrow(e);
+					}
+				});
+			} else if(this.shouldOutput) {
+				builder.addProcessed(path);
+			}
 		}
 
 		@Override
@@ -163,7 +162,7 @@ public class Normal extends CommonStateCachedFile {
 		}
 
 		protected DownloadUtil.Result getRead() throws IOException {
-			return DownloadUtil.read(this.value.getUrl(), null, -1, this.logger, offlineMode, this.compress);
+			return DownloadUtil.read(this.value.getUrl(), null, -1, this.project.getLogger(), offlineMode, this.compress);
 		}
 
 		protected void write(Path output, DownloadUtil.Result result) throws IOException {
@@ -172,10 +171,6 @@ public class Normal extends CommonStateCachedFile {
 
 		protected boolean needsUrl() {
 			return true;
-		}
-
-		public Logger getLogger() {
-			return this.logger;
 		}
 	}
 }

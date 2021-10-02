@@ -18,18 +18,21 @@ public class LibraryStrippedFile extends ZipProcessCachedFile {
 
 	@Override
 	public void init(ZipProcessBuilder process, Path outputFile) throws IOException {
-		process.setEntryProcessor(buffer -> {
-			String name = buffer.path();
-			if(!name.endsWith(".class") || // copy non-classes
-			   !name.contains("/") || // copy root dir files
-			   name.startsWith("/") && !name.substring(1).contains("/") || // copy root dir files
-			   name.contains("net/minecraft")
-			) {
-				buffer.copyToOutput();
-			}
-			return ProcessResult.HANDLED;
-		});
-		process.addZip(this.serverJar.getOutput(), outputFile);
+		if(this.isOutdated()) {
+			process.setEntryProcessor(buffer -> {
+				String name = buffer.path();
+				if(!name.endsWith(".class") || // copy non-classes
+				   !name.contains("/") || // copy root dir files
+				   name.startsWith("/") && !name.substring(1).contains("/") || // copy root dir files
+				   name.contains("net/minecraft")) {
+					buffer.copyToOutput();
+				}
+				return ProcessResult.HANDLED;
+			});
+			process.addZip(this.serverJar.getOutput(), outputFile);
+		} else {
+			process.addProcessed(outputFile);
+		}
 	}
 
 	@Override

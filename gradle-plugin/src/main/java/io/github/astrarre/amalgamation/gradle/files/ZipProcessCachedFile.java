@@ -16,7 +16,7 @@ public abstract class ZipProcessCachedFile extends CachedFile {
 		this.project = project;
 	}
 
-	public ZipProcess createProcess() throws IOException {
+	public ZipProcess process() throws IOException {
 		if(!this.isOutdated()) {
 			ZipProcessBuilder process = ZipProcess.builder();
 			process.addProcessed(this.path());
@@ -29,6 +29,7 @@ public abstract class ZipProcessCachedFile extends CachedFile {
 		return process;
 	}
 
+
 	/**
 	 * Set processing settings, eg {@link ZipProcessBuilder#setEntryProcessor(ZipEntryProcessor)}
 	 */
@@ -37,7 +38,7 @@ public abstract class ZipProcessCachedFile extends CachedFile {
 	@Override
 	protected void write(Path output) throws IOException {
 		try(Clock ignored = new Clock(this + " in %dms", this.project.getLogger())) {
-			ZipProcess process = this.createProcess();
+			ZipProcess process = this.process();
 			process.execute();
 		}
 	}

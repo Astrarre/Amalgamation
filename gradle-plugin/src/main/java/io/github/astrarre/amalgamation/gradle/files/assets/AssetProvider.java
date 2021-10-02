@@ -42,7 +42,7 @@ public class AssetProvider { // todo log config
 			return assets;
 		}
 
-		CachedFile file = CachedFile.forUrl(vers.getAssetIndexUrl(), indexFile, amalgamation.logger, true);
+		CachedFile file = CachedFile.forUrl(vers.getAssetIndexUrl(), indexFile, amalgamation.project, true);
 		Path objectsDir = assetsDir.resolve("objects");
 		try(Reader reader = file.getReader()) {
 			JsonObject assetsJson = CachedFile.GSON.fromJson(reader, JsonObject.class);
@@ -57,7 +57,7 @@ public class AssetProvider { // todo log config
 							"https://resources.download.minecraft.net/" + minHash + "/" + hash,
 							entry.getKey());
 					// todo maybe not compress for PNG?
-					CachedFile asset = CachedFile.forUrl(url, objectsDir.resolve(minHash).resolve(hash), null, true);
+					CachedFile asset = CachedFile.forUrl(url, objectsDir.resolve(minHash).resolve(hash), amalgamation.project, true);
 					asset.getOutdatedPath();
 				});
 				futures.add(future);

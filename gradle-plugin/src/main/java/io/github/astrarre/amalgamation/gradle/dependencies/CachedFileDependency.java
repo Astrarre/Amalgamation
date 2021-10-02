@@ -46,7 +46,7 @@ public class CachedFileDependency extends AbstractSelfResolvingDependency implem
 			CachedFile file = this.files.get(0);
 			if(file instanceof ZipProcessCachedFile z) {
 				try {
-					return z.createProcess();
+					return z.process();
 				} catch(IOException e) {
 					throw U.rethrow(e);
 				}
@@ -57,7 +57,7 @@ public class CachedFileDependency extends AbstractSelfResolvingDependency implem
 		for(CachedFile file : this.files) {
 			if(file instanceof ZipProcessCachedFile z) {
 				try {
-					process.linkProcess(z.createProcess(), p -> z.path());
+					process.linkProcess(z.process(), p -> z.path());
 				} catch(IOException e) {
 					throw U.rethrow(e);
 				}

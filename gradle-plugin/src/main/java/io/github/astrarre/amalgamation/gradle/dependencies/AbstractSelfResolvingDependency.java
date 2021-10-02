@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		implements FileCollectionDependency, SelfResolvingDependencyInternal {
 	public final Project project;
+	public final Logger logger;
 	protected final String group, name, version;
 	protected Set<File> resolved;
 
 	public AbstractSelfResolvingDependency(Project project, String group, String name, String version) {
+		this.logger = project.getLogger();
 		this.project = project;
 		this.group = group;
 		this.name = name;

@@ -21,6 +21,7 @@ import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.stage.TaskTransform;
+import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +57,12 @@ public abstract class CachedFile {
 		}
 	}
 
-	public static CachedFile forUrl(LauncherMeta.HashedURL url, Path path, Logger logger, boolean compress) {
-		return new Normal.Hashed(path, logger, url, compress);
+	public static URLCachedFile.Hashed forUrl(LauncherMeta.HashedURL url, Path path, Project logger, boolean compress) {
+		return new URLCachedFile.Hashed(path, logger, url, compress);
 	}
 
 	public static CachedFile forUrl(URL url, Path path, Logger logger, boolean compress) {
-		return new Normal(path, url, logger, compress);
+		return new URLCachedFile(path, url, logger, compress);
 	}
 
 	/**
@@ -88,7 +89,11 @@ public abstract class CachedFile {
 
 	public static TaskTransform add(CachedFile file, ZipProcessBuilder builder, UnaryOperator<Path> path) {
 		if(file instanceof ZipProcessCachedFile f && f.isOutdated()) {
-			return builder.linkProcess(f.createProcess(), path);
+			try {
+				return builder.linkProcess(f.process(), path);
+			} catch(IOException e) {
+				throw new RuntimeException(e);
+			}
 		} else {
 			Path out = file.getOutput();
 			return builder.addZip(file.getOutput(), path.apply(out));

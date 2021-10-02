@@ -41,7 +41,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 				.flatMap(Collection::stream)
 				.map(dependency -> {
 					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
-					return CachedFile.forUrl(dependency, jar, this.project.getLogger(), false);
+					return CachedFile.forUrl(dependency, jar, this.project, false);
 				})
 				.map(CachedFile::getOutdatedPath)
 				.collect(Collectors.toList());
