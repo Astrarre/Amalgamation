@@ -19,15 +19,13 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
+import io.github.astrarre.amalgamation.gradle.ide.IdeExtension;
+import io.github.astrarre.amalgamation.gradle.ide.intellij.ConfigureIntellij;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.ExtensionContainer;
-import org.gradle.api.tasks.JavaExec;
-import org.gradle.ide.visualstudio.VisualStudioExtension;
-import org.gradle.plugins.ide.eclipse.model.EclipseModel;
-import org.gradle.plugins.ide.idea.model.IdeaModel;
-import org.gradle.plugins.ide.idea.model.ProjectLibrary;
+import org.gradle.api.plugins.PluginContainer;
+import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
@@ -46,13 +44,18 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		this.registerProvider(target);
 
 		// target.getGradle().buildFinished(result -> {});
+		target.getExtensions().create(IdeExtension.class, "ide", IdeExtension.class);
 
-		IdeaModel ideaModel = (IdeaModel) target.getExtensions().findByName("idea");
-		if(ideaModel != null) {
-			ideaModel.getModule().getExcludeDirs().addAll(target.files(".gradle", "build", ".idea", "out").getFiles());
-			ideaModel.getModule().setDownloadJavadoc(true);
-			ideaModel.getModule().setDownloadSources(true);
-			ideaModel.getModule().setInheritOutputDirs(true);
+		PluginContainer plugins = target.getPlugins();
+		IdeaPlugin plugin = plugins.findPlugin(IdeaPlugin.class);
+		if(plugin != null) {
+			ConfigureIntellij.configure(target, plugin.getModel());
+		} else {
+			plugins.whenPluginAdded(p -> {
+				if(p instanceof IdeaPlugin d) {
+					ConfigureIntellij.configure(target, d.getModel());
+				}
+			});
 		}
 	}
 

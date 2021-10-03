@@ -47,6 +47,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
 		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target.getGradle()), target);
+
 	}
 
 	@Override
