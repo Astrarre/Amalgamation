@@ -9,16 +9,13 @@ import java.util.List;
 import java.util.function.UnaryOperator;
 
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.logging.Logger;
 
-// todo remove in favor of dependency system
 public interface ZipProcessable {
 	ZipProcess process() throws IOException;
 

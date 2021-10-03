@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import org.gradle.api.Action;
@@ -43,5 +44,10 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		//configuration.execute(dependency);
 		//return dependency;
 		return null;
+	}
+
+	@Override
+	public Dependency url(String url) {
+		return new URLDependency(this.project, url);
 	}
 }

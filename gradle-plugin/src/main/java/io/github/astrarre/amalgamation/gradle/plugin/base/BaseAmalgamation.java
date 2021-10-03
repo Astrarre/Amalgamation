@@ -36,4 +36,6 @@ public interface BaseAmalgamation {
     Provider<Iterable<File>> resolve(Iterable<Object> dependency);
 
     Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
+
+    Dependency url(String url);
 }
