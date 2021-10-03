@@ -85,7 +85,7 @@ public class SingleRemapDependency extends ZipProcessDependency {
 			}
 		} else {
 			for(Path path : UnsafeIterable.walkFiles(resolvedPath)) {
-				process.addProcessed(path);
+				process.addProcessed(path.toAbsolutePath());
 			}
 			for(TaskTransform transform : add) {
 				if(this.isClasspath) {

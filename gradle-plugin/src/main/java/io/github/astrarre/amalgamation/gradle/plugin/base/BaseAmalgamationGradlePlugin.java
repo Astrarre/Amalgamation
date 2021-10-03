@@ -24,6 +24,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.JavaExec;
+import org.gradle.ide.visualstudio.VisualStudioExtension;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.ProjectLibrary;
@@ -52,10 +53,6 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			ideaModel.getModule().setDownloadJavadoc(true);
 			ideaModel.getModule().setDownloadSources(true);
 			ideaModel.getModule().setInheritOutputDirs(true);
-		}
-		EclipseModel eclipse = (EclipseModel) target.getExtensions().findByName("eclipse");
-		if(eclipse != null) {
-			// todo interesting eclipse.getSynchronizationTasks();
 		}
 	}
 

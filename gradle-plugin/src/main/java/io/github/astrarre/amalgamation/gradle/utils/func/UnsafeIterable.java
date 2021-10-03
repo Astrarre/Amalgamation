@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface UnsafeIterable<T> extends Iterable<T> {
 	static UnsafeIterable<Path> walkFiles(Path path) {
-		return () -> Files.walk(path).filter(Files::isRegularFile).map(path::relativize).iterator();
+		return () -> Files.walk(path).filter(Files::isRegularFile).iterator();
 	}
 
 	@NotNull
