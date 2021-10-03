@@ -19,7 +19,6 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -38,8 +37,6 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
 		}
 		offlineMode = parameter.isOffline();
-		CachedFile.offlineMode = offlineMode;
-		CachedFile.refreshAmalgamationCaches = refreshAmalgamationCaches;
 		this.registerProvider(target);
 		target.getGradle().buildFinished(result -> {
 

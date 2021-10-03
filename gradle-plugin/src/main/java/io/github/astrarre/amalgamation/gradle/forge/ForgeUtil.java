@@ -1,26 +1,35 @@
 package io.github.astrarre.amalgamation.gradle.forge;
 
+import java.io.File;
+import java.util.ArrayList;
+
+import net.minecraftforge.installer.DownloadUtils;
+import net.minecraftforge.installer.actions.ProgressCallback;
+import net.minecraftforge.installer.json.Install;
+import net.minecraftforge.installer.json.Util;
+import net.minecraftforge.installer.json.Version;
+
 public class ForgeUtil {
 	/**
 	 * @param libs   the folder for caching libraries
 	 * @param client the vanilla client jar
 	 */
-	/*public static void getForgeClient(File libs, File client) {
+	public static void getForgeClient(File libs, File client) {
 		installLibs(libs);
-		new ForgeInstalls.Client(Util.loadInstallProfile(), (m, p) -> {
+		/*new ForgeInstalls.Client(Util.loadInstallProfile(), (m, p) -> {
 			if (p == ProgressCallback.MessagePriority.NORMAL) {
 				System.out.println(m);
 			}
-		}, libs.toPath(), client).run(null, i -> true);
+		}, libs.toPath(), client).run(null, i -> true);*/
 	}
 
 	public static void getForgeServer(File libs, File server) {
 		installLibs(libs);
-		new ForgeInstalls.Server(Util.loadInstallProfile(), (m, p) -> {
+		/*new ForgeInstalls.Server(Util.loadInstallProfile(), (m, p) -> {
 			if (p == ProgressCallback.MessagePriority.NORMAL) {
 				System.out.println(m);
 			}
-		}, libs.toPath(), server).run(null, i -> true);
+		}, libs.toPath(), server).run(null, i -> true);*/
 	}
 
 	private static void installLibs(File forgeLibs) {
@@ -34,5 +43,5 @@ public class ForgeUtil {
 				}, profile.getMirror(), lib, forgeLibs, t -> true, new ArrayList<>());
 			}
 		}
-	}*/
+	}
 }

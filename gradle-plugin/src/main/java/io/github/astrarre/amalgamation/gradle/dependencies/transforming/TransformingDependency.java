@@ -2,7 +2,9 @@ package io.github.astrarre.amalgamation.gradle.dependencies.transforming;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -12,9 +14,10 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
-import io.github.astrarre.amalgamation.gradle.files.ZipProcessCachedFile;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
 import org.gradle.api.Project;
@@ -24,7 +27,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-public class TransformingDependency extends AbstractSelfResolvingDependency {
+@SuppressWarnings("UnstableApiUsage")
+public class TransformingDependency extends ZipProcessDependency {
 	public final List<Dependency> dependencies;
 	public final List<Transformer> transformers;
 
@@ -46,11 +50,11 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 	}
 
 	public void transform(Object depNotation) {
-		this.dependencies.add(this.project.getDependencies().create(depNotation));
+		this.dependencies.add(this.of(depNotation));
 	}
 
 	public void transform(Object depNotation, Closure<ModuleDependency> config) {
-		this.dependencies.add(this.project.getDependencies().create(depNotation, config));
+		this.dependencies.add(this.of(depNotation, config));
 	}
 
 	public void transformer(Transformer transformer) {
@@ -73,36 +77,29 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolvePaths() {
-		List<Path> transformed = new ArrayList<>();
-		for(File file : this.resolve(this.dependencies)) {
-			Hasher hasher = Hashing.sha256().newHasher();
-			AmalgIO.hash(hasher, file);
-			this.transformers.forEach(t -> t.hash(hasher));
-			String hash = Base64.getUrlEncoder().encodeToString(hasher.hash().asBytes());
-			Path path = AmalgIO.projectCache(this.project).resolve(this.name).resolve(hash + "_" + file.getName());
-			TransformingCachedFile cached = new TransformingCachedFile(path, hash, file.toPath());
-			transformed.add(cached.getOutput());
+	public void hashInputs(Hasher hasher) throws IOException {
+		for(Dependency dependency : this.dependencies) {
+			this.hashDep(hasher, dependency);
 		}
-		return transformed;
 	}
 
-	public class TransformingCachedFile extends ZipProcessCachedFile {
-		public final String hash;
-		public final Path inputFile;
-		public TransformingCachedFile(Path file, String hash, Path inputFile) {
-			super(file, TransformingDependency.this.project);
-			this.hash = hash;
-			this.inputFile = inputFile;
-		}
+	@Override
+	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
+		return AmalgIO.projectCache(this.project).resolve(this.name).resolve(AmalgIO.b64(hash));
+	}
 
-		@Override
-		public void hashInputs(Hasher hasher) {
-			hasher.putUnencodedChars(this.hash);
-		}
-
-		@Override
-		public void init(ZipProcessBuilder process, Path outputFile) throws IOException {
+	@Override
+	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+		for(Dependency dependency : this.dependencies) {
+			ZipProcessable.add(this.project, process, dependency, p -> {
+				Hasher hasher = HASHING.newHasher();
+				Path path = p.getVirtualPath();
+				hasher.putString(path.toAbsolutePath().toString(), StandardCharsets.UTF_8);
+				this.transformers.forEach(t -> t.hash(hasher));
+				String hash = AmalgIO.hash(hasher);
+				Path resolve = AmalgIO.projectCache(this.project).resolve(this.name).resolve(AmalgIO.insertName(path, hash));
+				return new OutputTag(resolve);
+			});
 			process.setEntryProcessor(b -> {
 				String name = b.path();
 				if(name.endsWith(".class")) {
@@ -123,7 +120,6 @@ public class TransformingDependency extends AbstractSelfResolvingDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			process.addZip(this.inputFile, outputFile);
 		}
 	}
 }

@@ -1,11 +1,13 @@
 package io.github.astrarre.amalgamation.gradle.utils.casmerge;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -109,17 +111,25 @@ public class CASMerger extends ClassVisitor {
 		void accept(AnnotationVisitor visitor, boolean isClient);
 
 		void accept(AnnotationVisitor visitor, String iface, boolean isClient);
+
+		void hashInputs(Hasher hasher);
 	}
 
-	public static final FabricHandler FABRIC = new FabricHandler("Lnet/fabricmc/api/Environment;", "Lnet/fabricmc/api/EnvironmentInterface;", "Lnet/fabricmc/api/EnvType;");
+	public static final StandardHandler FABRIC = new StandardHandler("Lnet/fabricmc/api/Environment;", "Lnet/fabricmc/api/EnvironmentInterface;", "Lnet/fabricmc/api/EnvType;");
 
-	public static class FabricHandler implements Handler {
-		final String normalDesc, ifaceDesc, enumDesc;
+	public static class StandardHandler implements Handler {
+		final String normalDesc, ifaceDesc, enumDesc, client, server;
 
-		public FabricHandler(String normalDesc, String ifaceDesc, String enumDesc) {
+		public StandardHandler(String normalDesc, String ifaceDesc, String enumDesc) {
+			this(normalDesc, ifaceDesc, enumDesc, "CLIENT", "SERVER");
+		}
+
+		public StandardHandler(String normalDesc, String ifaceDesc, String enumDesc, String client, String server) {
 			this.normalDesc = normalDesc;
 			this.ifaceDesc = ifaceDesc;
 			this.enumDesc = enumDesc;
+			this.client = client;
+			this.server = server;
 		}
 
 		@Override
@@ -143,8 +153,18 @@ public class CASMerger extends ClassVisitor {
 			visitor.visitEnum("value", this.enumDesc, this.forSide(isClient));
 		}
 
+		@Override
+		public void hashInputs(Hasher hasher) {
+			hasher.putString(this.getClass().toString(), StandardCharsets.UTF_8);
+			hasher.putString(this.normalDesc, StandardCharsets.UTF_8);
+			hasher.putString(this.ifaceDesc, StandardCharsets.UTF_8);
+			hasher.putString(this.client, StandardCharsets.UTF_8);
+			hasher.putString(this.server, StandardCharsets.UTF_8);
+			hasher.putString(this.enumDesc, StandardCharsets.UTF_8);
+		}
+
 		public String forSide(boolean side) {
-			return side ? "CLIENT" : "SERVER";
+			return side ? this.client : this.server;
 		}
 	}
 

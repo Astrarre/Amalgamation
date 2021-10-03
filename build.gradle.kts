@@ -36,6 +36,10 @@ allprojects {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
+        maven {
+            name = "MinecraftForge"
+            url = uri("https://files.minecraftforge.net/maven")
+        }
 
         /*maven {
             url = uri("https://jitpack.io")

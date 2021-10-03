@@ -46,10 +46,12 @@ configurations {
 }
 
 dependencies {
+    //aaaaa ag.mojmerged(mc_vers)
     def intermediaryMinecraft = ag.map {
         mappings(mergedMappings, 'official', 'intermediary')
-        remap(ag.mojmerged(mc_vers), true)
+        remap(ag.mojmerged(mc_vers, true), true)
     }
+
     aaaaa ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
         remap(intermediaryMinecraft, true)
@@ -124,6 +126,6 @@ task fabric_1_16(type: RemapJar) {
 task loadMcEnv {
     doLast {
         //Thread.sleep(10_000)
-        configurations.aaaaa.resolve()
+        println(configurations.aaaaa.resolve())
     }
 }

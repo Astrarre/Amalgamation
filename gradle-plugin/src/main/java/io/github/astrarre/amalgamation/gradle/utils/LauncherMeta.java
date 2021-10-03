@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,24 +14,33 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
+import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
+import net.devtech.zipio.impl.util.U;
+import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 
 public class LauncherMeta {
+	public static final Gson GSON = new Gson();
+
 	private final Path globalCache;
 	private final Logger logger;
+	private final Project project;
 	private Map<String, Version> versions;
 
-	public LauncherMeta(Path globalCache, Logger logger) {
+	/**
+	 * @see MinecraftAmalgamationGradlePlugin#apply(Project)
+	 */
+	public LauncherMeta(Path globalCache, Project project) {
 		this.globalCache = globalCache;
-		this.logger = logger;
+		this.project = project;
+		this.logger = project.getLogger();
 	}
 
 	public static String activeMinecraftDirectory() {
@@ -38,16 +48,12 @@ public class LauncherMeta {
 	}
 
 	public static String minecraftDirectory(OS os) {
-		switch (os) {
-		case WINDOWS:
-			return System.getenv("appdata") + "/.minecraft";
-		case LINUX:
-			return System.getProperty("user.home") + "/.minecraft";
-		case MACOS:
-			return System.getProperty("user.home") + "/Library/Application Support/minecraft";
-		default:
-			throw new UnsupportedOperationException("unsupported operating system " + os);
-		}
+		return switch(os) {
+			case WINDOWS -> System.getenv("appdata") + "/.minecraft";
+			case LINUX -> System.getProperty("user.home") + "/.minecraft";
+			case MACOS -> System.getProperty("user.home") + "/Library/Application Support/minecraft";
+			default -> throw new UnsupportedOperationException("unsupported operating system " + os);
+		};
 	}
 
 	public Version getVersion(String version) {
@@ -59,13 +65,11 @@ public class LauncherMeta {
 
 	private void init(String lookingFor) {
 		Map<String, Version> vers = this.versions;
-		CachedFile cache = null;
-		if (vers == null) {
-			this.logger.lifecycle("downloading manifest . . .");
-			cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
-					this.globalCache.resolve("version_manifest.json"),
-					this.logger, true);
-			try (Reader reader = cache.getOutdatedReader()) {
+		Path path = this.globalCache.resolve("version_manifest.json");
+		if (vers == null && Files.exists(path)) {
+			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
+			cache.output = path;
+			try (Reader reader = Files.newBufferedReader(cache.output); Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
 				Map<String, Version> versions = this.read(reader);
 				if (versions.containsKey(lookingFor)) {
 					vers = this.versions = versions;
@@ -76,15 +80,13 @@ public class LauncherMeta {
 		}
 
 		if (vers == null || !vers.containsKey(lookingFor)) {
-			if (cache == null) {
-				cache = CachedFile.forUrl("https://launchermeta.mojang.com/mc/game/version_manifest.json",
-						this.globalCache.resolve("version_manifest.json"),
-						this.logger, true);
-			}
-			try (Reader reader = cache.getReader()) {
+			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
+			cache.output = path;
+			this.logger.lifecycle("Downloading launchermeta...");
+			try (Reader reader = cache.getOutdatedReader(); Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
 				this.versions = this.read(reader);
 			} catch (IOException e) {
-				throw new RuntimeException(e);
+				throw U.rethrow(e);
 			}
 		}
 	}
@@ -92,7 +94,7 @@ public class LauncherMeta {
 	protected Map<String, Version> read(Reader reader) {
 		Map<String, Version> versions = new HashMap<>();
 		// todo stop using gson, use a visitor based parser since 99% of the time you don't need to parse the entire damn thing
-		JsonObject object = CachedFile.GSON.fromJson(reader, JsonObject.class);
+		JsonObject object = GSON.fromJson(reader, JsonObject.class);
 		int index = 0;
 		for (JsonElement version : object.getAsJsonArray("versions")) {
 			JsonObject obj = (JsonObject) version;
@@ -101,16 +103,6 @@ public class LauncherMeta {
 			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
 		}
 		return Collections.unmodifiableMap(versions);
-	}
-
-	public JsonObject read(String output, String url) {
-		// todo pull from .minecraft
-		CachedFile cache = CachedFile.forUrl(url, this.globalCache.resolve(output), this.logger, true);
-		try (Reader reader = cache.getOutdatedReader()) {
-			return CachedFile.GSON.fromJson(reader, JsonObject.class);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	public final class Version {
@@ -150,9 +142,20 @@ public class LauncherMeta {
 			return client ? getClientJar() : getServerJar();
 		}
 
+		public JsonObject read(String output, String url) {
+			// todo pull from .minecraft
+			URLDependency dependency = new URLDependency(LauncherMeta.this.project, url);
+			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project.getGradle()).resolve(this.version).resolve(output);
+			try (Reader reader = dependency.getOutdatedReader()) {
+				return GSON.fromJson(reader, JsonObject.class);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		private void init() {
 			if (!this.initialized) {
-				JsonObject versionJson = LauncherMeta.this.read(this.version + "-downloads.json", this.manifestUrl);
+				JsonObject versionJson = this.read(this.version + "-downloads.json", this.manifestUrl);
 				JsonObject downloads = versionJson.getAsJsonObject("downloads");
 				this.clientJar = new HashedURL(downloads.getAsJsonObject("client"), this.version + "-client.jar");
 				this.serverJar = new HashedURL(downloads.getAsJsonObject("server"), this.version + "-server.jar");

@@ -21,10 +21,12 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.AssetsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
-import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
@@ -70,7 +72,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 */
 	Dependency server(String version, boolean strip, boolean split);
 
-	Dependency merged(String version, Action<CASMerger.Config> configurate);
+	Dependency merged(String version, Action<CASMergedDependency> configurate);
 
 	default Dependency mojmerged(String version, CASMerger.Handler handler) {
 		return this.mojmerged(version, handler, true);
@@ -90,8 +92,12 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 */
 	Dependency accessWidener(String name, Dependency dependency, Object accessWidener);
 
+	default Dependency mojmerged(String version, boolean split) {
+		return this.mojmerged(version, CASMerger.FABRIC, split);
+	}
+
 	default Dependency mojmerged(String version) {
-		return this.mojmerged(version, CASMerger.FABRIC);
+		return this.mojmerged(version, true);
 	}
 
 	default LibrariesDependency libraries(String version) {
@@ -100,15 +106,18 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	LibrariesDependency libraries(String version, Action<LibrariesDependency> configure);
 
-	Assets assets(String version);
+	AssetsDependency assets(String version);
 
-	String natives(String version);
+	/**
+	 * The to string on this dependency returns the natives directory
+	 */
+	NativesDependency natives(String version);
 
 	/**
 	 * @param mappings configurate mappings
 	 * @return a list of the remapped dependencies
 	 */
-	Dependency map(Action<RemappingDependency> mappings);
+	Dependency map(Action<RemapDependency> mappings);
 
 	/**
 	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries

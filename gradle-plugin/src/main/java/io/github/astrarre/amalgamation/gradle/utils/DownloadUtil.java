@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public class DownloadUtil {
 		long contentLength = connection.getContentLengthLong();
 
 		if (contentLength >= 0) {
-			if(logger != null) logger.lifecycle("'{}' Changed, downloading {}", url, CachedFile.toNiceSize(contentLength));
+			if(logger != null) logger.lifecycle("'{}' Changed, downloading {}", url, toNiceSize(contentLength));
 		}
 
 		try { // Try download to the output
@@ -68,7 +67,7 @@ public class DownloadUtil {
 	}
 
 
-	public static class Result {
+	public static class Result implements AutoCloseable {
 		public final InputStream stream;
 		public final long lastModifyDate;
 		public final Clock clock;
@@ -79,6 +78,34 @@ public class DownloadUtil {
 			this.lastModifyDate = date;
 			this.clock = clock;
 			this.etag = etag;
+		}
+
+		@Override
+		public void close() throws Exception {
+			if(clock != null) {
+				clock.close();
+			}
+			if(stream != null) {
+				stream.close();
+			}
+		}
+	}
+
+	/**
+	 * Format the given number of bytes as a more human readable string.
+	 *
+	 * @param bytes The number of bytes
+	 * @return The given number of bytes formatted to kilobytes, megabytes or gigabytes if appropriate
+	 */
+	public static String toNiceSize(long bytes) {
+		if(bytes < 1024) {
+			return bytes + " B";
+		} else if(bytes < 1_048_576) {
+			return bytes / 1024 + " KB";
+		} else if(bytes < 1_073_741_824) {
+			return String.format("%.2f MB", bytes / (1_048_576.0));
+		} else {
+			return String.format("%.2f GB", bytes / (1_073_741_824.0));
 		}
 	}
 }

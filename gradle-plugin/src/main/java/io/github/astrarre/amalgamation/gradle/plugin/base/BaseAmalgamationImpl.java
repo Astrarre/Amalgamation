@@ -39,9 +39,9 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 
 	@Override
 	public Dependency deJiJ(String name, Action<DeJiJDependency> configuration) {
-		DeJiJDependency dependency = new DeJiJDependency(this.project, name);
-		configuration.execute(dependency);
-		return dependency;
+		//DeJiJDependency dependency = new DeJiJDependency(this.project, name);
+		//configuration.execute(dependency);
+		//return dependency;
+		return null;
 	}
-
 }

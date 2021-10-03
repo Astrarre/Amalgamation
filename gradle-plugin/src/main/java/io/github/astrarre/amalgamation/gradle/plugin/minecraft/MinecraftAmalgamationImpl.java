@@ -4,26 +4,21 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.astrarre.amalgamation.gradle.dependencies.CachedFileDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.RemappingDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.AssetsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.MinecraftFileHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.MojMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.refactor.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
-import io.github.astrarre.amalgamation.gradle.files.CASMergedFile;
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.files.MinecraftFileHelper;
-import io.github.astrarre.amalgamation.gradle.files.MojMergedFile;
-import io.github.astrarre.amalgamation.gradle.files.NativesFile;
-import io.github.astrarre.amalgamation.gradle.files.assets.AssetProvider;
-import io.github.astrarre.amalgamation.gradle.files.assets.Assets;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
@@ -54,33 +49,19 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	Dependency mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
-		CachedFileDependency dependency = new CachedFileDependency(this.project, "net.minecraft", isClient ? "minecraft-client" : "minecraft-server", version);
-		CachedFile file = MinecraftFileHelper.file(this.project, version, isClient, doStrip, doSplit);
-		dependency.add(file);
-		return dependency;
+		return MinecraftFileHelper.getDependency(project, version, isClient, doStrip, doSplit);
 	}
 
 	@Override
-	public Dependency merged(String version, Action<CASMerger.Config> configurate) {
-		CASMerger.Config config = new CASMerger.Config(this.project);
-		config.version = version;
-		configurate.execute(config);
-
-		Path jar = AmalgIO.globalCache(this.project.getGradle()).resolve(version).resolve("merged.jar");
-		CASMergedFile file = new CASMergedFile(jar, this.project, version, config.handler, config.clsReaderFlags, config.checkForServerOnly, config.server, config.client);
-		CachedFileDependency dependency = new CachedFileDependency(this.project, "net.minecraft", "moj-merged", version);
-		dependency.add(file);
+	public Dependency merged(String version, Action<CASMergedDependency> configurate) {
+		CASMergedDependency dependency = new CASMergedDependency(this.project, version);
+		configurate.execute(dependency);
 		return dependency;
 	}
 
 	@Override
 	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split) {
-		CachedFile file = MinecraftFileHelper.mojmap(this.project, version, false);
-		Path jar = AmalgIO.globalCache(this.project.getGradle()).resolve(version).resolve("moj-merged.jar");
-		var moj = new MojMergedFile(jar, this.project, this.client(version, split), version, handler, file);
-		CachedFileDependency dependency = new CachedFileDependency(this.project, "net.minecraft", "moj-merged", version);
-		dependency.add(moj);
-		return dependency;
+		return new MojMergedDependency(this.project, version, handler, this.client(version, split));
 	}
 
 	@Override
@@ -90,7 +71,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		dependencies.add(handler.create("net.fabricmc:fabric-loader:" + version));
 		File json = AmalgIO.resolve(this.project, "net.fabricmc:fabric-loader:" + version + "@json");
 		try(BufferedReader reader = Files.newBufferedReader(json.toPath())) {
-			JsonObject object = CachedFile.GSON.fromJson(reader, JsonObject.class);
+			JsonObject object = LauncherMeta.GSON.fromJson(reader, JsonObject.class);
 			JsonObject libs = object.getAsJsonObject("libraries");
 			for(JsonElement common : libs.getAsJsonArray("common")) {
 				JsonObject dep = common.getAsJsonObject();
@@ -130,24 +111,18 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Assets assets(String version) {
-		try(Clock clock = new Clock("Cache validation / download for assets took %sms", this.logger)) {
-			return AssetProvider.getAssetsDir(this, version);
-		} catch(IOException e) {
-			throw new RuntimeException(e);
-		}
+	public AssetsDependency assets(String version) {
+		return new AssetsDependency(this.project, version);
 	}
 
 	@Override
-	public String natives(String version) {
-		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		CachedFile natives = new NativesFile(this, version, meta);
-		return natives.getOutput().toAbsolutePath().toString();
+	public NativesDependency natives(String version) {
+		return new NativesDependency(this.project, version);
 	}
 
 	@Override
-	public Dependency map(Action<RemappingDependency> mappings) {
-		RemappingDependency dependency = new RemappingDependency(this.project);
+	public Dependency map(Action<RemapDependency> mappings) {
+		RemapDependency dependency = new RemapDependency(this.project);
 		mappings.execute(dependency);
 		return dependency;
 	}

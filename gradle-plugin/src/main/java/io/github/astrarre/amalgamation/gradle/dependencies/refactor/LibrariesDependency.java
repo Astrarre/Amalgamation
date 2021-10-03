@@ -1,11 +1,13 @@
-package io.github.astrarre.amalgamation.gradle.dependencies;
+package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
+import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
@@ -41,9 +43,13 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 				.flatMap(Collection::stream)
 				.map(dependency -> {
 					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
-					return CachedFile.forUrl(dependency, jar, this.project, false);
+					HashedURLDependency dep = new HashedURLDependency(this.project, dependency);
+					dep.output = jar;
+					return dep;
 				})
-				.map(CachedFile::getOutdatedPath)
+				.map(HashedURLDependency::resolve)
+				.flatMap(Set::stream)
+				.map(File::toPath)
 				.collect(Collectors.toList());
 	}
 }

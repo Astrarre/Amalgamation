@@ -27,8 +27,12 @@ import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlugin implements Plugin<Project> {
+	private static LauncherMeta instance;
 	public static LauncherMeta getLauncherMeta(Project project) {
-		return project.getExtensions().getByType(LauncherMeta.class);
+		if(instance == null) {
+			instance = new LauncherMeta(AmalgIO.globalCache(project.getGradle()), project);
+		}
+		return instance;
 	}
 
 	public static String getLibrariesCache(Project project) {
@@ -42,8 +46,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setName("Minecraft Libraries");
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
-		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target.getGradle()), target.getLogger());
-
+		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target.getGradle()), target);
 	}
 
 	@Override

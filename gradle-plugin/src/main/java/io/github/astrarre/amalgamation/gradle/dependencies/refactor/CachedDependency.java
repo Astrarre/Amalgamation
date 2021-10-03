@@ -1,17 +1,23 @@
-package io.github.astrarre.amalgamation.gradle.dependencies;
+package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -23,22 +29,40 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	/**
 	 * 0 == unevaluated 1 == false 2 == true
 	 */
-	byte isOutdated;
-	private Path cachePath;
-
+	protected byte isOutdated;
+	private Path cachePath, realPath;
 	public CachedDependency(Project project, String group, String name, String version) {
 		super(project, group, name, version);
+	}
+
+	public Dependency of(Object notation) {
+		if(notation instanceof Dependency d) {
+			return d;
+		} else {
+			return this.project.getDependencies().create(notation);
+		}
+	}
+
+	public Dependency of(Object notation, Closure<ModuleDependency> config) {
+		return this.project.getDependencies().create(notation, config);
+	}
+
+	public Dependency hashDep(Hasher hasher, Object dependency) throws IOException {
+		Dependency resolved = this.of(dependency);
+		if(dependency instanceof CachedDependency c) {
+			c.hashInputs(hasher);
+		} else {
+			this.resolve(List.of(resolved));
+		}
+		return resolved;
 	}
 
 	public boolean isOutdated() {
 		byte val = this.isOutdated;
 		if(val == 0) {
 			try {
+				this.getCurrentHash();
 				this.initOldHash();
-				if(this.currentHash == null) {
-					this.computeHash();
-				}
-
 				if(this.oldHash == null || !Arrays.equals(this.oldHash, this.currentHash)) {
 					this.isOutdated = val = 2;
 				} else {
@@ -58,25 +82,39 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		throw new UnsupportedOperationException("// TODO: implement");
 	}
 
-	public abstract void hashInputs(Hasher hasher);
+	public abstract void hashInputs(Hasher hasher) throws IOException;
 
 	/**
 	 * This path does not have to actually contain any files, filename.extension.data stores the information on this dependency
 	 */
-	protected abstract Path evaluatePath();
+	protected abstract Path evaluatePath(byte[] hash) throws MalformedURLException;
 
 	protected void readInputs(@Nullable InputStream stream) throws IOException {}
 
-	protected void writeOutputs(@Nullable OutputStream stream) throws IOException {}
+	protected void writeOutputs(OutputStream stream) throws IOException {}
 
-	private void initOldHash() throws IOException {
+	public Path getPath() {
+		if(this.realPath == null) {
+			try {
+				Path record = this.realPath = this.evaluatePath(this.getCurrentHash());
+				this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
+				Files.createDirectories(record.getParent());
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
+		}
+		return this.realPath;
+	}
+
+	protected void initOldHash() throws IOException {
 		if(this.initOldHash) {
 			return;
 		}
 		this.initOldHash = true;
 
-		Path record = this.evaluatePath();
-		Path path = this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
+		this.getPath();
+		Path path = this.cachePath;
+
 		if(Files.exists(path)) {
 			try(InputStream stream = Files.newInputStream(path)) {
 				byte[] hash = new byte[BYTES];
@@ -96,7 +134,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		this.readInputs(null);
 	}
 
-	private byte[] computeHash() throws IOException {
+	protected byte[] getCurrentHash() throws IOException {
 		byte[] current = this.currentHash;
 		if(current == null) {
 			Hasher hasher = HASHING.newHasher();
@@ -111,22 +149,26 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		return current;
 	}
 
-	protected abstract Iterable<Path> resolve0(boolean isOutdated) throws IOException;
+	protected abstract Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
 
-	private void writeHash() throws IOException {
-		byte[] hash = this.computeHash();
+	public void writeHash() throws IOException {
+		byte[] hash = this.getCurrentHash();
+		this.getPath();
 		try(OutputStream stream = Files.newOutputStream(this.cachePath)) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);
 		}
+		this.oldHash = hash;
 	}
 
 	@Override
 	protected Iterable<Path> resolvePaths() throws IOException {
 		boolean isOutdated = this.isOutdated();
-		Iterable<Path> paths = this.resolve0(isOutdated);
+		Path path = this.getPath();
+		Iterable<Path> paths = this.resolve0(path, isOutdated);
 		if(isOutdated) {
 			this.writeHash();
+			this.isOutdated = 1;
 		}
 		return paths;
 	}

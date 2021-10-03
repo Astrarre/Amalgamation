@@ -1,35 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
-import com.google.common.hash.Hasher;
-import com.google.gson.JsonObject;
-import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.files.CachedFile;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleDependency;
-import org.jetbrains.annotations.Nullable;
-
-public class DeJiJDependency extends AbstractSelfResolvingDependency {
+public class DeJiJDependency {} /*extends AbstractSelfResolvingDependency {
 	public final List<Dependency> dependencies;
 
 	public DeJiJDependency(Project project, String name) {
@@ -125,4 +96,4 @@ public class DeJiJDependency extends AbstractSelfResolvingDependency {
 			}
 		}
 	}
-}
+}*/

@@ -11,21 +11,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
-import org.gradle.internal.impldep.org.bouncycastle.util.encoders.Base64Encoder;
 
 public class AmalgIO {
 	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
@@ -160,5 +155,25 @@ public class AmalgIO {
 
 	public static boolean jarContainsClasses(File t) {
 		return !isResourcesJar(t);
+	}
+
+	public static String b64(byte[] data) {
+		return Base64.getUrlEncoder().encodeToString(data);
+	}
+
+	public static String insertName(Path path, String hash) {
+		String name = path.getFileName().toString();
+		int i = name.lastIndexOf('.');
+		if(i == -1) {
+			return name + "_" + hash;
+		} else {
+			return name.substring(0, i) + hash + name.substring(i);
+		}
+	}
+
+	public static void createFile(Path resolve) throws IOException {
+		if(!Files.exists(resolve)) {
+			Files.createFile(resolve);
+		}
 	}
 }
