@@ -28,15 +28,19 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		boolean isOutdated = this.isOutdated();
 		this.add(builder, this.getPath(), isOutdated);
 		builder.afterExecute(() -> {
-			if(isOutdated) {
-				try {
-					this.writeHash();
-				} catch(IOException e) {
-					throw U.rethrow(e);
-				}
-			}
+			this.after(isOutdated);
 		});
 		return builder;
+	}
+
+	protected void after(boolean isOutdated) {
+		if(isOutdated) {
+			try {
+				this.writeHash();
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
+		}
 	}
 
 	protected static OutputTag tag(Path path) {

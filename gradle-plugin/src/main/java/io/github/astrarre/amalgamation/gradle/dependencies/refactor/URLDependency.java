@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
@@ -33,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 // todo this queries download url twice for some unknown reason...
 public class URLDependency extends ZipProcessDependency {
+	final String url;
 	public boolean shouldOutput = true;
 	public Path output;
-	final String url;
 	String etag;
 	long lastModifyDate = -1;
 	DownloadUtil.Result result;
@@ -90,6 +89,38 @@ public class URLDependency extends ZipProcessDependency {
 		data.flush();
 	}
 
+	public static Reader read(Project project, Dependency dependency) throws IOException {
+		if(dependency instanceof URLDependency d) {
+			return d.getOutdatedReader();
+		} else {
+			return Files.newBufferedReader(AmalgIO.resolve(project, dependency).toPath());
+		}
+	}
+
+	public Reader getOutdatedReader() throws IOException {
+		if(!Files.exists(this.getPath())) {
+			this.resolve();
+		}
+		return Files.newBufferedReader(this.getPath());
+	}
+
+	@Nullable
+	@Override
+	public String getVersion() {
+		try {
+			return AmalgIO.b64(this.getCurrentHash());
+		} catch(IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	protected void after(boolean isOutdated) {
+		if(this.shouldOutput) {
+			super.after(isOutdated);
+		}
+	}
+
 	@Override
 	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) {
 		if(isOutdated) {
@@ -126,35 +157,16 @@ public class URLDependency extends ZipProcessDependency {
 		}
 	}
 
-	public static Reader read(Project project, Dependency dependency) throws IOException {
-		if(dependency instanceof URLDependency d) {
-			return d.getOutdatedReader();
-		} else {
-			return Files.newBufferedReader(AmalgIO.resolve(project, dependency).toPath());
-		}
-	}
-
-	public Reader getOutdatedReader() throws IOException {
-		if(!Files.exists(this.getPath())) {
-			this.resolve();
-		}
-		return Files.newBufferedReader(this.getPath());
-	}
-
-	@Nullable
-	@Override
-	public String getVersion() {
-		try {
-			return AmalgIO.b64(this.getCurrentHash());
-		} catch(IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	protected DownloadUtil.Result getResult() throws IOException {
 		if(this.result == null) {
 			this.initOldHash();
-			this.result = DownloadUtil.read(new URL(this.url), this.etag, this.lastModifyDate, this.getLogger(), BaseAmalgamationGradlePlugin.offlineMode, true);
+			this.result = DownloadUtil.read(
+					new URL(this.url),
+					this.etag,
+					this.lastModifyDate,
+					this.getLogger(),
+					BaseAmalgamationGradlePlugin.offlineMode,
+					true);
 		}
 		return this.result;
 	}
