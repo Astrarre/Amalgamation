@@ -20,6 +20,7 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'amalgamation-minecraft'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'
 }
 
 
@@ -79,12 +80,6 @@ task unzip(type: Copy) {
         zipTree(ag.resolve([mergedMappings]).get().first())
     }
     into "$buildDir/unzip/"
-}
-
-idea.project.settings {
-    taskTriggers {
-        afterSync tasks.getByName("unzip")
-    }
 }
 
 compileJava {

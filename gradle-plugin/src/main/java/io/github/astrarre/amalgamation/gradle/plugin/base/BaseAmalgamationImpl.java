@@ -54,6 +54,9 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 
 	@Override
 	public IdeaExtension idea() throws IllegalStateException {
+		if(ConfigIdeaExt.extension == null) {
+			throw new IllegalStateException("idea-ext plugin not found! \n\tplugins {\n\t\tid 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'\n\t}");
+		}
 		return ConfigIdeaExt.extension;
 	}
 }

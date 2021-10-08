@@ -25,6 +25,7 @@ import java.util.function.Function;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
 import org.gradle.StartParameter;
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.PluginContainer;
@@ -54,32 +55,23 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			// target.getGradle().buildFinished(result -> {});
 
 			// add idea extensions
-			target.getPlugins().apply("org.jetbrains.gradle.plugin.idea-ext");
+			//target.getPlugins().apply("org.jetbrains.gradle.plugin.idea-ext");
 
 			var temp = new Object() {
-				IdeaPlugin plugin;
+				Plugin<Project> plugin;
 			};
-			this.listenFor(target, IdeaPlugin.class, idea -> {
-				ConfigIdea.configure(target, idea.getModel());
+
+			this.listenFor(target, "idea", idea -> {
+				ConfigIdea.configure(target, idea);
 				temp.plugin = idea;
 			});
-			this.listenFor(target, IdeaExtPlugin.class, idea -> ConfigIdeaExt.configure(target, temp.plugin));
+			this.listenFor(target, "org.jetbrains.gradle.plugin.idea-ext", idea -> ConfigIdeaExt.configure(target, temp.plugin));
 		}
 	}
 
-	<T extends Plugin<?>> void listenFor(Project target, Class<T> type, Consumer<T> onFound) {
+	<T extends Plugin<?>> void listenFor(Project target, String id, Consumer<Plugin<Project>> onFound) {
 		PluginContainer plugins = target.getPlugins();
-		T plugin = plugins.findPlugin(type);
-
-		if(plugin != null) {
-			onFound.accept(plugin);
-		} else {
-			plugins.whenPluginAdded(p -> {
-				if(type.isInstance(p)) {
-					onFound.accept((T) p);
-				}
-			});
-		}
+		plugins.withId(id, onFound::accept);
 	}
 
 	protected void registerProvider(Project target) {
