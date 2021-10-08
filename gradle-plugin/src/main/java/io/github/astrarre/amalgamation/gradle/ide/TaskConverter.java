@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.ManifestJarDependency;
+import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.JavaExec;
 
@@ -19,7 +20,7 @@ public abstract class TaskConverter<T extends Task> {
 
 	protected TaskConverter(T task) {this.task = task;}
 
-	public abstract void emit();
+	public abstract void emit() throws IOException;
 
 	public static void writeTemplate(Path path, String templateLocation, Map<String, String> parameters) throws IOException {
 		InputStream templateIn = TaskConverter.class.getResourceAsStream(templateLocation);
@@ -32,7 +33,7 @@ public abstract class TaskConverter<T extends Task> {
 		Files.writeString(path, template);
 	}
 
-	protected File getManifestJar(JavaExec task) {
+	protected static File getManifestJar(JavaExec task) {
 		String path = task.getPath();
 		ManifestJarDependency dependency = new ManifestJarDependency(task.getProject(), path, task);
 		return Iterables.getOnlyElement(dependency.resolve());
@@ -40,5 +41,9 @@ public abstract class TaskConverter<T extends Task> {
 
 	public static List<String> getClasspath(JavaExec task) {
 		return task.getClasspath().getFiles().stream().map(File::getAbsolutePath).toList();
+	}
+
+	public Project getProject() {
+		return this.task.getProject();
 	}
 }

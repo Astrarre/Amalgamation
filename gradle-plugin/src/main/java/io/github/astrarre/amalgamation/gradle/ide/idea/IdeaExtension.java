@@ -1,9 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.ide.idea;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Action;
 import org.gradle.api.PolymorphicDomainObjectContainer;
 import org.gradle.api.Task;
@@ -33,7 +35,11 @@ public class IdeaExtension {
 
 	public void configureQueue() {
 		for(TaskConverter<?> value : this.converters) {
-			value.emit();
+			try {
+				value.emit();
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
 		}
 	}
 }

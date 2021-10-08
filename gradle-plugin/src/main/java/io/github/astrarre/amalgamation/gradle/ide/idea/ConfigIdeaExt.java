@@ -4,11 +4,13 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.PolymorphicDomainObjectContainer;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.reflect.TypeOf;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.jetbrains.gradle.ext.ProjectSettings;
 import org.jetbrains.gradle.ext.RunConfiguration;
+import org.jetbrains.gradle.ext.TaskTriggersConfig;
 
 public class ConfigIdeaExt {
 	public static IdeaExtension extension;
@@ -19,7 +21,10 @@ public class ConfigIdeaExt {
 			if(settings instanceof ExtensionAware ex) {
 				NamedDomainObjectContainer<RunConfiguration> runCfg = ex.getExtensions().getByType(new TypeOf<>() {});
 				PolymorphicDomainObjectContainer<RunConfiguration> container = (PolymorphicDomainObjectContainer<RunConfiguration>) runCfg;
+				TaskTriggersConfig config = ex.getExtensions().getByType(TaskTriggersConfig.class);
 				extension = new IdeaExtension(container);
+				Task task = project.task("emitIdeaRunConfigs", t -> t.doFirst($ -> extension.configureQueue()));
+				config.afterSync(task);
 				return;
 			}
 		}

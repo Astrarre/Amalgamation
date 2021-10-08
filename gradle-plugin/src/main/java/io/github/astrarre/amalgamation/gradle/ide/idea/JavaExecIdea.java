@@ -1,6 +1,8 @@
 package io.github.astrarre.amalgamation.gradle.ide.idea;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,7 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 	/**
 	 * shorten the command line to use a manifest jar
 	 */
-	private CompressCmd shorten = CompressCmd.NONE;
+	private CompressCmd shorten = CompressCmd.DEFAULT;
 
 	private Project classpathProject;
 	private SourceSet sourceSetClasspath;
@@ -69,12 +71,12 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 	public static ShortenCommandLine from(CompressCmd cmd) {
 		return switch(cmd) {
 			case MANIFEST_JAR -> ShortenCommandLine.MANIFEST;
-			case NONE -> ShortenCommandLine.NONE;
+			case DEFAULT -> ShortenCommandLine.NONE;
 		};
 	}
 
 	@Override
-	public void emit() {
+	public void emit() throws IOException {
 		Application application = this.runCfgFactory.create(this.customName, Application.class);
 
 		// environment variables
@@ -92,17 +94,7 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 			application.moduleRef(this.classpathProject, this.sourceSetClasspath);
 			application.setShortenCommandLine(this.ideaShorten);
 		} else {
-			vmArgs = new ArrayList<>(vmArgs);
-			vmArgs.add("-cp");
-			switch(this.shorten) {
-				case NONE -> {
-					vmArgs.add(String.join(";", getClasspath(this.task)));
-				}
-				case MANIFEST_JAR -> {
-					File jar = this.getManifestJar(this.task);
-					vmArgs.add(jar.getAbsolutePath());
-				}
-			}
+			vmArgs = appendClasspath(this.shorten, this.task, vmArgs);
 		}
 
 		// main class
@@ -110,7 +102,7 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 		application.setMainClass(cls);
 
 		// working directory
-		application.setWorkingDirectory(this.task.getWorkingDir().getAbsolutePath());
+		application.setWorkingDirectory(this.task.getWorkingDir().getAbsolutePath()); // todo make this non-absolute maybe
 
 		// vm args
 		if(!vmArgs.isEmpty()) {
@@ -120,7 +112,7 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 		// program args
 		List<String> progArgs = this.task.getArgs();
 		if (progArgs != null && !progArgs.isEmpty()) {
-			application.setProgramParameters(String.join(" ", vmArgs));
+			application.setProgramParameters(String.join(" ", progArgs));
 		}
 
 		// task dependencies
@@ -134,5 +126,20 @@ public class JavaExecIdea extends NamedTaskConverter<JavaExec> {
 				task.setTask(dependency);
 			}
 		});
+	}
+
+	public static List<String> appendClasspath(CompressCmd cmd, JavaExec exec, List<String> vmArgs) {
+		vmArgs = new ArrayList<>(vmArgs);
+		vmArgs.add("-cp");
+		switch(cmd) {
+			case DEFAULT -> {
+				vmArgs.add(String.join(";", getClasspath(exec)));
+			}
+			case MANIFEST_JAR -> {
+				File jar = getManifestJar(exec);
+				vmArgs.add(jar.getAbsolutePath());
+			}
+		}
+		return vmArgs;
 	}
 }

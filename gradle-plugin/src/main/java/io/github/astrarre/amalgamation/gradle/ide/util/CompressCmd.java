@@ -4,7 +4,7 @@ public enum CompressCmd {
 	/**
 	 * Do not shorten the command line
 	 */
-	NONE,
+	DEFAULT,
 	/**
 	 * Create a dummy jar with the classpath META-INF/Manifest.mf
 	 */
