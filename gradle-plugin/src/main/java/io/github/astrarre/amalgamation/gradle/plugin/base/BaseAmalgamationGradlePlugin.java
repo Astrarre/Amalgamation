@@ -66,6 +66,9 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 				temp.plugin = idea;
 			});
 			this.listenFor(target, "org.jetbrains.gradle.plugin.idea-ext", idea -> ConfigIdeaExt.configure(target, temp.plugin));
+			this.listenFor(target, "eclipse", eclipse -> {
+
+			});
 		}
 	}
 

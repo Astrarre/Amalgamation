@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
+import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
+import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -16,6 +18,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
+import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationImpl implements BaseAmalgamation {
 	public final Project project;
@@ -54,9 +57,25 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 
 	@Override
 	public IdeaExtension idea() throws IllegalStateException {
-		if(ConfigIdeaExt.extension == null) {
-			throw new IllegalStateException("idea-ext plugin not found! \n\tplugins {\n\t\tid 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'\n\t}");
+		return this.getExtension("idea-ext", "org.jetbrains.gradle.plugin.idea-ext", "version '1.1'", () -> ConfigIdeaExt.extension);
+	}
+
+	@Override
+	public EclipseExtension eclipse() throws IllegalStateException {
+		return this.getExtension("eclipse", "eclipse", "", () -> ConfigureEclipse.extension);
+	}
+
+	@NotNull
+	private <T> T getExtension(String depName, String dep, String version, Supplier<T> extension) {
+		T ext = extension.get();
+		if(ext == null) {
+			throw new IllegalStateException(String.format(
+					"%s plugin not found! \n\tplugins {\n\t\tid '%s' %s\n\t}",
+					depName,
+					dep,
+					version
+			));
 		}
-		return ConfigIdeaExt.extension;
+		return ext;
 	}
 }

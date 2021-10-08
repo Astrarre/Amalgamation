@@ -22,6 +22,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 import java.io.File;
 import java.util.function.Supplier;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
+import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
@@ -45,4 +46,9 @@ public interface BaseAmalgamation {
      * @throws IllegalStateException if idea-ext is not installed
      */
     IdeaExtension idea() throws IllegalStateException;
+
+    /**
+     * same idea as {@link #idea()} but u need the "eclipse" plugin
+     */
+    EclipseExtension eclipse() throws IllegalStateException;
 }
