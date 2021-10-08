@@ -18,14 +18,15 @@
  */
 plugins {
     id 'java'
-    id 'idea'
     id 'maven-publish'
-    id 'amalgamation-minecraft' version "1.0.0"
+    id 'amalgamation-minecraft'
 }
+
 
 repositories {
     mavenLocal()
     mavenCentral()
+    gradlePluginPortal()
     maven { url 'https://maven.fabricmc.net/' }
     maven { url 'https://files.minecraftforge.net/maven/' }
     maven {
@@ -80,16 +81,24 @@ task unzip(type: Copy) {
     into "$buildDir/unzip/"
 }
 
+idea.project.settings {
+    taskTriggers {
+        afterSync tasks.getByName("unzip")
+    }
+}
+
 compileJava {
     def compilerArgs = options.compilerArgs
     compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappings/mappings.tiny" as String)
-    compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String) // I have no idea what this does btw
+    compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String)
+    // I have no idea what this does btw
     compilerArgs.add("-AoutRefMapFile=${destinationDirectory.get().asFile}/test-refmap.json" as String)
     compilerArgs.add("-AdefaultObfuscationEnv=named:intermediary" as String)
     dependsOn tasks.unzip
 }
 
 import io.github.astrarre.amalgamation.gradle.tasks.RemapJar
+
 task outputJar(type: RemapJar) {
     from jar
 }
@@ -110,7 +119,7 @@ task testDiff(type: JavaExec) {
     dependsOn tasks.classes
 }
 
-ide.intellij(testDiff) {}
+ag.idea().java(testDiff) {}
 
 /*
 task stripFabric_1_16(type: StripJar) {

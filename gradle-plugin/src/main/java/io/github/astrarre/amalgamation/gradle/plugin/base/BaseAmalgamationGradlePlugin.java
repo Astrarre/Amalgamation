@@ -19,47 +19,74 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import io.github.astrarre.amalgamation.gradle.ide.IdeExtension;
-import io.github.astrarre.amalgamation.gradle.ide.intellij.ConfigureIntellij;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
+import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.gradle.ext.IdeaExtPlugin;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
+
 	public static boolean refreshDependencies, offlineMode, refreshAmalgamationCaches;
 
 	@Override
 	public void apply(@NotNull Project target) {
-		StartParameter parameter = target.getGradle().getStartParameter();
-		refreshDependencies = parameter.isRefreshDependencies();
-		if(refreshDependencies) {
-			refreshAmalgamationCaches = true;
-		} else {
-			refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
-		}
-		offlineMode = parameter.isOffline();
 		this.registerProvider(target);
 
-		// target.getGradle().buildFinished(result -> {});
-		target.getExtensions().create(IdeExtension.class, "ide", IdeExtension.class);
+		if(target == target.getRootProject()) {
+			StartParameter parameter = target.getGradle().getStartParameter();
+			refreshDependencies = parameter.isRefreshDependencies();
+			if(refreshDependencies) {
+				refreshAmalgamationCaches = true;
+			} else {
+				refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
+			}
+			offlineMode = parameter.isOffline();
 
+
+			// target.getGradle().buildFinished(result -> {});
+
+			// add idea extensions
+			target.getPlugins().apply("org.jetbrains.gradle.plugin.idea-ext");
+
+			var temp = new Object() {
+				IdeaPlugin plugin;
+			};
+			this.listenFor(target, IdeaPlugin.class, idea -> {
+				ConfigIdea.configure(target, idea.getModel());
+				temp.plugin = idea;
+			});
+			this.listenFor(target, IdeaExtPlugin.class, idea -> ConfigIdeaExt.configure(target, temp.plugin));
+		}
+	}
+
+	<T extends Plugin<?>> void listenFor(Project target, Class<T> type, Consumer<T> onFound) {
 		PluginContainer plugins = target.getPlugins();
-		IdeaPlugin plugin = plugins.findPlugin(IdeaPlugin.class);
+		T plugin = plugins.findPlugin(type);
+
 		if(plugin != null) {
-			ConfigureIntellij.configure(target, plugin.getModel());
+			onFound.accept(plugin);
 		} else {
 			plugins.whenPluginAdded(p -> {
-				if(p instanceof IdeaPlugin d) {
-					ConfigureIntellij.configure(target, d.getModel());
+				if(type.isInstance(p)) {
+					onFound.accept((T) p);
 				}
 			});
 		}
 	}
 
 	protected void registerProvider(Project target) {
-		target.getExtensions().create(BaseAmalgamation.class, "ag", BaseAmalgamationImpl.class, target);
+		this.register(target, BaseAmalgamation.class, BaseAmalgamationImpl.class);
+	}
+
+	protected <T> void register(Project target, Class<T> extensionType, Class<? extends T> realType) {
+		target.getExtensions().create(extensionType, "ag", realType, target);
 	}
 }

@@ -82,10 +82,14 @@ public class AmalgIO {
 
 	public static Path cache(Project project, boolean global) {
 		if (global) {
-			return globalCache(project.getGradle());
+			return globalCache(project);
 		} else {
 			return projectCache(project.getRootProject());
 		}
+	}
+
+	public static Path globalCache(Project project) {
+		return globalCache(project.getGradle());
 	}
 
 	public static Path globalCache(Gradle gradle) {

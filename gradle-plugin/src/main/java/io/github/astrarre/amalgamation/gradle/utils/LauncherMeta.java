@@ -145,7 +145,7 @@ public class LauncherMeta {
 		public JsonObject read(String output, String url) {
 			// todo pull from .minecraft
 			URLDependency dependency = new URLDependency(LauncherMeta.this.project, url);
-			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project.getGradle()).resolve(this.version).resolve(output);
+			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project).resolve(this.version).resolve(output);
 			try (Reader reader = dependency.getOutdatedReader()) {
 				return GSON.fromJson(reader, JsonObject.class);
 			} catch (IOException e) {

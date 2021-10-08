@@ -87,7 +87,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	/**
 	 * This path does not have to actually contain any files, filename.extension.data stores the information on this dependency
 	 */
-	protected abstract Path evaluatePath(byte[] hash) throws MalformedURLException;
+	protected abstract Path evaluatePath(byte[] hash) throws IOException;
 
 	protected void readInputs(@Nullable InputStream stream) throws IOException {}
 

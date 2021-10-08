@@ -23,11 +23,14 @@ plugins {
 
 allprojects {
     group = "io.github.astrarre.amalgamation"
-    version = "2.0.0"
+    version = "2.1.0"
 
     repositories {
         mavenCentral()
         mavenLocal()
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
         maven {
             name = "FabricMC"
             url = uri("https://maven.fabricmc.net/")

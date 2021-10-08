@@ -34,7 +34,7 @@ public class MinecraftFileHelper {
 			}
 		}
 
-		Path globalCache = AmalgIO.globalCache(project.getGradle());
+		Path globalCache = AmalgIO.globalCache(project);
 		Path jar = globalCache.resolve(version).resolve(area + ".jar");
 		Path unstripped = globalCache.resolve(version).resolve(area + ".jar");
 		HashedURLDependency dependency = new HashedURLDependency(project, url);

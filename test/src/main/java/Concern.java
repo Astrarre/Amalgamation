@@ -1,6 +1,3 @@
-package me.ramidzkh.concern;
-
-
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 

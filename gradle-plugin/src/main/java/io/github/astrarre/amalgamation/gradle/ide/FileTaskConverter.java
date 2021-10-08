@@ -1,6 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.ide;
 
+import java.nio.file.Path;
+
+import com.google.common.collect.Iterables;
+import io.github.astrarre.amalgamation.gradle.dependencies.ManifestJarDependency;
 import org.gradle.api.Task;
+import org.gradle.api.tasks.JavaExec;
 
 public abstract class FileTaskConverter<T extends Task> extends NamedTaskConverter<T> {
 	public String customPath;
@@ -21,4 +26,6 @@ public abstract class FileTaskConverter<T extends Task> extends NamedTaskConvert
 	public void setCustomPath(String customPath) {
 		this.customPath = customPath;
 	}
+
+
 }

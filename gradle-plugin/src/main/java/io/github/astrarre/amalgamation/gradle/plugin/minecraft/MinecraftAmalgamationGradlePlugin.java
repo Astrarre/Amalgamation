@@ -30,7 +30,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	private static LauncherMeta instance;
 	public static LauncherMeta getLauncherMeta(Project project) {
 		if(instance == null) {
-			instance = new LauncherMeta(AmalgIO.globalCache(project.getGradle()), project);
+			instance = new LauncherMeta(AmalgIO.globalCache(project), project);
 		}
 		return instance;
 	}
@@ -46,12 +46,12 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setName("Minecraft Libraries");
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
-		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target.getGradle()), target);
+		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target), target);
 
 	}
 
 	@Override
 	protected void registerProvider(Project target) {
-		target.getExtensions().create(MinecraftAmalgamation.class, "ag", MinecraftAmalgamationImpl.class, target);
+		this.register(target, MinecraftAmalgamation.class, MinecraftAmalgamationImpl.class);
 	}
 }

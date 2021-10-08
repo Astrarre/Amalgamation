@@ -45,12 +45,15 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
     implementation("net.devtech:zip-io:3.0.8")
+    implementation("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     //implementation("com.github.javaparser:javaparser-core:3.22.0")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.22.0")
     implementation("net.fabricmc", "access-widener", "1.0.2")
 
     // todo unhardcode this
     implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
+
+
 }
 
 gradlePlugin {

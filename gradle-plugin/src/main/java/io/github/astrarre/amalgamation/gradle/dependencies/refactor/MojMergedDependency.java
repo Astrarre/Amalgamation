@@ -91,7 +91,7 @@ public class MojMergedDependency extends ZipProcessDependency {
 	}
 
 	public static HashedURLDependency mojmap(Project project, String version, boolean isClient) {
-		Path path = AmalgIO.globalCache(project.getGradle()).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
+		Path path = AmalgIO.globalCache(project).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
 		var url = forVers(project, version, isClient);
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
 		dependency.output = path;

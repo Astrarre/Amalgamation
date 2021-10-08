@@ -1,7 +1,5 @@
 package io.github.astrarre.amalgamation.gradle.ide;
 
-import java.io.IOException;
-
 import org.gradle.api.Task;
 
 public abstract class NamedTaskConverter<T extends Task> extends TaskConverter<T> {

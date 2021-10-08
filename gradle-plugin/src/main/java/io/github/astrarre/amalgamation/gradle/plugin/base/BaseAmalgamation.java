@@ -22,14 +22,12 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 import java.io.File;
 import java.util.function.Supplier;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
+import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.provider.Provider;
 
 public interface BaseAmalgamation {
-    //todo void runConfig(RunConfigSettings settings);
-
-    //todo Iterable<RunConfigSettings> getRunConfigs();
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 
@@ -37,5 +35,14 @@ public interface BaseAmalgamation {
 
     Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 
+    /**
+     * Adds a url as a direct dependency
+     */
     Dependency url(String url);
+
+    /**
+     * A utility class for intellij, most useful for generating intellij run configs from gradle tasks.
+     * @throws IllegalStateException if idea-ext is not installed, atm amalg automatically applies it
+     */
+    IdeaExtension idea() throws IllegalStateException;
 }

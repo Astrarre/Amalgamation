@@ -38,7 +38,7 @@ public class AssetsDependency extends CachedDependency {
 			this.getLogger().lifecycle("Found .minecraft assets folder");
 		} else {
 			this.getLogger().lifecycle("No .minecraft assets folder, using global cache!");
-			assetsDir = AmalgIO.globalCache(this.getProject().getGradle()).resolve("assetsDir");
+			assetsDir = AmalgIO.globalCache(this.getProject()).resolve("assetsDir");
 		}
 		this.assetsDir = assetsDir;
 

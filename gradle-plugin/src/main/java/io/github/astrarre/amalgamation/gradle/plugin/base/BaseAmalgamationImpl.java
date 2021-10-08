@@ -6,6 +6,8 @@ import java.util.function.Supplier;
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
+import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
+import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import org.gradle.api.Action;
@@ -23,7 +25,6 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		this.project = project;
 		this.logger = project.getLogger();
 	}
-
 
 	@Override
 	public <T> Provider<T> provideLazy(Supplier<T> action) {
@@ -49,5 +50,10 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	@Override
 	public Dependency url(String url) {
 		return new URLDependency(this.project, url);
+	}
+
+	@Override
+	public IdeaExtension idea() throws IllegalStateException {
+		return ConfigIdeaExt.extension;
 	}
 }
