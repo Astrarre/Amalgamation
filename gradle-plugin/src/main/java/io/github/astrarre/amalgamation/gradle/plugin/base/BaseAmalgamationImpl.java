@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
@@ -32,14 +32,6 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	@Override
 	public <T> Provider<T> provideLazy(Supplier<T> action) {
 		return this.project.provider(Lazy.of(action));
-	}
-
-	@Override
-	public Provider<Iterable<File>> resolve(Iterable<Object> dependency) {
-		return this.provideLazy(() -> {
-			DependencyHandler handler = this.project.getDependencies();
-			return AmalgIO.resolve(this.project, Iterables.transform(dependency, handler::create));
-		});
 	}
 
 	@Override

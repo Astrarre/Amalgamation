@@ -1,21 +1,17 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.transforming;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.ZipProcessDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
+import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;

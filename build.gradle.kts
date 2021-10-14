@@ -43,7 +43,9 @@ allprojects {
             name = "MinecraftForge"
             url = uri("https://files.minecraftforge.net/maven")
         }
-
+        maven {
+            url = uri("https://maven.hydos.cf/releases")
+        }
         /*maven {
             url = uri("https://jitpack.io")
         }*/

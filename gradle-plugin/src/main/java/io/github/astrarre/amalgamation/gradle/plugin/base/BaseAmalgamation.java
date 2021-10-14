@@ -32,8 +32,6 @@ public interface BaseAmalgamation {
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 
-    Provider<Iterable<File>> resolve(Iterable<Object> dependency);
-
     Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 
     /**

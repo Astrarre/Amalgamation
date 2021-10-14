@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
+package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.io.Reader;

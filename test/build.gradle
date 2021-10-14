@@ -49,18 +49,21 @@ configurations {
 }
 
 dependencies {
-    //aaaaa ag.mojmerged(mc_vers)
+    //aaaaa ag.mojmerged(mc_vers, mergedMappings)
+
     def intermediaryMinecraft = ag.map {
-        mappings(mergedMappings, 'official', 'intermediary')
+        mappings(ag.intermediary(mc_vers))
         remap(ag.mojmerged(mc_vers, true), true)
     }
+    //aaaaa intermediaryMinecraft
 
     aaaaa ag.map {
+        trieHarder()
         mappings(mergedMappings, 'intermediary', 'named')
         remap(intermediaryMinecraft, true)
-        /*remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
+        remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
             exclude module: 'fabric-loader'
-        }*/
+        }
     }
 
     aaaaa ag.fabricLoader("0.11.7")
@@ -114,7 +117,7 @@ task testDiff(type: JavaExec) {
     dependsOn tasks.classes
 }
 
-ag.idea().java(testDiff) {}
+//ag.idea().java(testDiff) {}
 
 /*
 task stripFabric_1_16(type: StripJar) {

@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
+package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.util.ZipProcessable;
+import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.ZipTag;

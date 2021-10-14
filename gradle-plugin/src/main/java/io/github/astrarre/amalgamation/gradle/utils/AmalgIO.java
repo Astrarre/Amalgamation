@@ -9,8 +9,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import com.google.common.collect.Iterables;
@@ -31,24 +33,6 @@ public class AmalgIO {
 	// start merger meta properties
 	public static final String TYPE = "type"; // resources, java, classes, all
 
-	public static boolean isResourcesJar(File file) {
-		if (file.isDirectory()) {
-			return false;
-		}
-		try (FileSystem system = FileSystems.newFileSystem(file.toPath(), (ClassLoader) null)) {
-			Path path = system.getPath(MERGER_META_FILE);
-			if (Files.exists(path)) {
-				Properties properties = new Properties();
-				properties.load(Files.newInputStream(path));
-				return properties.getProperty(TYPE, "all").equals("resources");
-			} else {
-				return false;
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public static String hash(Iterable<File> files) {
 		Hasher hasher = Hashing.sha256().newHasher();
 		hash(hasher, files);
@@ -68,11 +52,6 @@ public class AmalgIO {
 			hasher.putUnencodedChars(file.getAbsolutePath());
 			hasher.putLong(file.lastModified());
 		}
-	}
-
-	public static void hash(Project project, Hasher hasher, Dependency dependency) {
-		// todo add ZipProcessable
-		hash(hasher, resolve(project, Collections.singletonList(dependency)));
 	}
 
 	public static String hash(Hasher hasher) {
@@ -115,50 +94,32 @@ public class AmalgIO {
 	}
 
 	public static File resolve(Project project, Dependency dependencies) {
-		return Iterables.getOnlyElement(resolve(project, Collections.singleton(dependencies)));
+		return Iterables.getOnlyElement(resolve(project, List.of(dependencies)));
 	}
 
 	public static Iterable<File> resolve(Project project, Iterable<Dependency> dependencies) {
 		Configuration configuration = null;
-		Iterable<File> selfResolving = null;
+		List<File> resolved = new ArrayList<>();
 		for (Dependency dependency : dependencies) {
-			if (dependency instanceof SelfResolvingDependency) {
-				if (selfResolving == null) {
-					selfResolving = ((SelfResolvingDependency) dependency).resolve();
-				} else {
-					selfResolving = Iterables.concat(((SelfResolvingDependency) dependency).resolve(), selfResolving);
-				}
+			if (dependency instanceof SelfResolvingDependency s) {
+				resolved.addAll(s.resolve());
 			} else {
 				if (configuration == null) {
 					configuration = project.getConfigurations().detachedConfiguration(dependency);
-				} else {
-					configuration.getDependencies().add(dependency);
 				}
+				configuration.getDependencies().add(dependency);
 			}
 		}
 
-		if (configuration == null) {
-			if (selfResolving == null) {
-				return Collections.emptyList();
-			} else {
-				return selfResolving;
-			}
-		} else {
-			if (selfResolving == null) {
-				return configuration;
-			} else {
-				return Iterables.concat(configuration.getResolvedConfiguration().getFiles(), selfResolving);
-			}
+		if(configuration != null) {
+			resolved.addAll(configuration.getResolvedConfiguration().getFiles());
 		}
+		return resolved;
 	}
 
 	public static File resolve(Project project, Object notation) {
 		Dependency dependency = project.getDependencies().create(notation);
 		return resolve(project, dependency);
-	}
-
-	public static boolean jarContainsClasses(File t) {
-		return !isResourcesJar(t);
 	}
 
 	public static String b64(byte[] data) {

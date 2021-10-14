@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
+package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;

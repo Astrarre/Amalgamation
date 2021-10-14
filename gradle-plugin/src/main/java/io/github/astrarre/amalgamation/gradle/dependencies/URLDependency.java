@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
+package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -89,14 +89,6 @@ public class URLDependency extends ZipProcessDependency {
 		data.flush();
 	}
 
-	public static Reader read(Project project, Dependency dependency) throws IOException {
-		if(dependency instanceof URLDependency d) {
-			return d.getOutdatedReader();
-		} else {
-			return Files.newBufferedReader(AmalgIO.resolve(project, dependency).toPath());
-		}
-	}
-
 	public Reader getOutdatedReader() throws IOException {
 		if(!Files.exists(this.getPath())) {
 			this.resolve();
@@ -136,7 +128,7 @@ public class URLDependency extends ZipProcessDependency {
 	@Override
 	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
-		if(this.isOutdated()) {
+		if(isOutdated) {
 			ZipTag tag = process.createZipTag(path);
 			process.afterExecute(() -> {
 				try(var result = this.getResult(); ZipInputStream zis = new ZipInputStream(result.stream)) {

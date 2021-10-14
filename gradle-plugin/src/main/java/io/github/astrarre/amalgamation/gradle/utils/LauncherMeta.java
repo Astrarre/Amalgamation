@@ -20,7 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.URLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;

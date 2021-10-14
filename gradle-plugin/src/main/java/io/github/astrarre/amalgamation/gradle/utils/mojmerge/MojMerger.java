@@ -1,29 +1,31 @@
 package io.github.astrarre.amalgamation.gradle.utils.mojmerge;
 
+import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import net.fabricmc.mappingio.tree.MappingTree;
 import net.fabricmc.mappingio.tree.MappingTreeView;
 
 public class MojMerger extends ClassVisitor {
 	final CASMerger.Handler handler;
-	final MappingTree serverMappings;
+	final Mappings.Namespaced clientMap;
+	final Mappings.Namespaced serverMap;
 
 	MappingTreeView.ClassMappingView owner;
 
-	public MojMerger(int api, ClassVisitor classVisitor, CASMerger.Handler handler, MappingTree reader) {
+	public MojMerger(int api, ClassVisitor classVisitor, CASMerger.Handler handler, Mappings.Namespaced clientMappings, Mappings.Namespaced reader) {
 		super(api, classVisitor);
 		this.handler = handler;
-		this.serverMappings = reader;
+		this.clientMap = clientMappings;
+		this.serverMap = reader;
 	}
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		super.visit(version, access, name, signature, superName, interfaces);
-		MappingTreeView.ClassMappingView view = this.serverMappings.getClass(name, 0);
+		MappingTreeView.ClassMappingView view = this.serverMap.tree().getClass(name, this.serverMap.fromI());
 		if(view == null) {
 			this.handler.accept(this.visitAnnotation(this.handler.normalDesc(), false), true);
 		} else {
@@ -31,7 +33,17 @@ public class MojMerger extends ClassVisitor {
 		}
 
 		for(String iface : interfaces) {
-			if(this.serverMappings.getClass(iface, 0) == null) {
+			boolean isMissing = !iface.startsWith("java"); // if non sdk class
+
+			if(isMissing) { // and not in server mappings
+				isMissing = this.serverMap.tree().getClass(iface, this.serverMap.fromI()) == null;
+			}
+
+			if(isMissing) { // and not in client mappings
+				isMissing = this.clientMap.tree().getClass(iface, this.clientMap.fromI()) != null;
+			}
+
+			if(isMissing) {
 				// interface not present on server
 				this.handler.accept(this.visitAnnotation(this.handler.ifaceDesc(), false), iface, true);
 			}

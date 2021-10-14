@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.util;
+package io.github.astrarre.amalgamation.gradle.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;

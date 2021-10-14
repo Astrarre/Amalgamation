@@ -21,16 +21,19 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.AssetsDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.CASMergedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.remap.RemapDependency;
+import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.NamespacedMappingsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 
 // todo support looms caches
 
@@ -50,7 +53,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	/**
 	 * @param version the minecraft version string, should match up with launchermeta
-	 * @return a dependency for the obfuscated client jar
+	 * @return a clientMappings for the obfuscated client jar
 	 */
 	Dependency client(String version, boolean split);
 
@@ -68,48 +71,67 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	/**
 	 * @param version the minecraft version string, should match up with launchermeta
 	 * @param split split jar into resources and classes jar for speed
-	 * @return a dependency for the obfuscated server jar (dependencies stripped)
+	 * @return a clientMappings for the obfuscated server jar (dependencies stripped)
 	 */
 	Dependency server(String version, boolean strip, boolean split);
 
 	Dependency merged(String version, Action<CASMergedDependency> configurate);
 
-	default Dependency mojmerged(String version, CASMerger.Handler handler) {
-		return this.mojmerged(version, handler, true);
+	default Dependency mojmerged(String version, CASMerger.Handler handler, NamespacedMappingsDependency clientMappings) {
+		return this.mojmerged(version, handler, true, clientMappings);
 	}
 
-	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split);
+	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, NamespacedMappingsDependency clientMappings);
+
+	default Dependency mojmerged(String version, boolean split, NamespacedMappingsDependency clientMappings) {
+		return this.mojmerged(version, CASMerger.FABRIC, split, clientMappings);
+	}
+
+	default Dependency mojmerged(String version, NamespacedMappingsDependency clientMappings) {
+		return this.mojmerged(version, true, clientMappings);
+	}
+
+	default Dependency mojmerged(String version, boolean split) {
+		return this.mojmerged(version, CASMerger.FABRIC, split, this.intermediary(version));
+	}
+
+	default Dependency mojmerged(String version) {
+		return this.mojmerged(version, true, this.intermediary(version));
+	}
+
+	default NamespacedMappingsDependency intermediary(String version) {
+		return this.mappings("net.fabricmc:intermediary:" + version + ":v2", "official", "intermediary");
+	}
+
 
 	List<Dependency> fabricLoader(String version);
 
 	/**
-	 * @param name a unique name for this transformed dependency
+	 * @param name a unique name for this transformed clientMappings
 	 */
 	Dependency transformed(String name, Action<TransformingDependency> configure);
 
 	/**
-	 * @param name a unique name for this access widened dependency
+	 * @param name a unique name for this access widened clientMappings
 	 */
 	Dependency accessWidener(String name, Dependency dependency, Object accessWidener);
 
-	default Dependency mojmerged(String version, boolean split) {
-		return this.mojmerged(version, CASMerger.FABRIC, split);
-	}
 
-	default Dependency mojmerged(String version) {
-		return this.mojmerged(version, true);
-	}
 
 	default LibrariesDependency libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
+
+	NamespacedMappingsDependency mappings(Object depNotation, String from, String to);
+
+	NamespacedMappingsDependency mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
 
 	LibrariesDependency libraries(String version, Action<LibrariesDependency> configure);
 
 	AssetsDependency assets(String version);
 
 	/**
-	 * The to string on this dependency returns the natives directory
+	 * The to string on this clientMappings returns the natives directory
 	 */
 	NativesDependency natives(String version);
 

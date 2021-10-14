@@ -166,9 +166,4 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	public String toString() {
 		return this.getClass().getSimpleName();
 	}
-
-	public Iterable<File> resolve(Iterable<Dependency> dependencies) {
-		return AmalgIO.resolve(this.project, dependencies);
-	}
-
 }

@@ -9,13 +9,15 @@ import java.util.List;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.AssetsDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.CASMergedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.MinecraftFileHelper;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.MojMergedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.remap.RemapDependency;
+import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.NamespacedMappingsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftFileHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -24,6 +26,7 @@ import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements MinecraftAmalgamation {
@@ -59,8 +62,8 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split) {
-		return new MojMergedDependency(this.project, version, handler, this.client(version, split));
+	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, NamespacedMappingsDependency dependency) {
+		return new MojMergedDependency(this.project, version, handler, this.client(version, split), dependency);
 	}
 
 	@Override
@@ -100,6 +103,16 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 				throw new RuntimeException(e);
 			}
 		});
+	}
+
+	@Override
+	public NamespacedMappingsDependency mappings(Object depNotation, String from, String to) {
+		return new NamespacedMappingsDependency(this.project, this.project.getDependencies().create(depNotation), from, to);
+	}
+
+	@Override
+	public NamespacedMappingsDependency mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config) {
+		return new NamespacedMappingsDependency(this.project, this.project.getDependencies().create(depNotation, config), from, to);
 	}
 
 	@Override

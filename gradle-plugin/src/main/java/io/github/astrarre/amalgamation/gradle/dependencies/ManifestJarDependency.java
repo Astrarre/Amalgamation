@@ -1,16 +1,13 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.CachedDependency;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.impl.util.U;

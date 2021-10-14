@@ -1,9 +1,8 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor;
+package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -13,7 +12,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -52,7 +51,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		if(dependency instanceof CachedDependency c) {
 			c.hashInputs(hasher);
 		} else {
-			this.resolve(List.of(resolved));
+			AmalgIO.hash(hasher, AmalgIO.resolve(this.project, List.of(resolved)));
 		}
 		return resolved;
 	}
@@ -159,6 +158,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 			this.writeOutputs(stream);
 		}
 		this.oldHash = hash;
+		this.isOutdated = 1;
 	}
 
 	@Override
@@ -168,7 +168,6 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		Iterable<Path> paths = this.resolve0(path, isOutdated);
 		if(isOutdated) {
 			this.writeHash();
-			this.isOutdated = 1;
 		}
 		return paths;
 	}

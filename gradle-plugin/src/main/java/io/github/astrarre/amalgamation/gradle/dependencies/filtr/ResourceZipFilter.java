@@ -1,11 +1,11 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.refactor.filtr;
+package io.github.astrarre.amalgamation.gradle.dependencies.filtr;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.refactor.SplitDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.SplitDependency;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processors.zip.ZipBehavior;
 import net.devtech.zipio.processors.zip.ZipFilter;

@@ -21,15 +21,18 @@ package io.github.astrarre.amalgamation.gradle.tasks;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.utils.MappingUtil;
-import org.cadixdev.lorenz.MappingSet;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.jvm.tasks.Jar;
 
+import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
@@ -74,26 +77,26 @@ public class RemapJar extends Jar {
 		this.mappings = mappings;
 	}
 
+	// todo add utility method for adding dependency here and classpath based on configuration
+
 	@TaskAction
 	public void remap() throws IOException {
-		MappingSet set = MappingSet.create();
-		for (File file : this.mappings.getFiles()) {
-			MappingUtil.loadMappings(set, file, this.from, this.to);
-		}
-		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(MappingUtil.createMappingProvider(set)).build();
+		Path mappings = AmalgIO.resolve(this.getProject(), this.mappings).toPath();
+		IMappingProvider from = Mappings.from(List.of(Mappings.from(mappings, this.from, this.to)));
+		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(from).build();
 
 		FileCollection inputs = this.getInputs().getFiles();
 
-		for (File file : inputs) {
+		for(File file : inputs) {
 			remapper.readInputsAsync(file.toPath());
 		}
 
-		for (File file : this.classpath) {
+		for(File file : this.classpath) {
 			remapper.readClassPathAsync(file.toPath());
 		}
 
-		try (OutputConsumerPath outputConsumerPath = new OutputConsumerPath.Builder(this.getArchiveFile().get().getAsFile().toPath()).build()) {
-			for (File file : inputs) {
+		try(OutputConsumerPath outputConsumerPath = new OutputConsumerPath.Builder(this.getArchiveFile().get().getAsFile().toPath()).build()) {
+			for(File file : inputs) {
 				outputConsumerPath.addNonClassFiles(file.toPath());
 			}
 
