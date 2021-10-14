@@ -20,6 +20,9 @@ public abstract class AbstractRemapper implements AmalgRemapper {
 	@Override
 	public void init(List<Mappings.Namespaced> mappings) {
 		this.classpath = new Classpath();
+		if(sourceRemapper != null) {
+			sourceRemapper.init(mappings);
+		}
 	}
 
 	@Override

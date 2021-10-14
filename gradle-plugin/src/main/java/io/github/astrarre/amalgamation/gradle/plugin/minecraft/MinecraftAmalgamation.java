@@ -27,6 +27,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
@@ -139,7 +140,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param mappings configurate mappings
 	 * @return a list of the remapped dependencies
 	 */
-	Dependency map(Action<RemapDependency> mappings);
+	Dependency map(Action<DependencyRemapConfig> mappings);
 
 	/**
 	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries

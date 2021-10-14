@@ -22,123 +22,44 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 
 public class RemapDependency extends ZipProcessDependency {
-	private final List<Dependency> inputsLocal = new ArrayList<>(), inputsGlobal = new ArrayList<>();
+	final DependencyRemapConfig config;
 
-	private final List<Dependency> classpath = new ArrayList<>();
-	private final List<MappingTarget> mappings = new ArrayList<>();
-	private AmalgRemapper classRemapper = new TRemapper();
-
-	public RemapDependency(Project project) {
+	public RemapDependency(Project project, DependencyRemapConfig config) {
 		super(project, "io.github.astrarre.amalgamation", "remapped", "1.0.0");
-	}
-
-	/**
-	 * this layers mappings only, it does not maps each mapping one after the other!
-	 *
-	 * @param object the dependency
-	 * @param from the origin namespace
-	 * @param to the destination namespace
-	 */
-	public MappingTarget mappings(Object object, String from, String to) {
-		MappingTarget mappings = new MappingTarget(this.project, this.of(object), from, to);
-		this.mappings.add(mappings);
-		return mappings;
-	}
-
-	public void remapper(AmalgRemapper remapper) {
-		this.classRemapper = remapper;
-	}
-
-	public void remapper(AbstractRemapper remapper, AmalgRemapper sourceRemapper) {
-		this.classRemapper = remapper;
-		remapper.setSourceRemapper(sourceRemapper);
-	}
-
-	public AbstractRemapper tinyRemapper() {
-		if(this.classRemapper instanceof TRemapper t) {
-			return t;
-		} else {
-			TRemapper remapper = new TRemapper();
-			this.classRemapper = remapper;
-			return remapper;
-		}
-	}
-
-	public void trieHarder() {
-		if(this.classRemapper instanceof AbstractRemapper a) {
-			a.setSourceRemapper(new TrieHarderRemapper());
-		} else {
-			throw new UnsupportedOperationException("cannot set source remapper on non-AbstractRemapper remapper!");
-		}
-	}
-
-	public void mappings(MappingTarget dependency) {
-		this.mappings.add(dependency);
-	}
-
-	public void remap(Object object, boolean useGlobalCache) {
-		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(this.project.getDependencies().create(object));
-	}
-
-	public void remap(Object object, boolean useGlobalCache, Closure<ModuleDependency> config) {
-		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(this.project.getDependencies().create(object, config));
-	}
-
-	public void classpath(Object object) {
-		this.classpath.add(this.project.getDependencies().create(object));
-	}
-
-	public void classpath(Object object, Closure<ModuleDependency> config) {
-		this.classpath.add(this.project.getDependencies().create(object, config));
+		this.config = config;
 	}
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
-		for(Dependency dependency : this.classpath) {
-			this.hashDep(hasher, dependency);
-		}
-
-		for(Dependency dependency : this.inputsGlobal) {
-			this.hashDep(hasher, dependency);
-		}
-
-		for(Dependency dependency : this.inputsLocal) {
-			this.hashDep(hasher, dependency);
-		}
-
-		this.hashMappings(hasher);
+		this.config.hash(hasher);
 	}
 
 	@Override
 	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
-		return AmalgIO.cache(this.project, this.inputsLocal.isEmpty()).resolve("remaps").resolve(AmalgIO.b64(hash));
-	}
-
-	private void hashMappings(Hasher hasher) throws IOException {
-		for(var mapping : this.mappings) {
-			mapping.hash(hasher);
-		}
+		return AmalgIO.cache(this.project, this.config.inputsLocal.isEmpty()).resolve("remaps").resolve(AmalgIO.b64(hash));
 	}
 
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder builder, Path resolvedPath, boolean isOutdated) throws IOException {
+		var config = this.config;
 		Hasher hasher = HASHING.newHasher();
-		this.hashMappings(hasher);
+		config.hashMappings(hasher);
 		byte[] mappingsHash = hasher.hash().asBytes();
 
-		AmalgRemapper remapper = this.classRemapper;
+		AmalgRemapper remapper = config.getRemapper();
 		if(isOutdated) {
 			List<Mappings.Namespaced> maps = new ArrayList<>();
-			for(var mapping : this.mappings) {
+			for(var mapping : config.getMappings()) {
 				maps.add(mapping.read());
 			}
 
-			this.classRemapper.init(maps);
+			config.getRemapper().init(maps);
+			this.logger.lifecycle("Remapping " + (config.inputsLocal.size() + config.inputsLocal.size()) + " dependencies");
 		}
 
-		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.inputsGlobal, true, isOutdated);
-		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.inputsLocal, false, isOutdated);
-		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.classpath, false, true);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, config.inputsGlobal, true, isOutdated);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, config.inputsLocal, false, isOutdated);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, config.getClasspath(), false, true);
 	}
 
 	private void extracted(TaskInputResolver resolver,

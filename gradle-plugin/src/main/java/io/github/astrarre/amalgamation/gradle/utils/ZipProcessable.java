@@ -27,22 +27,22 @@ public interface ZipProcessable {
 	static List<TaskTransform> apply(Project project, ZipProcessBuilder process, Iterable<Dependency> dependencies, UnaryOperator<OutputTag> getOutput)
 			throws IOException {
 		List<Dependency> deps = new ArrayList<>();
-		List<TaskTransform> outputs = new ArrayList<>();
+		List<TaskTransform> transforms = new ArrayList<>();
 		for(Dependency dependency : dependencies) {
 			if(dependency instanceof ZipProcessable p) {
-				outputs.add(process.linkProcess(p.process(), getOutput));
+				transforms.add(process.linkProcess(p.process(), getOutput));
 			} else {
 				deps.add(dependency);
 			}
 		}
 		for(File file : AmalgIO.resolve(project, deps)) {
 			Path path = file.toPath();
-			outputs.add(process.addZip(path, getOutput.apply(new OutputTag(path))));
+			transforms.add(process.addZip(path, getOutput.apply(new OutputTag(path))));
 		}
 
 		for(Path sources : AmalgIO.resolveSources(project, dependencies)) {
-			outputs.add(process.addZip(sources, getOutput.apply(new SourcesOutput(sources))));
+			transforms.add(process.addZip(sources, getOutput.apply(new SourcesOutput(sources))));
 		}
-		return outputs;
+		return transforms;
 	}
 }

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.IntFunction;
 
 import com.google.common.collect.Iterables;
@@ -122,6 +123,7 @@ public class AmalgIO {
 				.getResolvedComponents()
 				.stream()
 				.map(c -> c.getArtifacts(SourcesArtifact.class))
+				.flatMap(Set::stream)
 				.filter(ResolvedArtifactResult.class::isInstance)
 				.map(ResolvedArtifactResult.class::cast)
 				.map(ResolvedArtifactResult::getFile)

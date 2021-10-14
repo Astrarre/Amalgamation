@@ -1,12 +1,15 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.google.common.collect.Iterables;
@@ -50,8 +53,9 @@ public class TrieHarderRemapper implements AmalgRemapper {
 			String path = buffer.path();
 			if(path.endsWith(".java")) {
 				ByteBuffer buf = buffer.read();
-				Reader reader = new StringReader(buf.asCharBuffer().toString());
-				var baos = new ByteArrayOutputStream() {
+				buf.rewind(); // todo add to zip-io
+				Reader reader = new StringReader(StandardCharsets.UTF_8.decode(buf).toString());
+				var baos = new ByteArrayOutputStream(buf.position()) {
 					public ByteBuffer getBytes() { // avoid copying
 						return ByteBuffer.wrap(this.buf, 0, this.count);
 					}

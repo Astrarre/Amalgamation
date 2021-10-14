@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.command.DataCommandStorage;
 import net.minecraft.server.MinecraftServer;
 
-@Mixin(MinecraftServer.class)
+@Mixin(value = MinecraftServer.class, remap = false)
 public abstract class ConeCernMixin {
 	@Shadow protected abstract void tick(BooleanSupplier supplier);
 

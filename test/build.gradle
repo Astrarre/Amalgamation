@@ -48,6 +48,8 @@ configurations {
     implementation.extendsFrom(aaaaa)
 }
 
+
+
 dependencies {
     //aaaaa ag.mojmerged(mc_vers, mergedMappings)
 
@@ -58,8 +60,8 @@ dependencies {
     //aaaaa intermediaryMinecraft
 
     aaaaa ag.map {
-        trieHarder()
         mappings(mergedMappings, 'intermediary', 'named')
+        trieHarder()
         remap(intermediaryMinecraft, true)
         remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
             exclude module: 'fabric-loader'
@@ -80,14 +82,14 @@ configurations {
 task unzip(type: Copy) {
     inputs.files(ag.resolve([mergedMappings]))
     from provider {
-        zipTree(ag.resolve([mergedMappings]).get().first())
+        zipTree(ag.resolve([mergedMappings]).first())
     }
     into "$buildDir/unzip/"
 }
 
 compileJava {
     def compilerArgs = options.compilerArgs
-    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappings/mappings.tiny" as String)
+    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappingsPath/mappingsPath.tiny" as String)
     compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String)
     // I have no idea what this does btw
     compilerArgs.add("-AoutRefMapFile=${destinationDirectory.get().asFile}/test-refmap.json" as String)
@@ -95,11 +97,7 @@ compileJava {
     dependsOn tasks.unzip
 }
 
-import io.github.astrarre.amalgamation.gradle.tasks.RemapJar
-
-task outputJar(type: RemapJar) {
-    from jar
-}
+import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapJar
 
 task testDiff(type: JavaExec) {
     group = "tests"
@@ -125,13 +123,14 @@ task stripFabric_1_16(type: StripJar) {
     archivesBaseName = 'fabric-1.16-dev'
     platform(['fabric', '1.16'])
 }
+*/
 
-task fabric_1_16(type: RemapJar) {
-    with stripFabric_1_16
-    archivesBaseName = 'fabric-1.16'
+task productionJar(type: RemapJar) {
+    with jar
+    archivesBaseName = 'fabric'
     classpath = configurations.compileClasspath
-    mappings = amalgamation.createMappings(MappingTarget.INTERMEDIARY, '1.16')
-}*/
+    mappings(mergedMappings, 'named', 'intermediary')
+}
 
 task loadMcEnv {
     doLast {

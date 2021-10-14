@@ -78,7 +78,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 
 	@Override
 	public Dependency copy() {
-		throw new UnsupportedOperationException("// TODO: implement");
+		return this;
 	}
 
 	public abstract void hashInputs(Hasher hasher) throws IOException;

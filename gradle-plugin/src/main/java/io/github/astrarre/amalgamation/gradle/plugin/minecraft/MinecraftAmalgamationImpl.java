@@ -17,6 +17,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftFileHelper;
 import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
@@ -133,10 +134,10 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency map(Action<RemapDependency> mappings) {
-		RemapDependency dependency = new RemapDependency(this.project);
-		mappings.execute(dependency);
-		return dependency;
+	public Dependency map(Action<DependencyRemapConfig> mappings) {
+		DependencyRemapConfig config = new DependencyRemapConfig(this.project);
+		mappings.execute(config);
+		return new RemapDependency(this.project, config);
 	}
 
 	@Override
