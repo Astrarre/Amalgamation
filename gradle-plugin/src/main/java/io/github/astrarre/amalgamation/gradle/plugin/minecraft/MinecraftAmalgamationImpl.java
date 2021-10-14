@@ -10,7 +10,7 @@ import java.util.List;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.NamespacedMappingsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
@@ -62,7 +62,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, NamespacedMappingsDependency dependency) {
+	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, MappingTarget dependency) {
 		return new MojMergedDependency(this.project, version, handler, this.client(version, split), dependency);
 	}
 
@@ -106,13 +106,13 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public NamespacedMappingsDependency mappings(Object depNotation, String from, String to) {
-		return new NamespacedMappingsDependency(this.project, this.project.getDependencies().create(depNotation), from, to);
+	public MappingTarget mappings(Object depNotation, String from, String to) {
+		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation), from, to);
 	}
 
 	@Override
-	public NamespacedMappingsDependency mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config) {
-		return new NamespacedMappingsDependency(this.project, this.project.getDependencies().create(depNotation, config), from, to);
+	public MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config) {
+		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation, config), from, to);
 	}
 
 	@Override

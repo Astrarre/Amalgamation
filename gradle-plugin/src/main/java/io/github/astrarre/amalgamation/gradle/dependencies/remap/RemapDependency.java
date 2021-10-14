@@ -2,15 +2,13 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.NamespacedMappingsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
@@ -18,24 +16,16 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.bin.TR
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src.TrieHarderRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.zipio.VirtualZipEntry;
-import net.devtech.zipio.ZipOutput;
 import net.devtech.zipio.processes.ZipProcessBuilder;
-import net.devtech.zipio.processors.entry.ProcessResult;
-import net.devtech.zipio.processors.entry.ZipEntryProcessor;
-import net.devtech.zipio.processors.zip.PostZipProcessor;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
-
-import net.fabricmc.tinyremapper.InputTag;
-import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemapDependency extends ZipProcessDependency {
 	private final List<Dependency> inputsLocal = new ArrayList<>(), inputsGlobal = new ArrayList<>();
 
 	private final List<Dependency> classpath = new ArrayList<>();
-	private final List<NamespacedMappingsDependency> mappings = new ArrayList<>();
+	private final List<MappingTarget> mappings = new ArrayList<>();
 	private AmalgRemapper classRemapper = new TRemapper();
 
 	public RemapDependency(Project project) {
@@ -49,8 +39,8 @@ public class RemapDependency extends ZipProcessDependency {
 	 * @param from the origin namespace
 	 * @param to the destination namespace
 	 */
-	public Dependency mappings(Object object, String from, String to) {
-		NamespacedMappingsDependency mappings = new NamespacedMappingsDependency(this.project, this.of(object), from, to);
+	public MappingTarget mappings(Object object, String from, String to) {
+		MappingTarget mappings = new MappingTarget(this.project, this.of(object), from, to);
 		this.mappings.add(mappings);
 		return mappings;
 	}
@@ -82,7 +72,7 @@ public class RemapDependency extends ZipProcessDependency {
 		}
 	}
 
-	public void mappings(NamespacedMappingsDependency dependency) {
+	public void mappings(MappingTarget dependency) {
 		this.mappings.add(dependency);
 	}
 
@@ -126,14 +116,12 @@ public class RemapDependency extends ZipProcessDependency {
 
 	private void hashMappings(Hasher hasher) throws IOException {
 		for(var mapping : this.mappings) {
-			this.hashDep(hasher, mapping.forward());
-			hasher.putString(mapping.from(), StandardCharsets.UTF_8);
-			hasher.putString(mapping.to(), StandardCharsets.UTF_8);
+			mapping.hash(hasher);
 		}
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder builder, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder builder, Path resolvedPath, boolean isOutdated) throws IOException {
 		Hasher hasher = HASHING.newHasher();
 		this.hashMappings(hasher);
 		byte[] mappingsHash = hasher.hash().asBytes();
@@ -148,12 +136,13 @@ public class RemapDependency extends ZipProcessDependency {
 			this.classRemapper.init(maps);
 		}
 
-		this.extracted(builder, isOutdated, mappingsHash, remapper, this.inputsGlobal, true, isOutdated);
-		this.extracted(builder, isOutdated, mappingsHash, remapper, this.inputsLocal, false, isOutdated);
-		this.extracted(builder, isOutdated, mappingsHash, remapper, this.classpath, false, true);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.inputsGlobal, true, isOutdated);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.inputsLocal, false, isOutdated);
+		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, this.classpath, false, true);
 	}
 
-	private void extracted(ZipProcessBuilder builder,
+	private void extracted(TaskInputResolver resolver,
+			ZipProcessBuilder builder,
 			boolean isOutdated,
 			byte[] mappingsHash,
 			AmalgRemapper remapper,
@@ -162,7 +151,7 @@ public class RemapDependency extends ZipProcessDependency {
 			boolean isClasspath) throws IOException {
 		for(Dependency dependency : deps) {
 			var dep = new SingleRemapDependency(this.project, remapper, mappingsHash, dependency, global, isClasspath);
-			dep.add(builder, dep.getPath(), isOutdated && dep.isOutdated());
+			dep.add(resolver, builder, dep.getPath(), isOutdated && dep.isOutdated());
 		}
 	}
 }

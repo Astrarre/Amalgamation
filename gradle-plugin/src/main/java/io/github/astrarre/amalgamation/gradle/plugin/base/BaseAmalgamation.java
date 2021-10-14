@@ -20,6 +20,7 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Supplier;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
@@ -31,6 +32,10 @@ import org.gradle.api.provider.Provider;
 public interface BaseAmalgamation {
 
     <T> Provider<T> provideLazy(Supplier<T> action);
+
+    List<File> resolve(Iterable<Dependency> dependency);
+
+    List<File> resolveWithSources(Iterable<Dependency> dependency);
 
     Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 

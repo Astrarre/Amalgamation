@@ -26,19 +26,19 @@ public class CASMergedDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			CASMergerUtil merger = new CASMergerUtil(this.handler, this.checkForServerOnly);
 
 			// scan server
 			ZipProcessBuilder scan = ZipProcess.builder();
-			ZipProcessable.add(this.project, scan, this.of(this.server), p -> OutputTag.INPUT);
+			this.apply(scan, this.of(this.server), p -> OutputTag.INPUT);
 			scan.setEntryProcessor(merger.serverScan());
 			scan.execute();
 
 			// iterate client
 			process.setEntryProcessor(merger.clientApplier());
-			ZipProcessable.add(this.project, process, this.of(this.client), p -> tag(resolvedPath));
+			resolver.apply(this.of(this.client), p -> tag(p, resolvedPath));
 		} else {
 			process.addProcessed(resolvedPath);
 		}

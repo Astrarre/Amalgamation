@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.SourcesOutput;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
@@ -18,12 +19,12 @@ import org.gradle.api.artifacts.Dependency;
 public interface ZipProcessable {
 	ZipProcess process() throws IOException;
 
-	static List<TaskTransform> add(Project project, ZipProcessBuilder process, Dependency dependency, UnaryOperator<OutputTag> getOutput)
+	static List<TaskTransform> apply(Project project, ZipProcessBuilder process, Dependency dependency, UnaryOperator<OutputTag> getOutput)
 			throws IOException {
-		return add(project, process, Collections.singleton(dependency), getOutput);
+		return apply(project, process, Collections.singleton(dependency), getOutput);
 	}
 
-	static List<TaskTransform> add(Project project, ZipProcessBuilder process, Iterable<Dependency> dependencies, UnaryOperator<OutputTag> getOutput)
+	static List<TaskTransform> apply(Project project, ZipProcessBuilder process, Iterable<Dependency> dependencies, UnaryOperator<OutputTag> getOutput)
 			throws IOException {
 		List<Dependency> deps = new ArrayList<>();
 		List<TaskTransform> outputs = new ArrayList<>();
@@ -37,6 +38,10 @@ public interface ZipProcessable {
 		for(File file : AmalgIO.resolve(project, deps)) {
 			Path path = file.toPath();
 			outputs.add(process.addZip(path, getOutput.apply(new OutputTag(path))));
+		}
+
+		for(Path sources : AmalgIO.resolveSources(project, dependencies)) {
+			outputs.add(process.addZip(sources, getOutput.apply(new SourcesOutput(sources))));
 		}
 		return outputs;
 	}

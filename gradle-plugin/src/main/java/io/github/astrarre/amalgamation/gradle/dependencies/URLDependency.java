@@ -27,7 +27,6 @@ import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
 
 // todo this queries download url twice for some unknown reason...
@@ -126,7 +125,7 @@ public class URLDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
 		if(isOutdated) {
 			ZipTag tag = process.createZipTag(path);

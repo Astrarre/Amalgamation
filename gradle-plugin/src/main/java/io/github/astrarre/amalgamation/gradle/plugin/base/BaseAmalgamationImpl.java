@@ -1,6 +1,8 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Iterables;
@@ -32,6 +34,22 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	@Override
 	public <T> Provider<T> provideLazy(Supplier<T> action) {
 		return this.project.provider(Lazy.of(action));
+	}
+
+	@Override
+	public List<File> resolve(Iterable<Dependency> dependency) {
+		return AmalgIO.resolve(this.project, dependency);
+	}
+
+	@Override
+	public List<File> resolveWithSources(Iterable<Dependency> dependency) {
+		List<File> files = AmalgIO.resolveSources(this.project, dependency)
+				                   .stream()
+				                   .map(Path::toFile)
+				                   .toList();
+		List<File> resolve = AmalgIO.resolve(this.project, dependency);
+		resolve.addAll(files);
+		return resolve;
 	}
 
 	@Override

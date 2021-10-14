@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.Filters;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
@@ -33,7 +34,7 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			process.setEntryProcessor(buffer -> {
 				String name = buffer.path();
@@ -45,7 +46,7 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			ZipProcessable.add(this.project, process, this.of(this.toStrip), p -> new OutputTag(resolvedPath));
+			resolver.apply(this.of(this.toStrip), p -> Filters.from(p, resolvedPath));
 		} else {
 			process.addProcessed(resolvedPath);
 		}

@@ -49,16 +49,16 @@ public class SingleRemapDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		int[] ur = {0};
 		UnaryOperator<OutputTag> operator;
 		if(!isOutdated && this.isClasspath) {
 			operator = p -> OutputTag.INPUT;
 		} else {
-			operator = p -> tag(resolvedPath.resolve(AmalgIO.insertName(p.getVirtualPath(), "_" + ur[0]++)));
+			operator = p -> tag(p, resolvedPath.resolve(AmalgIO.insertName(p.getVirtualPath(), "_" + ur[0]++)));
 		}
 
-		var add = ZipProcessable.add(this.project, process, this.delegate, operator);
+		var add = resolver.apply(this.delegate, operator);
 		if(isOutdated) {
 			Files.createDirectories(resolvedPath);
 			for(Path path : UnsafeIterable.walkFiles(resolvedPath)) {

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourcesOutput;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
@@ -34,13 +35,13 @@ public class SplitDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Files.createDirectories(resolvedPath);
 		AmalgIO.createFile(resolvedPath.resolve("resources.jar.rss_marker"));
 		Path cls = resolvedPath.resolve("classes.jar"), rss = resolvedPath.resolve("resources.jar"), sources = resolvedPath.resolve("sources.jar");
 		if(isOutdated) {
 			ZipTag clsTag = process.createZipTag(cls), rssTag = process.createZipTag(new ResourcesOutput(rss)), sourcesTag = process.createZipTag(sources);
-			ZipProcessable.add(this.project, process, this.dependency, p -> OutputTag.INPUT);
+			resolver.apply(this.dependency, p -> OutputTag.INPUT);
 			process.setEntryProcessor(buffer -> {
 				String path = buffer.path();
 				if(path.endsWith(".class") || path.contains("META-INF")) {
@@ -59,9 +60,4 @@ public class SplitDependency extends ZipProcessDependency {
 		}
 	}
 
-	public static class ResourcesOutput extends OutputTag {
-		public ResourcesOutput(Path path) {
-			super(path);
-		}
-	}
 }

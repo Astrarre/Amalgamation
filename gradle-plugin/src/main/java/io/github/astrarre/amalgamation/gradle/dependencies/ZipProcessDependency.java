@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.Filters;
 import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
@@ -12,7 +14,9 @@ import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
 
 public abstract class ZipProcessDependency extends CachedDependency implements ZipProcessable {
 	public ZipProcessDependency(Project project, String group, String name, String version) {
@@ -21,16 +25,19 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 
 	@Override
 	public ZipProcess process() throws IOException {
-		// todo ZipProcess in-memory caching
+		// todo ZipProcess piping whereby a single process can have multiple dependents
 		// todo cache TR classpaths at some point:tm:
 		ZipProcessBuilder builder = ZipProcess.builder();
 		builder.defaults().setZipFilter(p -> ResourceZipFilter.FILTER);
 		boolean isOutdated = this.isOutdated();
-		this.add(builder, this.getPath(), isOutdated);
-		builder.afterExecute(() -> {
-			this.after(isOutdated);
-		});
+		TaskInputResolver resolver = (dependencies, tag) -> ZipProcessable.apply(this.project, builder, dependencies, tag);
+		this.add(resolver, builder, this.getPath(), isOutdated);
+		builder.afterExecute(() -> this.after(isOutdated));
 		return builder;
+	}
+
+	public boolean requiresSources() {
+		return true;
 	}
 
 	protected void after(boolean isOutdated) {
@@ -43,8 +50,8 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		}
 	}
 
-	protected static OutputTag tag(Path path) {
-		return new OutputTag(path);
+	protected static OutputTag tag(OutputTag tag, Path path) {
+		return Filters.from(tag, path);
 	}
 
 	@Override
@@ -67,10 +74,26 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		return super.resolvePaths();
 	}
 
-	// todo by default add resource zip filter
-
 	/**
 	 * Remember to update your hash here if u need it
 	 */
-	protected abstract void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException;
+	protected abstract void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException;
+
+	public List<TaskTransform> apply(ZipProcessBuilder builder, Iterable<Dependency> dependencies, UnaryOperator<OutputTag> tag)
+			throws IOException {
+		return ZipProcessable.apply(this.project, builder, dependencies, tag);
+	}
+
+	public List<TaskTransform> apply(ZipProcessBuilder builder, Dependency dep, UnaryOperator<OutputTag> tag)
+			throws IOException {
+		return ZipProcessable.apply(this.project, builder, dep, tag);
+	}
+
+	public interface TaskInputResolver {
+		List<TaskTransform> apply(Iterable<Dependency> dependencies, UnaryOperator<OutputTag> tag) throws IOException;
+
+		default List<TaskTransform> apply(Dependency dependency, UnaryOperator<OutputTag> tag) throws IOException {
+			return this.apply(List.of(dependency), tag);
+		}
+	}
 }

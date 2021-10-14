@@ -22,7 +22,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 import java.util.List;
 
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.NamespacedMappingsDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
@@ -77,17 +77,17 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Dependency merged(String version, Action<CASMergedDependency> configurate);
 
-	default Dependency mojmerged(String version, CASMerger.Handler handler, NamespacedMappingsDependency clientMappings) {
+	default Dependency mojmerged(String version, CASMerger.Handler handler, MappingTarget clientMappings) {
 		return this.mojmerged(version, handler, true, clientMappings);
 	}
 
-	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, NamespacedMappingsDependency clientMappings);
+	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, MappingTarget clientMappings);
 
-	default Dependency mojmerged(String version, boolean split, NamespacedMappingsDependency clientMappings) {
+	default Dependency mojmerged(String version, boolean split, MappingTarget clientMappings) {
 		return this.mojmerged(version, CASMerger.FABRIC, split, clientMappings);
 	}
 
-	default Dependency mojmerged(String version, NamespacedMappingsDependency clientMappings) {
+	default Dependency mojmerged(String version, MappingTarget clientMappings) {
 		return this.mojmerged(version, true, clientMappings);
 	}
 
@@ -99,7 +99,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 		return this.mojmerged(version, true, this.intermediary(version));
 	}
 
-	default NamespacedMappingsDependency intermediary(String version) {
+	default MappingTarget intermediary(String version) {
 		return this.mappings("net.fabricmc:intermediary:" + version + ":v2", "official", "intermediary");
 	}
 
@@ -122,9 +122,9 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
         return this.libraries(version, NOTHING);
 	}
 
-	NamespacedMappingsDependency mappings(Object depNotation, String from, String to);
+	MappingTarget mappings(Object depNotation, String from, String to);
 
-	NamespacedMappingsDependency mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
+	MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
 
 	LibrariesDependency libraries(String version, Action<LibrariesDependency> configure);
 

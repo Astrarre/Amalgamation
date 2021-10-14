@@ -5,18 +5,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.SplitDependency;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processors.zip.ZipBehavior;
 import net.devtech.zipio.processors.zip.ZipFilter;
 
 public class ResourceZipFilter implements ZipFilter {
 	public static final ResourceZipFilter FILTER = new ResourceZipFilter();
-	public static final ZipFilter INVERTED = FILTER.invert();
+	public static final ZipFilter INVERTED = invert(FILTER);
 
 	@Override
 	public ZipBehavior test(OutputTag file, Supplier<FileSystem> system) {
-		if(file instanceof SplitDependency.ResourcesOutput) {
+		if(file instanceof ResourcesOutput) {
 			return ZipBehavior.COPY;
 		} else {
 			Path path = file.getVirtualPath();
@@ -29,7 +28,8 @@ public class ResourceZipFilter implements ZipFilter {
 		}
 	}
 
-	public ZipFilter invert() {
-		return (file, system) -> ResourceZipFilter.this.test(file, system) == ZipBehavior.COPY ? ZipBehavior.COPY : ZipBehavior.SKIP;
+	public static ZipFilter invert(ZipFilter filter) {
+		return (file, system) -> filter.test(file, system) == ZipBehavior.COPY ? ZipBehavior.COPY : ZipBehavior.SKIP;
 	}
+
 }

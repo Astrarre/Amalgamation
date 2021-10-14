@@ -7,10 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Filter;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.Filters;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
@@ -23,6 +25,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
+// todo source transformations
 @SuppressWarnings("UnstableApiUsage")
 public class TransformingDependency extends ZipProcessDependency {
 	public final List<Dependency> dependencies;
@@ -85,16 +88,16 @@ public class TransformingDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		for(Dependency dependency : this.dependencies) {
-			ZipProcessable.add(this.project, process, dependency, p -> {
+			resolver.apply(dependency, p -> {
 				Hasher hasher = HASHING.newHasher();
 				Path path = p.getVirtualPath();
 				hasher.putString(path.toAbsolutePath().toString(), StandardCharsets.UTF_8);
 				this.transformers.forEach(t -> t.hash(hasher));
 				String hash = AmalgIO.hash(hasher);
 				Path resolve = AmalgIO.projectCache(this.project).resolve(this.name).resolve(AmalgIO.insertName(path, hash));
-				return new OutputTag(resolve);
+				return Filters.from(p, resolve);
 			});
 			process.setEntryProcessor(b -> {
 				String name = b.path();

@@ -6,7 +6,6 @@ import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourceZipFilter;
-import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
@@ -25,8 +24,8 @@ import org.objectweb.asm.Opcodes;
 public class MojMergedDependency extends ZipProcessDependency {
 	public final CASMerger.Handler handler;
 	public final Dependency client;
-	public final NamespacedMappingsDependency serverMappings;
-	public final NamespacedMappingsDependency clientMappings;
+	public final MappingTarget serverMappings;
+	public final MappingTarget clientMappings;
 
 	// todo will require intermediary mappings
 
@@ -34,8 +33,8 @@ public class MojMergedDependency extends ZipProcessDependency {
 			String version,
 			CASMerger.Handler handler,
 			Dependency client,
-			NamespacedMappingsDependency serverMappings,
-			NamespacedMappingsDependency clientMappings) {
+			MappingTarget serverMappings,
+			MappingTarget clientMappings) {
 		super(project, "io.github.astrarre.amalgamation", "moj-merged", version);
 		this.handler = handler;
 		this.client = client;
@@ -43,27 +42,27 @@ public class MojMergedDependency extends ZipProcessDependency {
 		this.clientMappings = clientMappings;
 	}
 
-	public MojMergedDependency(Project project, String version, CASMerger.Handler handler, Dependency client, NamespacedMappingsDependency clientMappings) {
+	public MojMergedDependency(Project project, String version, CASMerger.Handler handler, Dependency client, MappingTarget clientMappings) {
 		this(project, version, handler, client, mojmap(project, version, false), clientMappings);
 	}
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
 		this.hashDep(hasher, this.client);
-		this.hashDep(hasher, this.serverMappings);
+		this.serverMappings.hash(hasher);
+		this.clientMappings.hash(hasher);
 		this.handler.hashInputs(hasher);
 	}
 
 	@Override
 	protected Path evaluatePath(byte[] hash) {
 		//String dir = AmalgIO.b64(hash);
-		Dependency client = this.client, server = this.serverMappings;
 		//String name = client.getName() + "-" + server.getName() + "@" + client.getVersion() + "_" + server.getVersion();
 		return AmalgIO.cache(this.project, true).resolve(this.version).resolve("merged-" + this.version + ".jar");
 	}
 
 	@Override
-	protected void add(ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			Mappings.Namespaced server = this.serverMappings.read(), client = this.clientMappings.read();
 			process.setEntryProcessor(buffer -> {
@@ -79,21 +78,21 @@ public class MojMergedDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			ZipProcessable.add(this.project, process, this.of(this.client), p -> tag(resolvedPath));
+			resolver.apply(this.of(this.client), p -> tag(p, resolvedPath));
 		} else {
-			for(TaskTransform transform : ZipProcessable.add(this.project, process, this.of(this.client), p -> tag(resolvedPath))) {
+			for(TaskTransform transform : resolver.apply(this.of(this.client), p -> tag(p, resolvedPath))) {
 				transform.setZipFilter(o -> ResourceZipFilter.INVERTED);
 			}
 			process.addProcessed(resolvedPath);
 		}
 	}
 
-	public static NamespacedMappingsDependency mojmap(Project project, String version, boolean isClient) {
+	public static MappingTarget mojmap(Project project, String version, boolean isClient) {
 		Path path = AmalgIO.globalCache(project).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
 		var url = forVers(project, version, isClient);
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
 		dependency.output = path;
-		return new NamespacedMappingsDependency(project, dependency, "source", "target");
+		return new MappingTarget(project, dependency, "source", "target");
 	}
 
 	public static LauncherMeta.HashedURL forVers(Project project, String version, boolean isClient) {
