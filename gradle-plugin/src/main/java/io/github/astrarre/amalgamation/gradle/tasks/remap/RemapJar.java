@@ -21,10 +21,13 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -37,6 +40,7 @@ import org.gradle.api.internal.file.copy.CopyAction;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.jvm.tasks.Jar;
@@ -46,30 +50,9 @@ import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
 // todo source remapping, cope
-public abstract class RemapJar extends Jar {
-	@Input
-	public abstract Property<String> getFrom();
-
-	@Input
-	public abstract Property<String> getTo();
-
-	@InputFiles
-	public abstract Property<FileCollection> getClasspath();
-
-	@InputFiles
-	public abstract Property<FileCollection> getMappings();
+public abstract class RemapJar extends Jar implements RemapTask {
 
 	public RemapJar() {
-	}
-
-	public void mappings(Object dep, String from, String to) {
-		this.getFrom().set(from);
-		this.getTo().set(to);
-		this.getMappings().set(this.getProject().files(AmalgIO.resolve(this.getProject(), dep)));
-	}
-
-	public void mappings(MappingTarget target) {
-		this.mappings(target.forward(), target.from(), target.to());
 	}
 
 	/**
@@ -85,14 +68,18 @@ public abstract class RemapJar extends Jar {
 		}
 	}
 
-	public void remap() throws IOException {
-		FileCollection mappings = this.getMappings().get(), classpath = this.getClasspath().get();
+	@Internal
+	protected Path getCurrent() {
+		return this.getArchiveFile().get().getAsFile().toPath();
+	}
 
-		Path mappingsPath = AmalgIO.resolve(this.getProject(), mappings).toPath();
-		IMappingProvider from = Mappings.from(List.of(Mappings.from(mappingsPath, this.getFrom().get(), this.getTo().get())));
+	public void remap() throws IOException {
+		File mappings = this.getMappings().get();
+		FileCollection classpath = this.getClasspath().get();
+		IMappingProvider from = Mappings.from(List.of(Mappings.from(mappings.toPath(), this.getFrom().get(), this.getTo().get())));
 		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(from).build();
 
-		Path current = this.getArchiveFile().get().getAsFile().toPath();
+		Path current = getCurrent();
 
 		List<CompletableFuture<?>> futures = new ArrayList<>();
 		futures.add(remapper.readInputsAsync(current));

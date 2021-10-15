@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.devtech.zipio.impl.util.U;
+import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -19,6 +20,13 @@ import net.fabricmc.tinyremapper.IMappingProvider;
 
 public class Mappings {
 	public static final Map<Path, MemoryMappingTree> MAPPINGS_CACHE = new HashMap<>();
+
+	public static MappingSet fromLorenz(Path path, String from, String to) throws IOException {
+		var map = Mappings.from(path, from, to);
+		MappingSet set = MappingSet.create();
+		Mappings.loadMappings(set, map);
+		return set;
+	}
 
 	public static Namespaced from(Path file, String from, String to) throws IOException {
 		return new Namespaced(read(file), from, to);
@@ -69,6 +77,19 @@ public class Mappings {
 				}
 			}
 		};
+	}
+
+	public static void loadMappings(MappingSet set, Namespaced namespaced) {
+		int to = namespaced.toI(), from = namespaced.fromI();
+		for(MappingTree.ClassMapping cls : namespaced.tree().getClasses()) {
+			var top = set.getOrCreateTopLevelClassMapping(cls.getName(from)).setDeobfuscatedName(cls.getName(to));
+			for(MappingTree.MethodMapping method : cls.getMethods()) {
+				top.getOrCreateMethodMapping(method.getName(from), method.getDesc(from)).setDeobfuscatedName(method.getName(to));
+			}
+			for(MappingTree.FieldMapping field : cls.getFields()) {
+				top.getOrCreateFieldMapping(field.getName(from), field.getDesc(from)).setDeobfuscatedName(field.getName(to));
+			}
+		}
 	}
 
 	public record Namespaced(MemoryMappingTree tree, String from, String to, int fromI, int toI) {

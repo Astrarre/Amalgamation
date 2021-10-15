@@ -69,14 +69,15 @@ public abstract class AbstractRemapper implements AmalgRemapper {
 	public class RemapImpl implements Remap {
 		final Remap srcProc = AbstractRemapper.this.sourceRemapper != null ? AbstractRemapper.this.sourceRemapper.remap() : null;
 
-
 		@Override
 		public ProcessResult apply(VirtualZipEntry buffer) {
 			String path = buffer.path();
 			if(path.endsWith(".class")) {
 				ByteBuffer read = buffer.read();
 				AbstractRemapper.this.readFileToInput(this, path, read);
-			} else if(this.srcProc == null) {
+			}
+
+			if(this.srcProc == null) {
 				buffer.copyToOutput();
 			} else {
 				return this.srcProc.apply(buffer);

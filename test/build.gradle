@@ -98,6 +98,8 @@ compileJava {
 }
 
 import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapJar
+import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapSourcesJar
+import io.github.astrarre.amalgamation.gradle.tasks.remap.MigrateMappingsTask
 
 task testDiff(type: JavaExec) {
     group = "tests"
@@ -115,6 +117,8 @@ task testDiff(type: JavaExec) {
     dependsOn tasks.classes
 }
 
+
+
 //ag.idea().java(testDiff) {}
 
 /*
@@ -130,6 +134,20 @@ task productionJar(type: RemapJar) {
     archivesBaseName = 'fabric'
     classpath = configurations.compileClasspath
     mappings(mergedMappings, 'named', 'intermediary')
+}
+
+task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+    classpath = configurations.compileClasspath
+    mappings(mergedMappings, 'named', 'intermediary')
+}
+
+task migrateMappings(type: MigrateMappingsTask) {
+    inputDir = "${project.projectDir}/src/main/java"
+    outputDir = "${project.projectDir}/src/main/remapped"
+    classpath = configurations.compileClasspath
+    mappings("net.fabricmc:yarn:1.17.1+build.61", "net.fabricmc:yarn:1.15.2+build.17")
 }
 
 task loadMcEnv {

@@ -1,6 +1,9 @@
 import io.github.astrarre.amalgamation.api.Displace;
 import io.github.astrarre.amalgamation.api.Platform;
 
+import net.minecraft.nbt.NbtByteArray;
+import net.minecraft.nbt.NbtCompound;
+
 public class Concern implements Runnable {
     public static void main(String[] args) {
         System.out.println("aaaaaaggggadwadawdafffffnnnna");
@@ -21,5 +24,7 @@ public class Concern implements Runnable {
 
     @Override
     public void run() {
+        NbtCompound compound = new NbtCompound();
+        compound.put("urmom", new NbtByteArray(new byte[0]));
     }
 }

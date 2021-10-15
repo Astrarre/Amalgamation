@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -20,6 +21,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.google.common.hash.Hasher;
+import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
@@ -128,19 +130,31 @@ public class URLDependency extends ZipProcessDependency {
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
 		if(isOutdated) {
-			ZipTag tag = process.createZipTag(path);
-			process.afterExecute(() -> {
-				try(var result = this.getResult(); ZipInputStream zis = new ZipInputStream(result.stream)) {
-					ReadableByteChannel channel = Channels.newChannel(zis);
-					ZipEntry entry;
-					while((entry = zis.getNextEntry()) != null) {
-						ByteBuffer buffer = U.read(channel);
-						tag.write(entry.getName(), buffer);
-					}
+			if(path == null) { // virtual output
+				FileSystem virtual = Jimfs.newFileSystem();
+				Path temp = virtual.getPath("temp.jar");
+				try(var result = this.getResult()) {
+					Files.copy(result.stream, temp);
 				} catch(Exception e) {
 					throw U.rethrow(e);
 				}
-			});
+				process.addProcessed(temp);
+				process.addCloseable(virtual);
+			} else { // real output
+				ZipTag tag = process.createZipTag(path);
+				process.afterExecute(() -> {
+					try(var result = this.getResult(); ZipInputStream zis = new ZipInputStream(result.stream)) {
+						ReadableByteChannel channel = Channels.newChannel(zis);
+						ZipEntry entry;
+						while((entry = zis.getNextEntry()) != null) {
+							ByteBuffer buffer = U.read(channel);
+							tag.write(entry.getName(), buffer);
+						}
+					} catch(Exception e) {
+						throw U.rethrow(e);
+					}
+				});
+			}
 		} else if(path != null && Files.exists(path)) {
 			process.addProcessed(path);
 		} else {
