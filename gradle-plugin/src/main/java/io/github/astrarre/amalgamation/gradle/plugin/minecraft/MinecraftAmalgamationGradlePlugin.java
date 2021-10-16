@@ -20,10 +20,15 @@
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.MigrateSourcesTask;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapJar;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapSourcesJar;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.ExtensionContainer;
+import org.gradle.api.reflect.TypeOf;
 import org.jetbrains.annotations.NotNull;
 
 public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlugin implements Plugin<Project> {
@@ -46,8 +51,11 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setName("Minecraft Libraries");
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
-		target.getExtensions().create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target), target);
-
+		ExtensionContainer container = target.getExtensions();
+		container.create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target), target);
+		container.add(new TypeOf<>() {}, "RemapJar", RemapJar.class);
+		container.add(new TypeOf<>() {}, "RemapSourcesJar", RemapSourcesJar.class);
+		container.add(new TypeOf<>() {}, "MigrateSourcesTask", MigrateSourcesTask.class);
 	}
 
 	@Override

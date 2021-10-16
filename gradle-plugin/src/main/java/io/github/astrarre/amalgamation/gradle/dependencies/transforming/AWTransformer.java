@@ -5,17 +5,18 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import net.fabricmc.accesswidener.AccessWidener;
+import net.fabricmc.accesswidener.AccessWidenerClassVisitor;
 import net.fabricmc.accesswidener.AccessWidenerReader;
-import net.fabricmc.accesswidener.AccessWidenerVisitor;
 
 public class AWTransformer implements Transformer {
 	protected final File aw;
@@ -32,20 +33,25 @@ public class AWTransformer implements Transformer {
 	}
 
 	@Override
-	public void apply(ClassNode node) {
+	public ClassNode apply(ClassNode node) {
+		ClassNode n = new ClassNode();
+		ClassVisitor visitor = AccessWidenerClassVisitor.createClassVisitor(Opcodes.ASM9, n, this.widener);
+		node.accept(visitor);
+		return n;
+	}
+
+	@Override
+	public void applyJava(CompilationUnit unit) {
+		for(TypeDeclaration<?> type : unit.getTypes()) {
+			String qualified = type.getFullyQualifiedName().orElseThrow();
+			if(this.widener.getTargets().contains(qualified.replace('.', '/'))) {
+
+			}
+		}
 	}
 
 	@Override
 	public void hash(Hasher hasher) {
 		AmalgIO.hash(hasher, this.aw);
-	}
-
-	@Override
-	public byte[] processResource(String path, byte[] input) {
-		ClassWriter writer = new ClassWriter(0);
-		ClassVisitor visitor = AccessWidenerVisitor.createClassVisitor(Opcodes.ASM9, writer, this.widener);
-		ClassReader reader = new ClassReader(input);
-		reader.accept(visitor, 0);
-		return writer.toByteArray();
 	}
 }

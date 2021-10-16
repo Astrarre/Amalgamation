@@ -17,7 +17,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
-public abstract class MigrateMappingsTask extends DefaultTask {
+public abstract class MigrateSourcesTask extends DefaultTask {
 	@InputDirectory
 	public abstract Property<String> getInputDir();
 

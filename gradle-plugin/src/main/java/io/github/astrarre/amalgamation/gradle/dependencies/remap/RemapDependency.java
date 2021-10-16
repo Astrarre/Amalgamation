@@ -2,27 +2,37 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.bin.TRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src.TrieHarderRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
+import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
+import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 
 public class RemapDependency extends ZipProcessDependency {
 	final DependencyRemapConfig config;
+
+	// todo add resource remappers
 
 	public RemapDependency(Project project, DependencyRemapConfig config) {
 		super(project, "io.github.astrarre.amalgamation", "remapped", "1.0.0");

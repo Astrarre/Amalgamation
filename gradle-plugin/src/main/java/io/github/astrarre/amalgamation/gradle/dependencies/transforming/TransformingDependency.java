@@ -77,6 +77,9 @@ public class TransformingDependency extends ZipProcessDependency {
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
+		for(Transformer transformer : this.transformers) {
+			transformer.hash(hasher);
+		}
 		for(Dependency dependency : this.dependencies) {
 			this.hashDep(hasher, dependency);
 		}
@@ -89,6 +92,7 @@ public class TransformingDependency extends ZipProcessDependency {
 
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+		// todo add isOutdated support
 		for(Dependency dependency : this.dependencies) {
 			resolver.apply(dependency, p -> {
 				Hasher hasher = HASHING.newHasher();
@@ -108,7 +112,7 @@ public class TransformingDependency extends ZipProcessDependency {
 					reader.accept(node, 0);
 					int flags = 0;
 					for(Transformer transformer : TransformingDependency.this.transformers) {
-						transformer.apply(node);
+						node = transformer.apply(node);
 						flags |= transformer.writerFlags();
 					}
 					ClassWriter writer = new ClassWriter(flags);

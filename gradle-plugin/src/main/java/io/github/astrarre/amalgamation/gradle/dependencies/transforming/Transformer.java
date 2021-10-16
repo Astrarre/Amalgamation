@@ -1,10 +1,13 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.transforming;
 
+import com.github.javaparser.ast.CompilationUnit;
 import com.google.common.hash.Hasher;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface Transformer {
-	void apply(ClassNode node);
+	ClassNode apply(ClassNode node);
+
+	void applyJava(CompilationUnit unit);
 
 	/**
 	 * hash the inputs to this transformer, if the hash changes, the jar changes
@@ -13,10 +16,6 @@ public interface Transformer {
 
 	default boolean processes(String path) {
 		return path.endsWith(".class");
-	}
-
-	default byte[] processResource(String path, byte[] input) {
-		return input;
 	}
 
 	default int writerFlags() {

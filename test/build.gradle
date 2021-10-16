@@ -59,10 +59,11 @@ dependencies {
     }
     //aaaaa intermediaryMinecraft
 
+    def cope
     aaaaa ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
         trieHarder()
-        remap(intermediaryMinecraft, true)
+        cope = remap(intermediaryMinecraft, true)
         remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
             exclude module: 'fabric-loader'
         }
@@ -97,9 +98,8 @@ compileJava {
     dependsOn tasks.unzip
 }
 
-import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapJar
-import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapSourcesJar
-import io.github.astrarre.amalgamation.gradle.tasks.remap.MigrateMappingsTask
+// todo maybe just add an Extension with name RemapJar with RemapJar.class
+//      sometimes, my genius, it generates gravity
 
 task testDiff(type: JavaExec) {
     group = "tests"
@@ -116,8 +116,6 @@ task testDiff(type: JavaExec) {
     workingDir("$rootDir/run")
     dependsOn tasks.classes
 }
-
-
 
 //ag.idea().java(testDiff) {}
 
@@ -143,7 +141,7 @@ task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {
     mappings(mergedMappings, 'named', 'intermediary')
 }
 
-task migrateMappings(type: MigrateMappingsTask) {
+task migrateMappings(type: MigrateSourcesTask) {
     inputDir = "${project.projectDir}/src/main/java"
     outputDir = "${project.projectDir}/src/main/remapped"
     classpath = configurations.compileClasspath

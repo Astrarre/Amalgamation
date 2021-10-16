@@ -21,38 +21,28 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.impl.util.U;
-import org.gradle.api.Action;
-import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.file.copy.CopyAction;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.jvm.tasks.Jar;
 
 import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
-// todo source remapping, cope
 public abstract class RemapJar extends Jar implements RemapTask {
+	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
 
+	// todo aw remapping
 	public RemapJar() {
+		this.remappers.add(new AwResourceRemapper("intermediary"));
 	}
 
 	/**
@@ -79,7 +69,7 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		IMappingProvider from = Mappings.from(List.of(Mappings.from(mappings.toPath(), this.getFrom().get(), this.getTo().get())));
 		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(from).build();
 
-		Path current = getCurrent();
+		Path current = this.getCurrent();
 
 		List<CompletableFuture<?>> futures = new ArrayList<>();
 		futures.add(remapper.readInputsAsync(current));
@@ -90,9 +80,9 @@ public abstract class RemapJar extends Jar implements RemapTask {
 
 		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
-		try(OutputConsumerPath outputConsumerPath = new OutputConsumerPath.Builder(current).build()) {
-			outputConsumerPath.addNonClassFiles(current);
-			remapper.apply(outputConsumerPath);
+		try(OutputConsumerPath ocp = new OutputConsumerPath.Builder(current).build()) {
+			ocp.addNonClassFiles(current, remapper, this.remappers);
+			remapper.apply(ocp);
 		} finally {
 			remapper.finish();
 		}
