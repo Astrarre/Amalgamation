@@ -3,7 +3,6 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper;
 import java.util.List;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.zipio.ZipOutput;
 import net.devtech.zipio.processors.entry.ZipEntryProcessor;
 import net.devtech.zipio.processors.zip.PostZipProcessor;
 

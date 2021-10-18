@@ -84,8 +84,8 @@ public abstract class MigrateSourcesTask extends DefaultTask {
 
 	@TaskAction
 	public void run() throws Exception {
-		var src = Mappings.fromLorenz(from(this.getSrcMappings()), this.getSrcName().get(), this.getSrcIntermediateName().get());
-		var dst = Mappings.fromLorenz(from(this.getDstMappings()), this.getDstName().get(), this.getDstIntermediateName().get());
+		var src = Mappings.toLorenz(from(this.getSrcMappings()), this.getSrcName().get(), this.getSrcIntermediateName().get());
+		var dst = Mappings.toLorenz(from(this.getDstMappings()), this.getDstName().get(), this.getDstIntermediateName().get());
 		MappingSet combined = src.merge(dst);
 		Mercury mercury = RemapTask.createMercury(combined, this.getClasspath());
 		mercury.rewrite(Path.of(this.getInputDir().get()), Path.of(this.getOutputDir().get()));

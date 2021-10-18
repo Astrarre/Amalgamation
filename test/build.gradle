@@ -90,7 +90,7 @@ task unzip(type: Copy) {
 
 compileJava {
     def compilerArgs = options.compilerArgs
-    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappingsPath/mappingsPath.tiny" as String)
+    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappings/mappings.tiny" as String)
     compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String)
     // I have no idea what this does btw
     compilerArgs.add("-AoutRefMapFile=${destinationDirectory.get().asFile}/test-refmap.json" as String)
@@ -131,7 +131,9 @@ task productionJar(type: RemapJar) {
     with jar
     archivesBaseName = 'fabric'
     classpath = configurations.compileClasspath
+    remapAw()
     mappings(mergedMappings, 'named', 'intermediary')
+    mappings(files("$buildDir${File.separator}test.tiny"), 'named', 'intermediary')
 }
 
 task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {

@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import net.devtech.zipio.impl.util.U;
 import org.cadixdev.lorenz.MappingSet;
@@ -21,7 +22,7 @@ import net.fabricmc.tinyremapper.IMappingProvider;
 public class Mappings {
 	public static final Map<Path, MemoryMappingTree> MAPPINGS_CACHE = new HashMap<>();
 
-	public static MappingSet fromLorenz(Path path, String from, String to) throws IOException {
+	public static MappingSet toLorenz(Path path, String from, String to) throws IOException {
 		var map = Mappings.from(path, from, to);
 		MappingSet set = MappingSet.create();
 		Mappings.loadMappings(set, map);
@@ -64,15 +65,24 @@ public class Mappings {
 				int from = mapping.fromI, to = mapping.toI;
 				for(MappingTree.ClassMapping cls : tree.getClasses()) {
 					String name = cls.getName(from);
-					out.acceptClass(name, cls.getName(to));
+					String deobfC = cls.getName(to);
+					if(deobfC != null) {
+						out.acceptClass(name, deobfC);
+					}
 					for(MappingTree.MethodMapping method : cls.getMethods()) {
-						IMappingProvider.Member m = new IMappingProvider.Member(name, method.getName(from), method.getDesc(from));
-						out.acceptMethod(m, method.getName(to));
+						String deobfM = method.getName(to);
+						if(deobfM != null) {
+							IMappingProvider.Member m = new IMappingProvider.Member(name, method.getName(from), method.getDesc(from));
+							out.acceptMethod(m, deobfM);
+						}
 					}
 
 					for(MappingTree.FieldMapping field : cls.getFields()) {
-						IMappingProvider.Member m = new IMappingProvider.Member(name, field.getName(from), field.getDesc(from));
-						out.acceptField(m, field.getName(to));
+						String deobfF = field.getName(to);
+						if(deobfF != null) {
+							IMappingProvider.Member f = new IMappingProvider.Member(name, field.getName(from), field.getDesc(from));
+							out.acceptField(f, deobfF);
+						}
 					}
 				}
 			}
@@ -82,14 +92,28 @@ public class Mappings {
 	public static void loadMappings(MappingSet set, Namespaced namespaced) {
 		int to = namespaced.toI(), from = namespaced.fromI();
 		for(MappingTree.ClassMapping cls : namespaced.tree().getClasses()) {
-			var top = set.getOrCreateTopLevelClassMapping(cls.getName(from)).setDeobfuscatedName(cls.getName(to));
+			String unmapped = cls.getName(to);
+			var top = set.getOrCreateTopLevelClassMapping(cls.getName(from));
+			if(unmapped != null) {
+				top.setDeobfuscatedName(unmapped);
+			}
 			for(MappingTree.MethodMapping method : cls.getMethods()) {
-				top.getOrCreateMethodMapping(method.getName(from), method.getDesc(from)).setDeobfuscatedName(method.getName(to));
+				String name = method.getName(to);
+				if(name != null) {
+					top.getOrCreateMethodMapping(method.getName(from), method.getDesc(from)).setDeobfuscatedName(name);
+				}
 			}
 			for(MappingTree.FieldMapping field : cls.getFields()) {
-				top.getOrCreateFieldMapping(field.getName(from), field.getDesc(from)).setDeobfuscatedName(field.getName(to));
+				String name = field.getName(to);
+				if(name != null) {
+					top.getOrCreateFieldMapping(field.getName(from), field.getDesc(from)).setDeobfuscatedName(name);
+				}
 			}
 		}
+	}
+
+	static <T, C> T orDef(T val, C context, Function<C, T> apply) {
+		return val == null ? apply.apply(context) : val;
 	}
 
 	public record Namespaced(MemoryMappingTree tree, String from, String to, int fromI, int toI) {

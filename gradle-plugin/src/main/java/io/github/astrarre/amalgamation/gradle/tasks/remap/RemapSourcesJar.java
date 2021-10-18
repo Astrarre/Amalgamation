@@ -7,20 +7,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
 import net.devtech.zipio.impl.util.U;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.mercury.Mercury;
-import org.gradle.api.file.FileCollection;
 
 public abstract class RemapSourcesJar extends RemapJar {
 	@Override
 	public void remap() throws IOException {
-		var set = Mappings.fromLorenz(this.getMappings().get().toPath(), this.getFrom().get(), this.getTo().get());
-		Mercury mercury = RemapTask.createMercury(set, this.getClasspath());
+		MappingSet set = MappingSet.create();
+		for(Mappings.Namespaced namespaced : this.readMappings()) {
+			Mappings.loadMappings(set, namespaced);
+		}
 
+		Mercury mercury = RemapTask.createMercury(set, this.getClasspath());
 		Path current = this.getCurrent();
 		Path temp = this.getProject().getBuildDir().toPath().resolve("amalg-remap-sources-temp");
 		try {

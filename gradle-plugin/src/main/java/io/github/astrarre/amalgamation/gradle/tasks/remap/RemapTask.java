@@ -2,44 +2,76 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.mercury.Mercury;
 import org.cadixdev.mercury.remapper.MercuryRemapper;
-import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Nested;
 
 public interface RemapTask extends Task {
-	@Input
-	Property<String> getFrom();
+	class MappingEntry {
+		public String from, to;
+		public File mappings;
 
-	@Input
-	Property<String> getTo();
+		@Input
+		public String getFrom() {
+			return this.from;
+		}
+
+		@Input
+		public String getTo() {
+			return this.to;
+		}
+
+		@InputFile
+		public File getMappings() {
+			return this.mappings;
+		}
+	}
 
 	@InputFiles
 	Property<FileCollection> getClasspath();
 
-	@InputFile
-	Property<File> getMappings();
+	@Nested
+	@Input
+	ListProperty<MappingEntry> getMappings();
 
 	default void mappings(Object dep, String from, String to) {
-		this.getFrom().set(from);
-		this.getTo().set(to);
-		this.getMappings().set(AmalgIO.resolve(this.getProject(), dep));
+		var lazy = Lazy.of(() -> {
+			MappingEntry entry = new MappingEntry();
+			entry.from = from;
+			entry.to = to;
+			entry.mappings = AmalgIO.resolve(this.getProject(), dep);
+			return entry;
+		});
+		this.getMappings().add(this.getProject().provider(lazy));
 	}
 
 	default void mappings(MappingTarget target) {
 		this.mappings(target.forward(), target.from(), target.to());
+	}
+
+	default List<Mappings.Namespaced> readMappings() throws IOException {
+		List<Mappings.Namespaced> namespaced = new ArrayList<>();
+		for(var entry : this.getMappings().get()) {
+			namespaced.add(Mappings.from(entry.mappings.toPath(), entry.from, entry.to));
+		}
+		return namespaced;
 	}
 
 	static Mercury createMercury(MappingSet set, Property<FileCollection> collection) throws IOException {

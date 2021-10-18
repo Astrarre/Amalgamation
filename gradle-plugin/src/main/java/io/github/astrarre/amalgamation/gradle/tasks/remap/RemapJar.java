@@ -25,11 +25,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 
@@ -40,9 +43,19 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 public abstract class RemapJar extends Jar implements RemapTask {
 	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
 
-	// todo aw remapping
 	public RemapJar() {
-		this.remappers.add(new AwResourceRemapper("intermediary"));
+	}
+
+	public void addResourceRemapper(OutputConsumerPath.ResourceRemapper remapper) {
+		this.remappers.add(remapper);
+	}
+
+	public void remapAw() {
+		this.remappers.add(new AwResourceRemapper(() -> this.getMappings().get().get(0).to));
+	}
+
+	public void remapAw(String destNamespace) {
+		this.remappers.add(new AwResourceRemapper(() -> destNamespace));
 	}
 
 	/**
@@ -64,9 +77,8 @@ public abstract class RemapJar extends Jar implements RemapTask {
 	}
 
 	public void remap() throws IOException {
-		File mappings = this.getMappings().get();
 		FileCollection classpath = this.getClasspath().get();
-		IMappingProvider from = Mappings.from(List.of(Mappings.from(mappings.toPath(), this.getFrom().get(), this.getTo().get())));
+		IMappingProvider from = Mappings.from(this.readMappings());
 		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(from).build();
 
 		Path current = this.getCurrent();

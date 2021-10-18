@@ -3,17 +3,18 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap.remap;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.devtech.zipio.impl.util.U;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 
-import net.fabricmc.accesswidener.AccessWidener;
 import net.fabricmc.accesswidener.AccessWidenerReader;
 import net.fabricmc.accesswidener.AccessWidenerRemapper;
 import net.fabricmc.accesswidener.AccessWidenerWriter;
@@ -23,11 +24,11 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 	private static final Logger LOGGER = Logger.getLogger(AwResourceRemapper.class.getSimpleName());
-	final String destNamespace;
+	final Supplier<String> destNamespace;
 	boolean hasResolvedAwFromFMJ;
 	Path awResolved;
 
-	public AwResourceRemapper(String namespace) {
+	public AwResourceRemapper(Supplier<String> namespace) {
 		this.destNamespace = namespace;
 	}
 
@@ -76,7 +77,7 @@ public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 		ForwardingVisitor visitor = new ForwardingVisitor(accessRemapper) {
 			@Override
 			public void visitHeader(String namespace) {
-				writer.visitHeader(AwResourceRemapper.this.destNamespace);
+				writer.visitHeader(AwResourceRemapper.this.destNamespace.get());
 			}
 		};
 		AccessWidenerReader reader = new AccessWidenerReader(visitor);

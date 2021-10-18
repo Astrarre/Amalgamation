@@ -9,7 +9,7 @@ import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractBinRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.bin.TRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src.TrieHarderRemapper;
@@ -66,7 +66,7 @@ public class RemapConfig {
 	}
 
 	public void setSrcRemapper(AmalgRemapper remapper) {
-		if(this.remapper instanceof AbstractRemapper a) {
+		if(this.remapper instanceof AbstractBinRemapper a) {
 			a.setSourceRemapper(remapper);
 			this.srcRemapper = remapper;
 		} else {

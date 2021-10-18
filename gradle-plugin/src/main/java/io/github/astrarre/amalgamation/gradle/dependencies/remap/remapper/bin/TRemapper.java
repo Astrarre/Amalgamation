@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractBinRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.ZipOutput;
@@ -12,7 +12,7 @@ import net.devtech.zipio.ZipOutput;
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
-public class TRemapper extends AbstractRemapper {
+public class TRemapper extends AbstractBinRemapper {
 	public static final Field EXECUTOR;
 
 	static {
@@ -55,6 +55,11 @@ public class TRemapper extends AbstractRemapper {
 	@Override
 	protected void write(RemapImpl remapData, ZipOutput output) {
 		this.remapper.apply((s, b) -> output.write(s + ".class", ByteBuffer.wrap(b)), ((RemapExt)remapData).tag);
+	}
+
+	@Override
+	protected void readNonClassToInput(RemapImpl remapData, String path, ByteBuffer buffer) {
+		super.readNonClassToInput(remapData, path, buffer);
 	}
 
 	public class RemapExt extends RemapImpl {
