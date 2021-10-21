@@ -18,6 +18,7 @@ import java.util.function.IntFunction;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.filtr.SourcesOutput;
 import net.devtech.zipio.OutputTag;
 import org.gradle.api.Project;
@@ -41,10 +42,12 @@ public class AmalgIO {
 	// start merger meta properties
 	public static final String TYPE = "type"; // resources, java, classes, all
 
-	public static String hash(Iterable<File> files) {
-		Hasher hasher = Hashing.sha256().newHasher();
-		hash(hasher, files);
-		return hasher.hash().toString();
+	public static void hashDep(Hasher hasher, Project project, Dependency dependency) throws IOException {
+		if(dependency instanceof CachedDependency c) {
+			c.hashInputs(hasher);
+		} else {
+			AmalgIO.hash(hasher, AmalgIO.resolve(project, List.of(dependency)));
+		}
 	}
 
 	public static void hash(Hasher hasher, Iterable<File> files) {

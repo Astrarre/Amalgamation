@@ -111,11 +111,7 @@ public class RemapConfig {
 
 	public Dependency hashDep(Hasher hasher, Object dependency) throws IOException {
 		Dependency resolved = this.of(dependency);
-		if(dependency instanceof CachedDependency c) {
-			c.hashInputs(hasher);
-		} else {
-			AmalgIO.hash(hasher, AmalgIO.resolve(this.project, List.of(resolved)));
-		}
+		AmalgIO.hashDep(hasher, this.project, resolved);
 		return resolved;
 	}
 

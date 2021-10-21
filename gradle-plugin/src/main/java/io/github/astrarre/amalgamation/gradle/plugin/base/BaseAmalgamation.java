@@ -22,11 +22,14 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
+
+import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.provider.Provider;
 
 public interface BaseAmalgamation {
@@ -36,6 +39,10 @@ public interface BaseAmalgamation {
     List<File> resolve(Iterable<Dependency> dependency);
 
     List<File> resolveWithSources(Iterable<Dependency> dependency);
+
+    Dependency sources(Object object);
+
+    Dependency sources(Object object, Closure<ModuleDependency> config);
 
     Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 

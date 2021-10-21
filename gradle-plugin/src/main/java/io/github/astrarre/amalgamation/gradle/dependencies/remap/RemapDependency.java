@@ -50,7 +50,7 @@ public class RemapDependency extends ZipProcessDependency {
 			}
 
 			config.getRemapper().init(maps);
-			this.logger.lifecycle("Remapping " + (config.inputsLocal.size() + config.inputsLocal.size()) + " dependencies");
+			this.logger.lifecycle("Remapping " + (config.inputsLocal.size() + config.inputsGlobal.size()) + " dependencies");
 		}
 
 		this.extracted(resolver, builder, isOutdated, mappingsHash, remapper, config.inputsGlobal, true, isOutdated);

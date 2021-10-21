@@ -28,7 +28,7 @@ public class DownloadUtil {
 
 		if(compressed) {
 			// We want to download gzip compressed stuff
-			connection.setRequestProperty("Accept-Encoding", "br"); // todo maybe use brotili idk
+			connection.setRequestProperty("Accept-Encoding", "gzip"); // todo maybe use brotili idk
 		}
 
 		// Try make the connection, it will hang here if the connection is bad

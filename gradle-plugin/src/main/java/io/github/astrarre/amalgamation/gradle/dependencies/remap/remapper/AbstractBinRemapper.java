@@ -20,8 +20,8 @@ public abstract class AbstractBinRemapper implements AmalgRemapper {
 	@Override
 	public void init(List<Mappings.Namespaced> mappings) {
 		this.classpath = new Classpath();
-		if(sourceRemapper != null) {
-			sourceRemapper.init(mappings);
+		if(this.sourceRemapper != null) {
+			this.sourceRemapper.init(mappings);
 		}
 	}
 
@@ -77,12 +77,10 @@ public abstract class AbstractBinRemapper implements AmalgRemapper {
 			if(path.endsWith(".class")) {
 				ByteBuffer read = buffer.read();
 				AbstractBinRemapper.this.readFileToInput(this, path, read);
-			}
-
-			if(this.srcProc == null) {
-				buffer.copyToOutput();
+			} else if(this.srcProc != null) {
+				this.srcProc.apply(buffer);
 			} else {
-				return this.srcProc.apply(buffer);
+				buffer.copyToOutput();
 			}
 			return ProcessResult.HANDLED;
 		}

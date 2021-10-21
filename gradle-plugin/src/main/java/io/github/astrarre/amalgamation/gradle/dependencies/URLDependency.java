@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 // todo this queries download url twice for some unknown reason...
 public class URLDependency extends ZipProcessDependency {
 	final String url;
+	public boolean compressed = true;
 	public boolean shouldOutput = true;
 	public Path output;
 	String etag;
@@ -43,6 +44,12 @@ public class URLDependency extends ZipProcessDependency {
 	public URLDependency(Project project, String url) {
 		super(project, "io.github.amalgamation", "download", "0.0.0");
 		this.url = url;
+	}
+
+	public URLDependency(Project project, String url, boolean compressed) {
+		super(project, "io.github.amalgamation", "download", "0.0.0");
+		this.url = url;
+		this.compressed = compressed;
 	}
 
 	@Override
@@ -171,7 +178,7 @@ public class URLDependency extends ZipProcessDependency {
 					this.lastModifyDate,
 					this.getLogger(),
 					BaseAmalgamationGradlePlugin.offlineMode,
-					true);
+					this.compressed);
 		}
 		return this.result;
 	}

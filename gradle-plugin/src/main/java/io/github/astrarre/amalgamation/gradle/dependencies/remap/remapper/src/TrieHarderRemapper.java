@@ -66,6 +66,8 @@ public class TrieHarderRemapper implements AmalgRemapper {
 					throw U.rethrow(e);
 				}
 				buffer.writeToOutput(baos.getBytes());
+			} else {
+				buffer.copyToOutput();
 			}
 			return ProcessResult.HANDLED;
 		}

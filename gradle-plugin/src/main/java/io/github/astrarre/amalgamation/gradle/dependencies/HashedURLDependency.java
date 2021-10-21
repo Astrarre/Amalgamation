@@ -18,6 +18,11 @@ public class HashedURLDependency extends URLDependency {
 		this.hash = url.hash;
 	}
 
+	public HashedURLDependency(Project project, LauncherMeta.HashedURL url, boolean compressed) {
+		super(project, url.url, compressed);
+		this.hash = url.hash;
+	}
+
 	@Override
 	protected void readInputs(@Nullable InputStream stream) throws IOException {
 	}

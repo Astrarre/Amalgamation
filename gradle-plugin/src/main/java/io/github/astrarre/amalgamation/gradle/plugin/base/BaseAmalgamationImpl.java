@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Iterables;
+import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.FilesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
@@ -17,6 +19,7 @@ import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
@@ -50,6 +53,21 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		List<File> resolve = AmalgIO.resolve(this.project, dependency);
 		resolve.addAll(files);
 		return resolve;
+	}
+
+	private Dependency sources0(Dependency dependency) {
+		Supplier<Iterable<Path>> supplier = () -> AmalgIO.resolveSources(this.project, List.of(dependency));
+		return new FilesDependency(this.project, dependency.getGroup(), dependency.getName() + "-sources", dependency.getVersion(), supplier);
+	}
+
+	@Override
+	public Dependency sources(Object object) {
+		return this.sources0(this.project.getDependencies().create(object));
+	}
+
+	@Override
+	public Dependency sources(Object object, Closure<ModuleDependency> config) {
+		return this.sources0(this.project.getDependencies().create(object, config));
 	}
 
 	@Override
