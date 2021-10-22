@@ -57,6 +57,7 @@ subprojects {
     apply(plugin = "java")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
+    apply(plugin = "eclipse")
 
     tasks.withType<AbstractArchiveTask> {
         from(rootProject.file("LICENSE"))

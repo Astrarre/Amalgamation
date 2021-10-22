@@ -22,6 +22,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
 import org.gradle.StartParameter;
@@ -66,9 +67,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 				temp.plugin = idea;
 			});
 			this.listenFor(target, "org.jetbrains.gradle.plugin.idea-ext", idea -> ConfigIdeaExt.configure(target, temp.plugin));
-			this.listenFor(target, "eclipse", eclipse -> {
-				// todo
-			});
+			this.listenFor(target, "eclipse", eclipse -> ConfigureEclipse.configure(target));
 		}
 	}
 
