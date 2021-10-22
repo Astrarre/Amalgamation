@@ -61,11 +61,11 @@ dependencies {
 
     aaaaa ag.map {
         mappings(mergedMappings, 'intermediary', 'named')
-        //trieHarder()
+        trieHarder()
         remap(intermediaryMinecraft, true)
-        /*remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
+        remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
             exclude module: 'fabric-loader'
-        }*/
+        }
     }
 
     //aaaaa ag.fabricLoader("0.11.7")

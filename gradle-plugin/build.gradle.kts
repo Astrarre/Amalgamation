@@ -47,7 +47,7 @@ dependencies {
     implementation("net.fabricmc:mapping-io:0.2.1")
     implementation("net.fabricmc:access-widener-javaparser:2.1.0")
     implementation("io.github.coolmineman:trieharder:0.0.1")
-    implementation("net.devtech:zip-io:3.0.8")
+    implementation("net.devtech:zip-io:3.1.0")
     compileOnly("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     implementation("com.google.jimfs:jimfs:1.2")
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
