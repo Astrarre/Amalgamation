@@ -48,7 +48,6 @@ public interface RemapTask extends Task {
 	Property<FileCollection> getClasspath();
 
 	@Nested
-	@Input
 	ListProperty<MappingEntry> getMappings();
 
 	default void mappings(Object dep, String from, String to) {
