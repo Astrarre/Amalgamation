@@ -3,3 +3,8 @@
 build/
 out/
 run/
+
+.settings
+.classpath
+.project
+bin
