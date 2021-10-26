@@ -47,4 +47,4 @@ pluginManagement {
     }
 }
 
-includeBuild '..'
+includeBuild("..")

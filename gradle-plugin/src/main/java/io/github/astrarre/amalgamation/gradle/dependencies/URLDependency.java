@@ -36,6 +36,7 @@ public class URLDependency extends ZipProcessDependency {
 	final String url;
 	public boolean compressed = true;
 	public boolean shouldOutput = true;
+	public boolean isOptional = false;
 	public Path output;
 	String etag;
 	long lastModifyDate = -1;
@@ -56,7 +57,7 @@ public class URLDependency extends ZipProcessDependency {
 	public void hashInputs(Hasher hasher) throws IOException {
 		DownloadUtil.Result result = this.getResult();
 		hasher.putString(this.url, StandardCharsets.UTF_8);
-		if(result.etag != null) {
+		if(result != null && result.etag != null) {
 			hasher.putString(result.etag, StandardCharsets.UTF_8);
 		}
 	}
@@ -122,12 +123,19 @@ public class URLDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) {
+	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
-			try(DownloadUtil.Result result = this.getResult()) {
+			DownloadUtil.Result result = this.getResult();
+			if(result.error != null) {
+				if(this.isOptional) {
+					return List.of();
+				} else {
+					throw result.error;
+				}
+			}
+
+			try(result) {
 				Files.copy(result.stream, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
-			} catch(Exception e) {
-				throw new RuntimeException(url, e);
 			}
 		}
 		return List.of(resolvedPath);
@@ -137,20 +145,28 @@ public class URLDependency extends ZipProcessDependency {
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
 		if(isOutdated) {
+			var result = this.getResult();
+			if(result.error != null) {
+				if(this.isOptional) {
+					return;
+				} else {
+					throw result.error;
+				}
+			}
 			if(path == null) { // virtual output
 				FileSystem virtual = Jimfs.newFileSystem();
 				Path temp = virtual.getPath("temp.jar");
-				try(var result = this.getResult()) {
+				try {
 					Files.copy(result.stream, temp);
-				} catch(Exception e) {
-					throw U.rethrow(e);
+				} finally {
+					result.close();
 				}
 				process.addProcessed(temp);
 				process.addCloseable(virtual);
 			} else { // real output
 				ZipTag tag = process.createZipTag(path);
 				process.afterExecute(() -> {
-					try(var result = this.getResult(); ZipInputStream zis = new ZipInputStream(result.stream)) {
+					try(ZipInputStream zis = new ZipInputStream(result.stream)) {
 						ReadableByteChannel channel = Channels.newChannel(zis);
 						ZipEntry entry;
 						while((entry = zis.getNextEntry()) != null) {
@@ -179,6 +195,9 @@ public class URLDependency extends ZipProcessDependency {
 					this.getLogger(),
 					BaseAmalgamationGradlePlugin.offlineMode,
 					this.compressed);
+			if(!this.isOptional && this.result != null && this.result.error != null) {
+				throw this.result.error;
+			}
 		}
 		return this.result;
 	}

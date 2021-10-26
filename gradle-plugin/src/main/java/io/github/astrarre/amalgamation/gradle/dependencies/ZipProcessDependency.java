@@ -8,6 +8,8 @@ import java.util.function.UnaryOperator;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.Filters;
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.SourcesOutput;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import net.devtech.zipio.OutputTag;
@@ -33,6 +35,11 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		TaskInputResolver resolver = (dependencies, tag) -> ZipProcessable.apply(this.project, builder, dependencies, tag);
 		this.add(resolver, builder, this.getPath(), isOutdated);
 		builder.afterExecute(() -> this.after(isOutdated));
+		for(OutputTag output : builder.getOutputs()) {
+			if(output instanceof SourcesOutput s) {
+				AmalgIO.SOURCES.add(s.getVirtualPath().toRealPath());
+			}
+		}
 		return builder;
 	}
 

@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.gradle.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.gradle.api.logging.Logger;
@@ -39,7 +40,9 @@ public class DownloadUtil {
 		if ((code < 200 || code > 299) && code != HttpURLConnection.HTTP_NOT_MODIFIED) {
 			//Didn't get what we expected
 			clock.close();
-			throw new IOException(connection.getResponseMessage() + " for " + url);
+			Result result = new Result(null, -1,clock, null);
+			result.error = new IOException(connection.getResponseMessage() + " for " + url);
+			return result;
 		}
 
 		long modifyTime = connection.getHeaderFieldDate("Last-Modified", -1);
@@ -48,7 +51,7 @@ public class DownloadUtil {
 		if (currentLastModifyDate != -1 && (code == HttpURLConnection.HTTP_NOT_MODIFIED || modifyTime > 0 && currentLastModifyDate >= modifyTime)) {
 			if(logger != null) logger.lifecycle("'{}' Not Modified, skipping.", url);
 			clock.close();
-			return new Result(null, currentLastModifyDate, clock, nEtag); //What we've got is already fine
+			return new Result(null, currentLastModifyDate, clock, nEtag); // What we've got is already fine
 		}
 
 		long contentLength = connection.getContentLengthLong();
@@ -62,7 +65,9 @@ public class DownloadUtil {
 			return new Result(stream, modifyTime, clock, nEtag);
 		} catch (IOException e) {
 			clock.close();
-			throw e;
+			Result result = new Result(null, -1,clock, null);
+			result.error = e;
+			return result;
 		}
 	}
 
@@ -72,6 +77,7 @@ public class DownloadUtil {
 		public final long lastModifyDate;
 		public final Clock clock;
 		public final String etag;
+		public IOException error;
 
 		public Result(InputStream stream, long date, Clock clock, String etag) {
 			this.stream = stream;
@@ -81,12 +87,16 @@ public class DownloadUtil {
 		}
 
 		@Override
-		public void close() throws Exception {
+		public void close() {
 			if(clock != null) {
 				clock.close();
 			}
 			if(stream != null) {
-				stream.close();
+				try {
+					stream.close();
+				} catch(IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		}
 	}

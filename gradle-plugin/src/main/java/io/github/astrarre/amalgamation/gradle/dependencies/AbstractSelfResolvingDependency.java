@@ -127,9 +127,9 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@Nullable
 	@Override
 	public ComponentIdentifier getTargetComponentId() {
-		var identifier = DefaultModuleIdentifier.newId(this.getGroup(), this.getName());
-		return new DefaultModuleComponentIdentifier(identifier, this.getVersion());
-		//return this::toString;
+		//var identifier = DefaultModuleIdentifier.newId(this.getGroup(), this.getName());
+		//return new DefaultModuleComponentIdentifier(identifier, this.getVersion());
+		return this::toString;
 	}
 
 	@Override

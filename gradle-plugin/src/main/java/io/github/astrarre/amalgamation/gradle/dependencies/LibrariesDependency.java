@@ -1,17 +1,19 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.artifacts.ResolveException;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	/**
@@ -34,22 +36,51 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolvePaths() {
+	protected Iterable<Path> resolvePaths() throws IOException {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		return meta.getVersion(this.version)
-				.getLibraries()
-				.stream()
-				.map(i -> i.evaluateAllDependencies(this.rule))
-				.flatMap(Collection::stream)
-				.map(dependency -> {
-					Path jar = Paths.get(this.librariesDirectory).resolve(dependency.path);
-					HashedURLDependency dep = new HashedURLDependency(this.project, dependency);
-					dep.output = jar;
-					return dep;
-				})
-				.map(HashedURLDependency::resolve)
-				.flatMap(Set::stream)
-				.map(File::toPath)
-				.collect(Collectors.toList());
+		final Path dir = Paths.get(this.librariesDirectory);
+		List<LauncherMeta.Library> libraries = meta.getVersion(this.version).getLibraries();
+		List<File> files = new ArrayList<>();
+
+		for(LauncherMeta.Library library : libraries) {
+			boolean failedDirectDownload = false; // use maven as fallback incase using the URL does not work (maybe mojang servers down?)
+			for(LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(this.rule)) {
+				Path jar = dir.resolve(dependency.path);
+				HashedURLDependency dep = new HashedURLDependency(this.project, dependency);
+				dep.output = jar;
+				dep.isOptional = true;
+				var resolved = dep.resolvePaths();
+				if(!resolved.iterator().hasNext()) {
+					failedDirectDownload = true;
+				} else {
+					for(Path path : resolved) {
+						files.add(path.toFile());
+					}
+				}
+			}
+
+			DependencyHandler deps = this.project.getDependencies();
+
+			if(failedDirectDownload) {
+				Dependency dependency = deps.create(library.name);
+				files.addAll(AmalgIO.resolve(this.project, List.of(dependency)));
+			}
+
+			Dependency sources = deps.create(library.name + ":sources");
+			List<Path> resolvedSources;
+			try {
+				resolvedSources = AmalgIO.resolveSources(this.project, List.of(sources));
+			} catch(ResolveException e) {
+				resolvedSources = List.of();
+			}
+
+			for(Path file : resolvedSources) {
+				AmalgIO.SOURCES.add(file.toRealPath());
+				files.add(file.toFile());
+			}
+		}
+
+
+		return files.stream().map(File::toPath).toList();
 	}
 }

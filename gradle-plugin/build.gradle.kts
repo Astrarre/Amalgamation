@@ -54,8 +54,6 @@ dependencies {
     compileOnly("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     implementation("com.google.jimfs:jimfs:1.2")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
-
-    // todo unhardcode this
     implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
 
 

@@ -47,7 +47,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			var f2 = new File(target.getBuildDir(), "amalgamation-caches/transforms/AccessWidenerInput/wycMyZQyEh1PfjpycxA61DROlQgNcGA1nMwyMgAwqCM=");
 			repository.setDirs(Set.of(f1, f2));
 		});*/
-		target.getRepositories().add(new AmalgSourcesRepository(target));
+		//target.getRepositories().add(new AmalgSourcesRepository(target));
 
 		if(target == target.getRootProject()) {
 			StartParameter parameter = target.getGradle().getStartParameter();

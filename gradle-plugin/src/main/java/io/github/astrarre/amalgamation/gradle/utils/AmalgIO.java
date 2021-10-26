@@ -1,24 +1,25 @@
 package io.github.astrarre.amalgamation.gradle.utils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import com.google.common.collect.Iterables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -33,13 +34,16 @@ import org.gradle.language.base.artifact.SourcesArtifact;
 
 public class AmalgIO {
 	public static final HashFunction HASHING = com.google.common.hash.Hashing.sha256();
-	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
 	/**
 	 * if the first entry of a zip file is a file with the name of this field, it is configured
 	 */
 	public static final String MERGER_META_FILE = "merger_metadata.properties";
 	// start merger meta properties
 	public static final String TYPE = "type"; // resources, java, classes, all
+	/**
+	 * All the sources jars we add to the classpath
+	 */
+	public static final Set<Path> SOURCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	public static void hashDep(Hasher hasher, Project project, Dependency dependency) throws IOException {
 		if(dependency instanceof CachedDependency c) {
@@ -89,24 +93,6 @@ public class AmalgIO {
 		return project.getBuildDir().toPath().resolve("amalgamation-caches");
 	}
 
-	public static byte[] readAll(InputStream zis) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		copy(zis, baos);
-		return baos.toByteArray();
-	}
-
-	public static void copy(InputStream from, OutputStream to) throws IOException {
-		int read;
-		byte[] buf = BUFFER.get();
-		while((read = from.read(buf)) != -1) {
-			to.write(buf, 0, read);
-		}
-	}
-
-	public static File resolve(Project project, Dependency dependencies) {
-		return Iterables.getOnlyElement(resolve(project, List.of(dependencies)));
-	}
-
 	public static List<Path> resolveSources(Project project, Iterable<Dependency> dependencies) {
 		List<ComponentIdentifier> ids = project.getConfigurations()
 				.detachedConfiguration(toArray(dependencies, Dependency[]::new))
@@ -130,6 +116,7 @@ public class AmalgIO {
 				.map(ResolvedArtifactResult.class::cast)
 				.map(ResolvedArtifactResult::getFile)
 				.map(File::toPath)
+				.map(apply(Path::toRealPath))
 				.toList();
 	}
 
@@ -169,7 +156,7 @@ public class AmalgIO {
 
 	public static File resolve(Project project, Object notation) {
 		Dependency dependency = project.getDependencies().create(notation);
-		return resolve(project, dependency);
+		return Iterables.getOnlyElement(resolve(project, List.of(dependency)));
 	}
 
 	public static String b64(byte[] data) {
@@ -196,5 +183,22 @@ public class AmalgIO {
 		Hasher hasher = HASHING.newHasher();
 		hash(hasher, path.toFile());
 		return hash(hasher);
+	}
+
+	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {
+		return function;
+	}
+
+	interface UnsafeFunction<A, B> extends Function<A, B> {
+		@Override
+		default B apply(A a) {
+			try {
+				return this.runUnsafe(a);
+			} catch(Throwable e) {
+				throw U.rethrow(e);
+			}
+		}
+
+		B runUnsafe(A a) throws Throwable;
 	}
 }

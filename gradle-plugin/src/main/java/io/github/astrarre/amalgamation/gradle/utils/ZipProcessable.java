@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Streams;
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.SourcesOutput;
@@ -21,11 +22,13 @@ import org.gradle.api.artifacts.Dependency;
 public interface ZipProcessable {
 	ZipProcess process() throws IOException;
 
-	static Stream<Path> getOutputs(Project project, Dependency dependency) throws IOException {
+	static Stream<OutputTag> getOutputs(Project project, Dependency dependency) throws IOException {
 		if(dependency instanceof ZipProcessable z) {
-			return Streams.stream(z.process().getOutputs()).map(OutputTag::getVirtualPath);
+			return Streams.stream(z.process().getOutputs());
 		} else {
-			return AmalgIO.resolve(project, List.of(dependency)).stream().map(File::toPath);
+			List<Dependency> deps = List.of(dependency);
+			return Stream.concat(AmalgIO.resolve(project, deps).stream().map(File::toPath).map(OutputTag::new),
+					AmalgIO.resolveSources(project, deps).stream().map(SourcesOutput::new));
 		}
 	}
 

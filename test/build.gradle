@@ -1,3 +1,5 @@
+import java.nio.file.Paths
+
 /*
  * Amalgamation
  * Copyright (C) 2021 Astrarre
@@ -18,6 +20,7 @@
  */
 plugins {
     id 'java'
+    id 'idea'
     id 'java-library'
     id 'maven-publish'
     id 'amalgamation-minecraft'
@@ -59,10 +62,7 @@ dependencies {
 
     //aaaaa intermediaryMinecraft
 
-    aaaaa ag.accessWidener {
-        input(aw(), files("${rootProject.rootDir}/src/main/resources/cope.aw"))
-        input(input(), 'com.google.code.gson:gson:1.1')
-    }
+    aaaaa ag.libraries('1.16.5')
 
     //aaaaa 'io.github.astrarre.amalgamation:transformed-dependency:0.0.0'
     //aaaaa 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3'

@@ -164,6 +164,7 @@ public class LauncherMeta {
 				List<Library> libraries = new ArrayList<>();
 				for (JsonElement element : versionJson.getAsJsonArray("libraries")) {
 					JsonObject object = element.getAsJsonObject();
+					String name = object.get("name").getAsString();
 					JsonObject libraryDownloads = object.getAsJsonObject("downloads");
 					HashedURL mainArtifact = new HashedURL(libraryDownloads.getAsJsonObject("artifact"));
 					Map<String, HashedURL> classifiers;
@@ -197,7 +198,7 @@ public class LauncherMeta {
 						rules = Collections.unmodifiableList(rules);
 					} else rules = Collections.emptyList();
 
-					Library library = new Library(mainArtifact, rules, classifiers, natives);
+					Library library = new Library(name, mainArtifact, rules, classifiers, natives);
 					libraries.add(library);
 				}
 
@@ -230,13 +231,15 @@ public class LauncherMeta {
 	}
 
 	public static final class Library {
+		public final String name;
 		public final HashedURL mainDownloadUrl;
 		public final List<Rule> rules;
 		public final Map<String, HashedURL> classifierUrls;
 		public final Map<String, String> nativesOsToClassifier;
 		private Map<NativesRule, List<HashedURL>> evaluatedDependencies;
 
-		public Library(HashedURL artifact, List<Rule> rules, Map<String, HashedURL> urls, Map<String, String> classifier) {
+		public Library(String name, HashedURL artifact, List<Rule> rules, Map<String, HashedURL> urls, Map<String, String> classifier) {
+			this.name = name;
 			this.mainDownloadUrl = artifact;
 			this.rules = rules;
 			this.classifierUrls = urls;
@@ -289,6 +292,10 @@ public class LauncherMeta {
 				this.evaluatedDependencies.put(natives, get = Collections.unmodifiableList(urls));
 			}
 			return get;
+		}
+
+		public String getName() {
+			return this.name;
 		}
 	}
 

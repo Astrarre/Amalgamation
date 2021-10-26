@@ -91,7 +91,6 @@ public class TransformDependency extends ZipProcessDependency implements Transfo
 		} else {
 			for(Input<?> input : this.inputs) {
 				ZipProcessable.getOutputs(this.project, input.dependency)
-						.map(Path::toAbsolutePath)
 						.map(input::resolve)
 						.forEach(process::addProcessed);
 			}
@@ -117,7 +116,8 @@ public class TransformDependency extends ZipProcessDependency implements Transfo
 	}
 
 	public record Input<T>(Project project, InputType<T> input, Dependency dependency, T value) {
-		public Path resolve(Path path) {
+		public OutputTag resolve(OutputTag tag) {
+			Path path = tag.getVirtualPath();
 			Path transforms = AmalgIO.cache(this.project, this.input.getCacheLocation().isGlobal())
 					.resolve("transforms")
 					.resolve(this.input.hint())
@@ -127,14 +127,11 @@ public class TransformDependency extends ZipProcessDependency implements Transfo
 			} catch(IOException e) {
 				throw new RuntimeException(e);
 			}
-			return transforms.resolve(path.getFileName().toString());
-
+			return tag(tag, transforms.resolve(path.getFileName().toString()));
 		}
 
 		public List<TaskTransform> appendInputs(ZipProcessBuilder builder) throws IOException {
-			return ZipProcessable.apply(this.project, builder, this.dependency, this::apply);
+			return ZipProcessable.apply(this.project, builder, this.dependency, this::resolve);
 		}
-
-		private OutputTag apply(OutputTag u) {return new OutputTag(this.resolve(u.getVirtualPath()));}
 	}
 }
