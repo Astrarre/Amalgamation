@@ -25,6 +25,8 @@ import java.util.function.Supplier;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
@@ -33,6 +35,11 @@ import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.provider.Provider;
 
 public interface BaseAmalgamation {
+
+    /**
+     * @param name a unique name for this transformed clientMappings
+     */
+    <T extends TransformConfiguration> Dependency transformed(TransformDependency.Transformer<T> name, Action<T> configure);
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 

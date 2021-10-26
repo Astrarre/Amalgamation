@@ -1,17 +1,22 @@
 package io.github.astrarre.amalgamation.gradle.utils.func;
 
-public interface UCons<T> {
-	static void run(UCons<?> consumer) {
-		consumer.acceptFailException(null);
+import java.util.function.Consumer;
+
+import net.devtech.zipio.impl.util.U;
+
+public interface UCons<T> extends Consumer<T> {
+	static <T> UCons<T> of(UCons<T> t) {
+		return t;
 	}
 
-	void accept(T t) throws Throwable;
-
-	default void acceptFailException(T t) {
+	@Override
+	default void accept(T t) {
 		try {
-			this.accept(t);
+			this.acceptFailException(t);
 		} catch (Throwable tr) {
-			throw new RuntimeException(tr);
+			throw U.rethrow(tr);
 		}
 	}
+
+	void acceptFailException(T t) throws Throwable;
 }

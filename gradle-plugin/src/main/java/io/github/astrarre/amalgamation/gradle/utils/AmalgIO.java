@@ -16,11 +16,9 @@ import java.util.Set;
 import java.util.function.IntFunction;
 
 import com.google.common.collect.Iterables;
+import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.SourcesOutput;
-import net.devtech.zipio.OutputTag;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -34,6 +32,7 @@ import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 
 public class AmalgIO {
+	public static final HashFunction HASHING = com.google.common.hash.Hashing.sha256();
 	public static final ThreadLocal<byte[]> BUFFER = ThreadLocal.withInitial(() -> new byte[8192]);
 	/**
 	 * if the first entry of a zip file is a file with the name of this field, it is configured
@@ -191,5 +190,11 @@ public class AmalgIO {
 		if(!Files.exists(resolve)) {
 			Files.createFile(resolve);
 		}
+	}
+
+	public static String hash(Path path) {
+		Hasher hasher = HASHING.newHasher();
+		hash(hasher, path.toFile());
+		return hash(hasher);
 	}
 }

@@ -7,8 +7,7 @@ import java.util.List;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractBinRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.bin.TRemapper;

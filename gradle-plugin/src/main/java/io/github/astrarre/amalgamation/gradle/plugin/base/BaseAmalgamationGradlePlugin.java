@@ -19,20 +19,21 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
+import java.io.File;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
+import io.github.astrarre.amalgamation.gradle.sources.AmalgSourcesRepository;
 import org.gradle.StartParameter;
-import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.internal.artifacts.repositories.DefaultFlatDirArtifactRepository;
 import org.gradle.api.plugins.PluginContainer;
-import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.gradle.ext.IdeaExtPlugin;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 
@@ -41,6 +42,12 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 	@Override
 	public void apply(@NotNull Project target) {
 		this.registerProvider(target);
+		/*target.getRepositories().flatDir(repository -> {
+			var f1 = new File(target.getBuildDir(), "amalgamation-caches/transforms/AccessWidenerInput/HJTQyY1o5e9vnDDF9EyGPa5yPXoVlTM9qQQGp322GG8=");
+			var f2 = new File(target.getBuildDir(), "amalgamation-caches/transforms/AccessWidenerInput/wycMyZQyEh1PfjpycxA61DROlQgNcGA1nMwyMgAwqCM=");
+			repository.setDirs(Set.of(f1, f2));
+		});*/
+		target.getRepositories().add(new AmalgSourcesRepository(target));
 
 		if(target == target.getRootProject()) {
 			StartParameter parameter = target.getGradle().getStartParameter();

@@ -25,14 +25,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 

@@ -1,8 +1,3 @@
-import io.github.astrarre.amalgamation.api.Displace;
-import io.github.astrarre.amalgamation.api.Platform;
-
-import net.minecraft.nbt.NbtByteArray;
-import net.minecraft.nbt.NbtCompound;
 
 public class Concern implements Runnable {
     public static void main(String[] args) {
@@ -11,20 +6,15 @@ public class Concern implements Runnable {
         System.out.println(Boolean.getBoolean("fabric.development"));
     }
 
-    @Platform("server")
-    public static void hello() {
+    private static void hello() {
         System.out.println("hello from server!");
     }
 
-    @Platform("client")
-    @Displace("hello")
-    public static void hello_client() {
+    private static void hello_client() {
         System.out.println("hello from client!");
     }
 
     @Override
     public void run() {
-        NbtCompound compound = new NbtCompound();
-        compound.put("urmom", new NbtByteArray(new byte[0]));
     }
 }

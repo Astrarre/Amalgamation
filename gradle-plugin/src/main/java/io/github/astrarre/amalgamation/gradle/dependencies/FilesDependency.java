@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 
 public class FilesDependency extends AbstractSelfResolvingDependency {
 	final Supplier<Iterable<Path>> resolver;

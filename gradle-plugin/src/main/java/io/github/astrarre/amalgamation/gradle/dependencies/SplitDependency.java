@@ -6,13 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourcesOutput;
-import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourcesOutput;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
+import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -41,7 +41,6 @@ public class SplitDependency extends ZipProcessDependency {
 		Path cls = resolvedPath.resolve("classes.jar"), rss = resolvedPath.resolve("resources.jar"), sources = resolvedPath.resolve("sources.jar");
 		if(isOutdated) {
 			ZipTag clsTag = process.createZipTag(cls), rssTag = process.createZipTag(new ResourcesOutput(rss)), sourcesTag = process.createZipTag(sources);
-			resolver.apply(this.dependency, p -> OutputTag.INPUT);
 			process.setEntryProcessor(buffer -> {
 				String path = buffer.path();
 				if(path.endsWith(".class") || path.contains("META-INF")) {

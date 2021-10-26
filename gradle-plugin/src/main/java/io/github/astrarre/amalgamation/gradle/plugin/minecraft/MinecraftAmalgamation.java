@@ -22,14 +22,14 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 import java.util.List;
 
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerTransform;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
@@ -107,17 +107,9 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	/**
-	 * @param name a unique name for this transformed clientMappings
-	 */
-	Dependency transformed(String name, Action<TransformingDependency> configure);
-
-	/**
-	 * @param name a unique name for this access widened clientMappings
-	 */
-	Dependency accessWidener(String name, Dependency dependency, Object accessWidener);
-
-
+	default Dependency accessWidener(Action<AccessWidenerHelper> configure) {
+		return this.transformed(new AccessWidenerTransform(), configure);
+	}
 
 	default LibrariesDependency libraries(String version) {
         return this.libraries(version, NOTHING);

@@ -13,14 +13,19 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.DefaultModuleIdentifier;
 import org.gradle.api.internal.artifacts.dependencies.AbstractDependency;
+import org.gradle.api.internal.artifacts.dependencies.AbstractModuleDependency;
 import org.gradle.api.internal.artifacts.dependencies.SelfResolvingDependencyInternal;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractSelfResolvingDependency extends AbstractDependency
@@ -43,7 +48,7 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 		return new AbstractTaskDependency() {
 			@Override
 			public String toString() {
-				return "Dependencies of " + AbstractSelfResolvingDependency.this.toString();
+				return "Dependencies of " + AbstractSelfResolvingDependency.this;
 			}
 
 			@Override
@@ -122,7 +127,9 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@Nullable
 	@Override
 	public ComponentIdentifier getTargetComponentId() {
-		return this::toString;
+		var identifier = DefaultModuleIdentifier.newId(this.getGroup(), this.getName());
+		return new DefaultModuleComponentIdentifier(identifier, this.getVersion());
+		//return this::toString;
 	}
 
 	@Override
@@ -164,6 +171,8 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@NotNull
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName();
+		return this.getTargetComponentId() + "";
 	}
+
+
 }

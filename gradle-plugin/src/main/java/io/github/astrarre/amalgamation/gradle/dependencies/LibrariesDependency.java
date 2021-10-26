@@ -11,6 +11,7 @@ import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgama
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 
 public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	/**

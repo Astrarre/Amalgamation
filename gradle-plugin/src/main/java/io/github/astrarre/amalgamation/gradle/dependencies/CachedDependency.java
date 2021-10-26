@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
 public abstract class CachedDependency extends AbstractSelfResolvingDependency {
-	public static final HashFunction HASHING = Hashing.sha256();
+	public static final HashFunction HASHING = AmalgIO.HASHING;
 	public static final int BYTES = 32; // should ideally remain this way and never change
 	@Nullable protected byte[] oldHash, currentHash;
 	boolean initOldHash;
@@ -107,7 +107,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		}
 		this.initOldHash = true;
 
-		this.getPath();
+		Path realPath = this.getPath();
 		Path path = this.cachePath;
 
 		if(Files.exists(path)) {
@@ -148,7 +148,6 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
-		this.getPath();
 		try(OutputStream stream = Files.newOutputStream(this.cachePath)) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);

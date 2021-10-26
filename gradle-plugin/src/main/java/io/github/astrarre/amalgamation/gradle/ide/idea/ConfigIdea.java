@@ -5,6 +5,9 @@ import java.util.function.Consumer;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.DependencyArtifactSelector;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -16,13 +19,18 @@ import org.gradle.plugins.ide.idea.model.IdeaModule;
 public class ConfigIdea {
 	public static void configure(Project project, Plugin<Project> ideaModel) {
 		IdeaPlugin plugin = (IdeaPlugin) ideaModel;
+		project.afterEvaluate(project1 -> {
+			System.out.println(plugin.getModel().getModule().resolveDependencies());
+		});
 		IdeaModule module = plugin.getModel().getModule();
 		module.getExcludeDirs().addAll(project.files(".gradle", "build", ".idea", "out").getFiles());
-		module.setDownloadJavadoc(true);
-		module.setDownloadSources(true);
+		//module.setDownloadJavadoc(true);
+		//module.setDownloadSources(true);
 		module.setInheritOutputDirs(false);
-		configureOutput(project, "compileJava", module::setOutputDir);
-		configureOutput(project, "compileTestJava", module::setTestOutputDir);
+		project.getPlugins().withId("java", $ -> {
+			configureOutput(project, "compileJava", module::setOutputDir);
+			configureOutput(project, "compileTestJava", module::setTestOutputDir);
+		});
 	}
 
 	public static void configureOutput(Project project, String taskName, Consumer<File> listen) {

@@ -10,10 +10,9 @@ import java.util.function.UnaryOperator;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourceZipFilter;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;

@@ -1,8 +1,6 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.filtr;
+package io.github.astrarre.amalgamation.gradle.dependencies.filters;
 
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import net.devtech.zipio.OutputTag;

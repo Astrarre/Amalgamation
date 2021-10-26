@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.Filters;
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.ResourceZipFilter;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.Filters;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import net.devtech.zipio.OutputTag;

@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.SourcesOutput;
+import com.google.common.collect.Streams;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.SourcesOutput;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
@@ -18,6 +20,14 @@ import org.gradle.api.artifacts.Dependency;
 
 public interface ZipProcessable {
 	ZipProcess process() throws IOException;
+
+	static Stream<Path> getOutputs(Project project, Dependency dependency) throws IOException {
+		if(dependency instanceof ZipProcessable z) {
+			return Streams.stream(z.process().getOutputs()).map(OutputTag::getVirtualPath);
+		} else {
+			return AmalgIO.resolve(project, List.of(dependency)).stream().map(File::toPath);
+		}
+	}
 
 	static List<TaskTransform> apply(Project project, ZipProcessBuilder process, Dependency dependency, UnaryOperator<OutputTag> getOutput)
 			throws IOException {

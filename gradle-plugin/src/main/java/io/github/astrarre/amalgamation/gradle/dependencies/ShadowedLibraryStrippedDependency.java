@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.filtr.Filters;
-import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
-import net.devtech.zipio.OutputTag;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.Filters;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
 import org.gradle.api.Project;

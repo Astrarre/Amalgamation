@@ -30,6 +30,7 @@ val forge_version: String by project
 
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
+    implementation(gradleApi())
 
     implementation(rootProject.project(":api"))
     implementation("com.google.guava", "guava", "30.1-jre")
@@ -45,12 +46,14 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
-    implementation("net.fabricmc:access-widener-javaparser:2.1.0")
+    implementation("net.fabricmc:access-widener-javaparser:2.1.0") {
+        exclude("javaparser-symbol-solver-core")
+    }
     implementation("io.github.coolmineman:trieharder:0.0.1")
     implementation("net.devtech:zip-io:3.1.0")
     compileOnly("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     implementation("com.google.jimfs:jimfs:1.2")
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
+    //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
 
     // todo unhardcode this
     implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")

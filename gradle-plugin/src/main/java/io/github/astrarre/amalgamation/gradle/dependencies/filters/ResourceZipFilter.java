@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.filtr;
+package io.github.astrarre.amalgamation.gradle.dependencies.filters;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Files;

@@ -52,7 +52,6 @@ public class LauncherMeta {
 			case WINDOWS -> System.getenv("appdata") + "/.minecraft";
 			case LINUX -> System.getProperty("user.home") + "/.minecraft";
 			case MACOS -> System.getProperty("user.home") + "/Library/Application Support/minecraft";
-			default -> throw new UnsupportedOperationException("unsupported operating system " + os);
 		};
 	}
 

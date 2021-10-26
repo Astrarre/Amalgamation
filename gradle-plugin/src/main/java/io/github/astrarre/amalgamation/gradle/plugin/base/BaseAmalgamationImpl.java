@@ -10,6 +10,8 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.FilesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
@@ -32,6 +34,11 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	public BaseAmalgamationImpl(Project project) {
 		this.project = project;
 		this.logger = project.getLogger();
+	}
+
+	@Override
+	public <T extends TransformConfiguration> Dependency transformed(TransformDependency.Transformer<T> name, Action<T> configure) {
+		return TransformDependency.create(this.project, name, configure);
 	}
 
 	@Override

@@ -18,21 +18,27 @@
  */
 plugins {
     id 'java'
+    id 'java-library'
     id 'maven-publish'
     id 'amalgamation-minecraft'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'
 }
 
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'amalgamation-minecraft'
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    gradlePluginPortal()
-    maven { url 'https://maven.fabricmc.net/' }
-    maven { url 'https://files.minecraftforge.net/maven/' }
-    maven {
-        name = "HalfOf2"
-        url = uri("https://storage.googleapis.com/devan-maven/")
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url 'https://maven.fabricmc.net/' }
+        maven { url 'https://files.minecraftforge.net/maven/' }
+        maven {
+            name = "HalfOf2"
+            url = uri("https://storage.googleapis.com/devan-maven/")
+        }
     }
 }
 
@@ -48,25 +54,22 @@ configurations {
     implementation.extendsFrom(aaaaa)
 }
 
-
-
 dependencies {
     //aaaaa ag.mojmerged(mc_vers, mergedMappings)
 
-    def intermediaryMinecraft = ag.map {
-        mappings(ag.intermediary(mc_vers))
-        remap(ag.mojmerged(mc_vers, true), true)
-    }
     //aaaaa intermediaryMinecraft
 
-    aaaaa ag.map {
-        mappings(mergedMappings, 'intermediary', 'named')
-        trieHarder()
-        remap(intermediaryMinecraft, true)
-        remap("net.fabricmc.fabric-api:fabric-api:0.40.1+1.17", false) {
-            exclude module: 'fabric-loader'
-        }
+    aaaaa ag.accessWidener {
+        input(aw(), files("${rootProject.rootDir}/src/main/resources/cope.aw"))
+        input(input(), 'com.google.code.gson:gson:1.1')
     }
+
+    //aaaaa 'io.github.astrarre.amalgamation:transformed-dependency:0.0.0'
+    //aaaaa 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3'
+
+    //implementation('com.google.code.gson:gson:1.1')
+
+    //implementation("net.fabricmc.fabric-api:fabric-api:0.41.0+1.17")
 
     //aaaaa ag.fabricLoader("0.11.7")
     //aaaaa ag.libraries(mc_vers)
@@ -100,7 +103,7 @@ compileJava {
 // todo maybe just add an Extension with name RemapJar with RemapJar.class
 //      sometimes, my genius, it generates gravity
 
-task testDiff(type: JavaExec) {
+/*task testDiff(type: JavaExec) {
     group = "tests"
     description = "Test Diff:tm:"
     classpath sourceSets.main.runtimeClasspath
@@ -114,7 +117,7 @@ task testDiff(type: JavaExec) {
     args("--assetIndex", assets.assetIndex, "--assetsDir", assets.assetsDir)
     workingDir("$rootDir/run")
     dependsOn tasks.classes
-}
+}*/
 
 //ag.idea().java(testDiff) {}
 

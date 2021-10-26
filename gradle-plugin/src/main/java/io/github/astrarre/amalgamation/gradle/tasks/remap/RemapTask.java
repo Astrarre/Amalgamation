@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
@@ -15,7 +14,6 @@ import org.cadixdev.mercury.Mercury;
 import org.cadixdev.mercury.remapper.MercuryRemapper;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;

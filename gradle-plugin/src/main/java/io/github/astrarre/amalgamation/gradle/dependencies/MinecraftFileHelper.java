@@ -9,7 +9,6 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class MinecraftFileHelper {
-	// todo minecraft dependency
 	public static Dependency getDependency(Project project, String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 		LauncherMeta.Version vers = meta.getVersion(version);

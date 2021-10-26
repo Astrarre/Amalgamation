@@ -10,7 +10,7 @@ import java.util.List;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
@@ -19,7 +19,6 @@ import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transforming.TransformingDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
@@ -85,25 +84,6 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 			throw new RuntimeException(e);
 		}
 		return dependencies;
-	}
-
-	@Override
-	public Dependency transformed(String name, Action<TransformingDependency> transformer) {
-		TransformingDependency dep = new TransformingDependency(this.project, name);
-		transformer.execute(dep);
-		return dep;
-	}
-
-	@Override
-	public Dependency accessWidener(String name, Dependency dependency, Object accessWidener) {
-		return this.transformed(name, d -> {
-			try {
-				d.accessWidener(accessWidener);
-				d.transform(dependency);
-			} catch(IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
 	}
 
 	@Override
