@@ -1,8 +1,9 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper;
+package io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.VirtualZipEntry;
 import net.devtech.zipio.ZipOutput;
@@ -42,6 +43,13 @@ public abstract class AbstractBinRemapper implements AmalgRemapper {
 	protected abstract void write(RemapImpl remapData, ZipOutput output);
 
 	protected void readNonClassToInput(RemapImpl remapData, String path, ByteBuffer buffer) {}
+
+	@Override
+	public void hash(Hasher hasher) {
+		if(this.sourceRemapper != null) {
+			this.sourceRemapper.hash(hasher);
+		}
+	}
 
 	public class Classpath implements ZipEntryProcessor {
 		final ZipEntryProcessor srcProc;

@@ -1,9 +1,7 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src;
+package io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.src;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
@@ -13,7 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.google.common.collect.Iterables;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
+import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.coolmineman.trieharder.FindReplaceSourceRemapper;
 import net.devtech.zipio.VirtualZipEntry;
@@ -21,7 +20,6 @@ import net.devtech.zipio.ZipOutput;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processors.entry.ProcessResult;
 import net.devtech.zipio.processors.entry.ZipEntryProcessor;
-import org.jetbrains.annotations.NotNull;
 
 public class TrieHarderRemapper implements AmalgRemapper {
 	FindReplaceSourceRemapper sourceRemapper;
@@ -45,6 +43,11 @@ public class TrieHarderRemapper implements AmalgRemapper {
 	@Override
 	public Remap remap() {
 		return new RemapImpl();
+	}
+
+	@Override
+	public void hash(Hasher hasher) {
+		hasher.putString("TrieHarder", StandardCharsets.UTF_8);
 	}
 
 	public class RemapImpl implements Remap {

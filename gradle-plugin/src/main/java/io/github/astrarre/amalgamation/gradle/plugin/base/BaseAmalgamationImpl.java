@@ -1,7 +1,9 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -10,8 +12,10 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.FilesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.SingleTransformDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.DependencyList;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
@@ -37,8 +41,12 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	}
 
 	@Override
-	public <T extends TransformConfiguration> Dependency transformed(TransformDependency.Transformer<T> name, Action<T> configure) {
-		return TransformDependency.create(this.project, name, configure);
+	public <T extends TransformConfiguration<T, C>, C extends TransformDependency.Transformer<T>> Object transformed(C name,
+			Action<T> configure) throws IOException {
+		TransformDependency<T, C> dependency = TransformDependency.create(this.project, name, configure);
+		DependencyList dependencies = dependency.getDependencies();
+		System.out.println(dependencies);
+		return dependency.getDependencies();
 	}
 
 	@Override

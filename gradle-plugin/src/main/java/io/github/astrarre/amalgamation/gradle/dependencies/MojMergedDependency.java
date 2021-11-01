@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
@@ -82,7 +82,7 @@ public class MojMergedDependency extends ZipProcessDependency {
 			resolver.apply(this.of(this.client), p -> tag(p, resolvedPath));
 		} else {
 			for(TaskTransform transform : resolver.apply(this.of(this.client), p -> tag(p, resolvedPath))) {
-				transform.setZipFilter(o -> ResourceZipFilter.INVERTED);
+				transform.setZipFilter(o -> ResourceZipFilter.SKIP);
 			}
 			process.addProcessed(resolvedPath);
 		}

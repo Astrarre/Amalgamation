@@ -11,7 +11,7 @@ import net.devtech.zipio.processors.zip.ZipFilter;
 
 public class ResourceZipFilter implements ZipFilter {
 	public static final ResourceZipFilter FILTER = new ResourceZipFilter();
-	public static final ZipFilter INVERTED = invert(FILTER);
+	public static final ZipFilter SKIP = invert(FILTER);
 
 	@Override
 	public ZipBehavior test(OutputTag file, Supplier<FileSystem> system) {

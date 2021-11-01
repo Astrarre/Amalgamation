@@ -20,6 +20,7 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -39,7 +40,8 @@ public interface BaseAmalgamation {
     /**
      * @param name a unique name for this transformed clientMappings
      */
-    <T extends TransformConfiguration> Dependency transformed(TransformDependency.Transformer<T> name, Action<T> configure);
+    <T extends TransformConfiguration<T, C>, C extends TransformDependency.Transformer<T>> Object transformed(C name, Action<T> configure)
+            throws IOException;
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 

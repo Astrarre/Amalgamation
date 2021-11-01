@@ -19,17 +19,18 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
+import java.io.IOException;
 import java.util.List;
 
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerHelper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerTransform;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapHelper;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
@@ -107,7 +108,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	default Dependency accessWidener(Action<AccessWidenerHelper> configure) {
+	default Object accessWidener(Action<AccessWidenerHelper> configure) throws IOException {
 		return this.transformed(new AccessWidenerTransform(), configure);
 	}
 
@@ -132,7 +133,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param mappings configurate mappings
 	 * @return a list of the remapped dependencies
 	 */
-	Dependency map(Action<DependencyRemapConfig> mappings);
+	Object map(Action<RemapHelper> mappings) throws IOException;
 
 	/**
 	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries

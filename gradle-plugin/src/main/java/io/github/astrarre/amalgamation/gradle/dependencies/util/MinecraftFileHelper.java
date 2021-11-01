@@ -1,7 +1,10 @@
-package io.github.astrarre.amalgamation.gradle.dependencies;
+package io.github.astrarre.amalgamation.gradle.dependencies.util;
 
 import java.nio.file.Path;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.HashedURLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.ShadowedLibraryStrippedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.SplitDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;

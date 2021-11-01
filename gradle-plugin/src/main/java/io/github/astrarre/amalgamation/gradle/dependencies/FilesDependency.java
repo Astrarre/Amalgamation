@@ -16,11 +16,6 @@ public class FilesDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	public Dependency copy() {
-		return this;
-	}
-
-	@Override
 	protected Iterable<Path> resolvePaths() throws IOException {
 		return resolver.get();
 	}

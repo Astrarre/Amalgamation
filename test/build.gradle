@@ -62,7 +62,14 @@ dependencies {
 
     //aaaaa intermediaryMinecraft
 
-    aaaaa ag.libraries('1.16.5')
+    aaaaa ag.accessWidener {
+        input("com.google.code.gson:gson:1.1")
+        input("com.google.code.gson:gson:2.8.6")
+        aw(files("$projectDir/src/main/resources/cope.aw"))
+    }
+    //aaaaa "com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
+    //aaaaa "com.google.code.gson:gson:2.8.6_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
+   // aaaaa 'com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA='
 
     //aaaaa 'io.github.astrarre.amalgamation:transformed-dependency:0.0.0'
     //aaaaa 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3'

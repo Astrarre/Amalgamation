@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.Objects;
 
 import com.github.javaparser.JavaParser;
@@ -18,7 +17,6 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderType
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.inputs.InputType;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
@@ -36,7 +34,6 @@ import net.fabricmc.accesswidener.javaparser.SourceAccessWidenerTransformer;
 
 public class AccessWidenerTransform implements TransformDependency.Transformer<AccessWidenerHelper> {
 	final AccessWidener widener = new AccessWidener(true);
-	File resolved;
 
 	@Override
 	public Class<AccessWidenerHelper> configurationHelper() {
@@ -44,24 +41,7 @@ public class AccessWidenerTransform implements TransformDependency.Transformer<A
 	}
 
 	@Override
-	public <V> V process(Project project, Dependency dependency, InputType<V> type) throws IllegalArgumentException {
-		if(type == AccessWidenerHelper.FILE) {
-			AccessWidenerReader aw = new AccessWidenerReader(this.widener);
-			File resolve = AmalgIO.resolve(project, dependency);
-			this.resolved = resolve;
-			try(var reader = Files.newBufferedReader(resolve.toPath())) {
-				aw.read(reader);
-			} catch(IOException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-
-		return null;
-	}
-
-	@Override
-	public void configure(List<TransformDependency.Input<?>> inputs, ZipProcessBuilder builder) throws IOException {
+	public void configure(Project project, TransformDependency.Inputs inputs, ZipProcessBuilder builder) throws IOException {
 		Objects.requireNonNull(this.widener, "no access widener dependency set!");
 		SourceAccessWidenerTransformer transformer = new SourceAccessWidenerTransformer(this.widener);
 
@@ -119,13 +99,23 @@ public class AccessWidenerTransform implements TransformDependency.Transformer<A
 			return ProcessResult.HANDLED;
 		});
 
-		for(TransformDependency.Input<?> input : inputs) {
+		for(var input : inputs.get(AccessWidenerHelper.INPUT)) {
 			input.appendInputs(builder);
 		}
 	}
 
 	@Override
 	public void hash(Hasher hasher) {
-		AmalgIO.hash(hasher, this.resolved);
+	}
+
+	public Void applyFile(Project p, Dependency i) {
+		AccessWidenerReader aw = new AccessWidenerReader(this.widener);
+		File resolve = AmalgIO.resolve(p, i);
+		try(var reader = Files.newBufferedReader(resolve.toPath())) {
+			aw.read(reader);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

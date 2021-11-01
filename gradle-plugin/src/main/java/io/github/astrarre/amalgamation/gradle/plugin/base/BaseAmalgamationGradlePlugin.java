@@ -19,35 +19,50 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import java.io.File;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.SingleTransformDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
-import io.github.astrarre.amalgamation.gradle.sources.AmalgSourcesRepository;
+import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.internal.artifacts.repositories.DefaultFlatDirArtifactRepository;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ComponentSelector;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.attributes.AttributeContainer;
+import org.gradle.api.capabilities.Capability;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginContainer;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
+	public static Gradle gradle;
 
 	public static boolean refreshDependencies, offlineMode, refreshAmalgamationCaches;
 
 	@Override
 	public void apply(@NotNull Project target) {
+		gradle = target.getGradle();
+		target.getRepositories().flatDir(f -> {
+			List<Path> paths = new ArrayList<>();
+			for(AmalgDirs value : AmalgDirs.values()) {
+				paths.add(value.transforms(target).resolve("accessWidener"));
+				paths.add(value.transforms(target).resolve("remap"));
+			}
+			f.setDirs(paths.stream().map(Path::toAbsolutePath).map(Path::toFile).collect(Collectors.toSet()));
+		});
+
 		this.registerProvider(target);
-		/*target.getRepositories().flatDir(repository -> {
-			var f1 = new File(target.getBuildDir(), "amalgamation-caches/transforms/AccessWidenerInput/HJTQyY1o5e9vnDDF9EyGPa5yPXoVlTM9qQQGp322GG8=");
-			var f2 = new File(target.getBuildDir(), "amalgamation-caches/transforms/AccessWidenerInput/wycMyZQyEh1PfjpycxA61DROlQgNcGA1nMwyMgAwqCM=");
-			repository.setDirs(Set.of(f1, f2));
-		});*/
-		//target.getRepositories().add(new AmalgSourcesRepository(target));
 
 		if(target == target.getRootProject()) {
 			StartParameter parameter = target.getGradle().getStartParameter();

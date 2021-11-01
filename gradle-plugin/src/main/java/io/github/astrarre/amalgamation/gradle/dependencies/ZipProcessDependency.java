@@ -34,12 +34,20 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		boolean isOutdated = this.isOutdated();
 		TaskInputResolver resolver = (dependencies, tag) -> ZipProcessable.apply(this.project, builder, dependencies, tag);
 		this.add(resolver, builder, this.getPath(), isOutdated);
-		builder.afterExecute(() -> this.after(isOutdated));
-		for(OutputTag output : builder.getOutputs()) {
-			if(output instanceof SourcesOutput s) {
-				AmalgIO.SOURCES.add(s.getVirtualPath().toRealPath());
+		builder.afterExecute(() -> {
+			for(OutputTag output : builder.getOutputs()) {
+				if(output instanceof SourcesOutput s) {
+					try {
+						AmalgIO.SOURCES.add(s.getVirtualPath().toRealPath());
+					} catch(IOException e) {
+						throw U.rethrow(e);
+					}
+				}
 			}
-		}
+
+			this.after(isOutdated);
+		});
+
 		return builder;
 	}
 

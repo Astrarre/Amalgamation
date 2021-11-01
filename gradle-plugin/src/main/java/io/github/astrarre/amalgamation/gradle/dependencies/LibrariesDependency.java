@@ -12,6 +12,7 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
@@ -31,12 +32,7 @@ public class LibrariesDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	public Dependency copy() {
-		return new LibrariesDependency(this.project, this.version);
-	}
-
-	@Override
-	protected Iterable<Path> resolvePaths() throws IOException {
+	protected Iterable<Path> resolvePaths() throws IOException { // todo this will not do ir
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
 		final Path dir = Paths.get(this.librariesDirectory);
 		List<LauncherMeta.Library> libraries = meta.getVersion(this.version).getLibraries();

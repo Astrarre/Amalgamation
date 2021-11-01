@@ -33,57 +33,13 @@ import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 public class ConfigIdea {
 	public static void configure(Project project, Plugin<Project> ideaModel) {
 		// todo for sources
-		// step 0: hash file name without the classifier (robust solution is easy)
 		// step 1: put hash as part of file name (before classifier / extension)
 		// step 2: add directories as flat directories
 		// step 3: make all multi-process dependencies return a list of Dependency
 
-
 		//project.getDependencies().create()
 
 		IdeaPlugin plugin = (IdeaPlugin) ideaModel;
-
-		plugin.getModel().module(m -> {
-			m.iml(i -> {
-				i.setGenerateTo(new File("testaaaaa"));
-			});
-		});
-		project.afterEvaluate(project1 -> {
-			plugin.getModel().getModule().iml(iml -> {
-				iml.whenMerged(o -> {
-					Module module = (Module) o;
-					module.getDependencies().clear();
-				});
-			});
-			System.out.println(plugin.getModel().getProject().getProjectLibraries());
-			System.out.println(plugin.getModel().getModule().resolveDependencies());
-			for(Dependency dependency : plugin.getModel().getModule().resolveDependencies()) {
-				if(dependency instanceof ModuleLibrary lib) {
-					var iterator = lib.getClasses().iterator();
-					while(iterator.hasNext()) {
-						var cls = iterator.next();
-						try {
-							String url = cls.getCanonicalUrl();
-							if(url.startsWith("jar://")) {
-								url = url.substring("jar://".length());
-							}
-
-							if(url.endsWith("!/")) {
-								url = url.substring(0, url.length() - 2);
-							}
-
-							Path path = Path.of(url).toRealPath();
-							if(AmalgIO.SOURCES.contains(path)) {
-								iterator.remove();
-								lib.getSources().add(new org.gradle.plugins.ide.idea.model.Path(path.toFile().getAbsolutePath()));
-							}
-						} catch(IOException e) {
-							throw U.rethrow(e);
-						}
-					}
-				}
-			}
-		});
 		IdeaModule module = plugin.getModel().getModule();
 		module.getExcludeDirs().addAll(project.files(".gradle", "build", ".idea", "out").getFiles());
 		module.setDownloadJavadoc(true);

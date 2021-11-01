@@ -72,10 +72,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	}
 
 
-	@Override
-	public Dependency copy() {
-		return this;
-	}
+
 
 	public abstract void hashInputs(Hasher hasher) throws IOException;
 

@@ -4,26 +4,21 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.HashedURLDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.MinecraftFileHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.MinecraftFileHelper;
 import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.DependencyRemapConfig;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapTransform;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
@@ -119,10 +114,8 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency map(Action<DependencyRemapConfig> mappings) {
-		DependencyRemapConfig config = new DependencyRemapConfig(this.project);
-		mappings.execute(config);
-		return new RemapDependency(this.project, config);
+	public Object map(Action<RemapHelper> mappings) throws IOException {
+		return this.transformed(new RemapTransform(), mappings);
 	}
 
 	@Override
