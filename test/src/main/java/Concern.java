@@ -1,10 +1,10 @@
-import com.mojang.serialization.Codec;
 
 public class Concern implements Runnable {
     public static void main(String[] args) {
         System.out.println("aaaaaaggggadwadawdafffffnnnna");
         hello();
         System.out.println(Boolean.getBoolean("fabric.development"));
+        net.minecraft.class_4 a = null;
     }
 
     private static void hello() {

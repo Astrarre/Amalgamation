@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <exclude-output/>
+    <orderEntry type="inheritedJdk"/>
+    <content url="file://$MODULE_DIR$/">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false"/>
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource"/>
+      <excludeFolder url="file://$MODULE_DIR$/.gradle"/>
+      <excludeFolder url="file://$MODULE_DIR$/build"/>
+      <excludeFolder url="file://$MODULE_DIR$/.idea"/>
+      <excludeFolder url="file://$MODULE_DIR$/out"/>
+    </content>
+    <orderEntry type="sourceFolder" forTests="false"/>
+    <output url="file://$MODULE_DIR$/build/classes/java/main"/>
+    <output-test url="file://$MODULE_DIR$/build/classes/java/test"/>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/transforms/accessWidener/gson_1.1-Y56X_Fu7rxJh_lJwKMx9MHeEbt7hmQQuSXeOaP8JlZU=.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/transforms/accessWidener/gson_1.1-Y56X_Fu7rxJh_lJwKMx9MHeEbt7hmQQuSXeOaP8JlZU=-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/d1aed0b642aa81cc1fd0413b87ddcff53112c4f7/gson-1.1.jar!/"/>
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/ac8920a0925daa3a36a8cb1d15a17108e546fe67/gson-1.1-javadoc.jar!/"/>
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/cbf51ba4a88ae596f9b3acf937779a57ce602f25/gson-1.1-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+  <component name="ModuleRootManager"/>
+</module>

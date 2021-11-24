@@ -9,9 +9,12 @@ import java.util.Objects;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.Problem;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
@@ -91,10 +94,9 @@ public class AccessWidenerTransform implements TransformDependency.Transformer<A
 				}
 			} else {
 				CompilationUnit unit = parse.getResult().orElseThrow();
-				var copy = new NodeList<>(unit.getImports());
-				transformer.transform(unit);
-				unit.setImports(copy);
-				buffer.writeToOutput(ByteBuffer.wrap(unit.toString().getBytes(StandardCharsets.UTF_8)));
+				CompilationUnit lpp = LexicalPreservingPrinter.setup(unit);
+				transformer.transform(lpp);
+				buffer.writeToOutput(ByteBuffer.wrap(LexicalPreservingPrinter.print(lpp).getBytes(StandardCharsets.UTF_8)));
 			}
 			return ProcessResult.HANDLED;
 		});

@@ -105,14 +105,13 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 		return this.mappings("net.fabricmc:intermediary:" + version + ":v2", "official", "intermediary");
 	}
 
-
 	List<Dependency> fabricLoader(String version);
 
 	default Object accessWidener(Action<AccessWidenerHelper> configure) throws IOException {
 		return this.transformed(new AccessWidenerTransform(), configure);
 	}
 
-	default LibrariesDependency libraries(String version) {
+	default Object libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
 
@@ -120,7 +119,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
 
-	LibrariesDependency libraries(String version, Action<LibrariesDependency> configure);
+	Object libraries(String version, Action<LibrariesDependency> configure);
 
 	AssetsDependency assets(String version);
 

@@ -12,6 +12,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
@@ -58,7 +59,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 			try {
 				this.getCurrentHash();
 				this.initOldHash();
-				if(this.oldHash == null || !Arrays.equals(this.oldHash, this.currentHash)) {
+				if(this.oldHash == null || !Arrays.equals(this.oldHash, this.currentHash) || BaseAmalgamationGradlePlugin.refreshAmalgamationCaches) {
 					this.isOutdated = val = 2;
 				} else {
 					this.isOutdated = val = 1;
@@ -70,9 +71,6 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 
 		return val == 2;
 	}
-
-
-
 
 	public abstract void hashInputs(Hasher hasher) throws IOException;
 

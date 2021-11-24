@@ -58,6 +58,10 @@ public interface RemapHelper extends TransformConfiguration<RemapHelper, RemapTr
 		this.getTransformer().addMappings(mappings);
 	}
 
+	default void mappings(MappingTarget mappings) {
+		this.getTransformer().addMappings(mappings);
+	}
+
 	default void setRemapper(AmalgRemapper remapper) {
 		this.getTransformer().setRemapper(remapper);
 	}

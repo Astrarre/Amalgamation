@@ -23,7 +23,7 @@ plugins {
 
 allprojects {
     group = "io.github.astrarre.amalgamation"
-    version = "2.1.1"
+    version = "2.3.0"
 
     repositories {
         mavenCentral()

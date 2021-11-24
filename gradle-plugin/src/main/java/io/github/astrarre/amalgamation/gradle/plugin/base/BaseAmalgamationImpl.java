@@ -44,8 +44,6 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	public <T extends TransformConfiguration<T, C>, C extends TransformDependency.Transformer<T>> Object transformed(C name,
 			Action<T> configure) throws IOException {
 		TransformDependency<T, C> dependency = TransformDependency.create(this.project, name, configure);
-		DependencyList dependencies = dependency.getDependencies();
-		System.out.println(dependencies);
 		return dependency.getDependencies();
 	}
 

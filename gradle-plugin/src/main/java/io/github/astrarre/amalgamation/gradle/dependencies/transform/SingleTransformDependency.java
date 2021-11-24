@@ -1,19 +1,13 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.transform;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import net.devtech.zipio.OutputTag;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleDependency;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.internal.artifacts.DefaultModuleIdentifier;
-import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier;
 import org.jetbrains.annotations.Nullable;
 
 public class SingleTransformDependency extends AbstractSelfResolvingDependency {

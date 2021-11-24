@@ -94,6 +94,9 @@ public class TransformDependency<C extends TransformConfiguration<C, D>, D exten
 
 	@Override
 	public <T> T input(InputType<D, T> type, Object depNotation) {
+		if(depNotation instanceof DependencyList l && l.callback != null) {
+			return this.getT(type, l.callback);
+		}
 		if(depNotation instanceof List<?> l) {
 			return this.applyMulti(type, l);
 		}
@@ -103,6 +106,9 @@ public class TransformDependency<C extends TransformConfiguration<C, D>, D exten
 
 	@Override
 	public <T> T input(InputType<D, T> type, Object depNotation, Closure<ModuleDependency> dep) {
+		if(depNotation instanceof DependencyList) {
+			LOGGER.warning("Can't chain amalg dependencies with the module dependency configuring closure");
+		}
 		if(depNotation instanceof List<?> l) {
 			return this.applyMulti(type, l);
 		}
@@ -231,7 +237,7 @@ public class TransformDependency<C extends TransformConfiguration<C, D>, D exten
 			}
 			objects.add(str);
 		}
-		return new DependencyList(objects, this::resolve);
+		return new DependencyList(objects, this);
 	}
 
 	public record Input<T>(Project project, InputType<?, ?> input, Dependency dependency, SingleTransformDependency representation, T value) {

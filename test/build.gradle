@@ -42,8 +42,13 @@ allprojects {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
+        flatDir {
+            dir("C:\\Users\\devan\\AppData\\Roaming\\.minecraft\\libraries")
+        }
     }
 }
+
+idea.module.downloadSources = true
 
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
@@ -62,11 +67,17 @@ dependencies {
 
     //aaaaa intermediaryMinecraft
 
+    /*aaaaa ag.map {
+        mappings(ag.intermediary(mc_vers))
+        inputLocal(ag.mojmerged(mc_vers))
+    }*/
     aaaaa ag.accessWidener {
         input("com.google.code.gson:gson:1.1")
-        input("com.google.code.gson:gson:2.8.6")
         aw(files("$projectDir/src/main/resources/cope.aw"))
     }
+    aaaaa "com.google.code.gson:gson:1.1"
+    //aaaaa ag.libraries(mc_vers)
+
     //aaaaa "com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
     //aaaaa "com.google.code.gson:gson:2.8.6_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
    // aaaaa 'com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA='
@@ -161,7 +172,6 @@ task migrateMappings(type: MigrateSourcesTask) {
 
 task loadMcEnv {
     doLast {
-        //Thread.sleep(10_000)
         println(configurations.aaaaa.resolve())
     }
 }

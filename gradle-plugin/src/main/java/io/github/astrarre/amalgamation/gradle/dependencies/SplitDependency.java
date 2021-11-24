@@ -52,6 +52,7 @@ public class SplitDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
+			resolver.apply(this.dependency, o -> OutputTag.INPUT);
 		} else {
 			process.addProcessed(cls);
 			process.addProcessed(new ResourcesOutput(rss));

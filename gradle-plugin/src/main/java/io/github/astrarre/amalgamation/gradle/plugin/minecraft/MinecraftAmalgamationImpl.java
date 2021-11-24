@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -30,7 +31,7 @@ import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements MinecraftAmalgamation {
-	public String librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
+	private String librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
 
 	public MinecraftAmalgamationImpl(Project project) {
 		super(project);
@@ -97,10 +98,10 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public LibrariesDependency libraries(String version, Action<LibrariesDependency> configure) {
+	public Object libraries(String version, Action<LibrariesDependency> configure) {
 		LibrariesDependency dependency = new LibrariesDependency(this.project, version);
 		configure.execute(dependency);
-		return dependency;
+		return dependency.list();
 	}
 
 	@Override

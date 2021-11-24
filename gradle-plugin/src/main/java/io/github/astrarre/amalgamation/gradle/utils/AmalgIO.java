@@ -40,10 +40,6 @@ public class AmalgIO {
 	public static final String MERGER_META_FILE = "merger_metadata.properties";
 	// start merger meta properties
 	public static final String TYPE = "type"; // resources, java, classes, all
-	/**
-	 * All the sources jars we add to the classpath
-	 */
-	public static final Set<Path> SOURCES = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	public static void hashDep(Hasher hasher, Project project, Dependency dependency) throws IOException {
 		if(dependency instanceof CachedDependency c) {

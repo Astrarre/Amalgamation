@@ -24,7 +24,7 @@ public class ConfigIdeaExt {
 				TaskTriggersConfig config = ex.getExtensions().getByType(TaskTriggersConfig.class);
 				extension = new IdeaExtension(container);
 				Task task = project.task("emitIdeaRunConfigs", t -> t.doFirst($ -> extension.configureQueue()));
-				config.afterSync(task);
+				config.afterSync(task, "idea");
 				return;
 			}
 		}

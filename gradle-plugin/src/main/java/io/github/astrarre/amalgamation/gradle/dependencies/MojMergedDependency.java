@@ -28,8 +28,6 @@ public class MojMergedDependency extends ZipProcessDependency {
 	public final MappingTarget serverMappings;
 	public final MappingTarget clientMappings;
 
-	// todo will require intermediary mappings
-
 	public MojMergedDependency(Project project,
 			String version,
 			CASMerger.Handler handler,

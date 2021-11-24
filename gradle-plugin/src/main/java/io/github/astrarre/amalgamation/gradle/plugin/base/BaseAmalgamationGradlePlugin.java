@@ -30,6 +30,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDe
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
@@ -72,6 +73,10 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			} else {
 				refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
 			}
+
+			if(refreshAmalgamationCaches) {
+				target.getLogger().warn("Refresh Amalgamation Caches Enabled: Build times may suffer.");
+			}
 			offlineMode = parameter.isOffline();
 
 
@@ -102,7 +107,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		this.register(target, BaseAmalgamation.class, BaseAmalgamationImpl.class);
 	}
 
-	protected <T> void register(Project target, Class<T> extensionType, Class<? extends T> realType) {
-		target.getExtensions().create(extensionType, "ag", realType, target);
+	protected <T> T register(Project target, Class<T> extensionType, Class<? extends T> realType) {
+		return target.getExtensions().create(extensionType, "ag", realType, target);
 	}
 }
