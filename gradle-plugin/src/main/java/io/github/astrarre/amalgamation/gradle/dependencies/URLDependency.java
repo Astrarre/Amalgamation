@@ -1,5 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -98,7 +99,7 @@ public class URLDependency extends ZipProcessDependency {
 		data.flush();
 	}
 
-	public Reader getOutdatedReader() throws IOException {
+	public BufferedReader getOutdatedReader() throws IOException {
 		if(!Files.exists(this.getPath())) {
 			this.resolve();
 		}

@@ -1,7 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.utils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -14,14 +14,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
+import io.github.astrarre.amalgamation.gradle.utils.json.Json;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
@@ -32,7 +30,8 @@ public class LauncherMeta {
 	private final Path globalCache;
 	private final Logger logger;
 	private final Project project;
-	private Map<String, Version> versions;
+	private Map<String, Version> versions = new HashMap<>();
+	private Json.Obj launcherMeta;
 
 	/**
 	 * @see MinecraftAmalgamationGradlePlugin#apply(Project)
@@ -57,51 +56,60 @@ public class LauncherMeta {
 
 	public Version getVersion(String version) {
 		this.init(version);
-		Version version1 = this.versions.get(version);
+		Version version1 = this.findVersion(version);
 		if(version1 == null) throw new IllegalArgumentException("Invalid version " + version);
 		return version1;
 	}
 
 	private void init(String lookingFor) {
-		Map<String, Version> vers = this.versions;
+		Json.Obj vers = this.launcherMeta;
 		Path path = this.globalCache.resolve("version_manifest.json");
-		if (vers == null && Files.exists(path)) {
+		if (vers == null && Files.exists(path)) { // if we already have launchermeta downloaded, use that
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
 			cache.output = path;
-			try (Reader reader = Files.newBufferedReader(cache.output); Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
-				Map<String, Version> versions = this.read(reader);
-				if (versions.containsKey(lookingFor)) {
-					vers = this.versions = versions;
+			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
+				Json.Obj versions = new Json.Obj(Files.readString(cache.resolve1()), 0);
+				this.launcherMeta = versions;
+				if (findVersion(lookingFor) != null) {
+					vers = versions;
 				}
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
 
-		if (vers == null || !vers.containsKey(lookingFor)) {
+		if (vers == null) { // if we don't, download it
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
 			cache.output = path;
 			this.logger.lifecycle("Downloading launchermeta...");
-			try (Reader reader = cache.getOutdatedReader(); Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
-				this.versions = this.read(reader);
+			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
+				this.launcherMeta = new Json.Obj(Files.readString(cache.resolve1()), 0);
 			} catch (IOException e) {
 				throw U.rethrow(e);
 			}
 		}
 	}
 
-	protected Map<String, Version> read(Reader reader) {
-		Map<String, Version> versions = new HashMap<>();
-		// todo stop using gson, use a visitor based parser since 99% of the time you don't need to parse the entire damn thing
-		JsonObject object = GSON.fromJson(reader, JsonObject.class);
-		int index = 0;
-		for (JsonElement version : object.getAsJsonArray("versions")) {
-			JsonObject obj = (JsonObject) version;
-			String versionName = obj.get("id").getAsString();
-			String versionJsonURL = obj.get("url").getAsString();
-			versions.put(versionName, new Version(index++, versionName, versionJsonURL));
-		}
-		return Collections.unmodifiableMap(versions);
+	private Version findVersion(String version) {
+		Json.List versions = this.launcherMeta.getList("versions");
+		List<Version> toAdd = new ArrayList<>();
+		Version ver = this.versions.computeIfAbsent(version, id -> {
+			int i = versions.currentlyParsed();
+			while(!versions.hasReachedEnd()) {
+				Json.Obj vers = (Json.Obj) versions.get(i);
+				String versionName = vers.getString("id");
+				String versionJsonURL = vers.getString("url");
+				Version value = new Version(i++, versionName, versionJsonURL);
+				if(versionName.equals(id)) {
+					return value;
+				} else {
+					toAdd.add(value);
+				}
+			}
+			return null;
+		});
+		toAdd.forEach(v -> this.versions.put(v.version, v));
+		return ver;
 	}
 
 	public final class Version {
@@ -141,12 +149,13 @@ public class LauncherMeta {
 			return client ? getClientJar() : getServerJar();
 		}
 
-		public JsonObject read(String output, String url) {
+		public Json.Obj read(String output, String url) {
 			// todo pull from .minecraft
 			URLDependency dependency = new URLDependency(LauncherMeta.this.project, url);
 			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project).resolve(this.version).resolve(output);
-			try (Reader reader = dependency.getOutdatedReader()) {
-				return GSON.fromJson(reader, JsonObject.class);
+			try (BufferedReader reader = dependency.getOutdatedReader()) {
+				String collect = reader.lines().collect(Collectors.joining("\n"));
+				return (Json.Obj) Json.parseValue(collect, 0);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -154,46 +163,46 @@ public class LauncherMeta {
 
 		private void init() {
 			if (!this.initialized) {
-				JsonObject versionJson = this.read(this.version + "-downloads.json", this.manifestUrl);
-				JsonObject downloads = versionJson.getAsJsonObject("downloads");
-				this.clientJar = new HashedURL(downloads.getAsJsonObject("client"), this.version + "-client.jar");
-				this.serverJar = new HashedURL(downloads.getAsJsonObject("server"), this.version + "-server.jar");
-				this.serverMojmap = new HashedURL(downloads.getAsJsonObject("server_mappings"), this.version + "-client_mappings.txt");
-				this.clientMojMap = new HashedURL(downloads.getAsJsonObject("client_mappings"), this.version + "-server_mappings.txt");
+				Json.Obj versionJson = this.read(this.version + "-downloads.json", this.manifestUrl);
+				Json.Obj downloads = versionJson.getObj("downloads");
+				this.clientJar = new HashedURL(downloads.getObj("client"), this.version + "-client.jar");
+				this.serverJar = new HashedURL(downloads.getObj("server"), this.version + "-server.jar");
+				this.serverMojmap = new HashedURL(downloads.getObj("server_mappings"), this.version + "-client_mappings.txt");
+				this.clientMojMap = new HashedURL(downloads.getObj("client_mappings"), this.version + "-server_mappings.txt");
 
 				List<Library> libraries = new ArrayList<>();
-				for (JsonElement element : versionJson.getAsJsonArray("libraries")) {
-					JsonObject object = element.getAsJsonObject();
-					String name = object.get("name").getAsString();
-					JsonObject libraryDownloads = object.getAsJsonObject("downloads");
-					HashedURL mainArtifact = new HashedURL(libraryDownloads.getAsJsonObject("artifact"));
+				for (Json element : versionJson.getList("libraries").asList()) {
+					Json.Obj object = (Json.Obj) element;
+					String name = object.getString("name");
+					Json.Obj libraryDownloads = object.getObj("downloads");
+					HashedURL mainArtifact = new HashedURL(libraryDownloads.getObj("artifact"));
 					Map<String, HashedURL> classifiers;
-					JsonObject classifiersJson = libraryDownloads.getAsJsonObject("classifiers");
+					Json.Obj classifiersJson = libraryDownloads.getObj("classifiers");
 
 					if(classifiersJson != null) {
 						classifiers = new HashMap<>();
-						for (String s : classifiersJson.keySet()) {
-							classifiers.put(s, new HashedURL(classifiersJson.getAsJsonObject(s)));
+						for (var s : classifiersJson.asMap().entrySet()) {
+							classifiers.put(s.getKey(), new HashedURL((Json.Obj)s.getValue()));
 						}
 						classifiers = Collections.unmodifiableMap(classifiers);
 					} else classifiers = Collections.emptyMap();
 
 					Map<String, String> natives;
-					JsonObject nativesJson = object.getAsJsonObject("natives");
+					Json.Obj nativesJson = object.getObj("natives");
 					if(nativesJson != null) {
 						natives = new HashMap<>();
-						for (String s : nativesJson.keySet()) {
-							natives.put(s, nativesJson.getAsJsonPrimitive(s).getAsString());
+						for (var s : nativesJson.asMap().entrySet()) {
+							natives.put(s.getKey(), ((Json.Str)s.getValue()).getValue());
 						}
 						natives = Collections.unmodifiableMap(natives);
 					} else natives = Collections.emptyMap();
 
 					List<Rule> rules;
-					JsonArray rulesJson = object.getAsJsonArray("rules");
+					Json.List rulesJson = object.getList("rules");
 					if(rulesJson != null) {
 						rules = new ArrayList<>();
-						for (JsonElement jsonElement : rulesJson) {
-							rules.add(new Rule(jsonElement.getAsJsonObject()));
+						for (Json jsonElement : rulesJson.asList()) {
+							rules.add(new Rule((Json.Obj) jsonElement));
 						}
 						rules = Collections.unmodifiableList(rules);
 					} else rules = Collections.emptyList();
@@ -203,8 +212,8 @@ public class LauncherMeta {
 				}
 
 				this.libraries = Collections.unmodifiableList(libraries);
-				this.assetIndexPath = versionJson.getAsJsonPrimitive("assets").getAsString();
-				this.assetIndexUrl = new HashedURL(versionJson.getAsJsonObject("assetIndex"), this.assetIndexPath + ".json");
+				this.assetIndexPath = versionJson.getString("assets");
+				this.assetIndexUrl = new HashedURL(versionJson.getObj("assetIndex"), this.assetIndexPath + ".json");
 				this.initialized = true;
 			}
 		}
@@ -321,18 +330,14 @@ public class LauncherMeta {
 			this.osName = name;
 		}
 
-		public Rule(JsonObject object) {
-			this.action = RuleType.valueOf(object.getAsJsonPrimitive("action").getAsString().toUpperCase(Locale.ROOT));
-			JsonObject os = object.getAsJsonObject("os");
+		public Rule(Json.Obj object) {
+			this.action = RuleType.valueOf(object.getString("action").toUpperCase(Locale.ROOT));
+			Json.Obj os = object.getObj("os");
 			if(os == null) {
 				this.osName = null;
 				return;
 			}
-			JsonPrimitive primitive = os.getAsJsonPrimitive("name");
-			if(primitive == null) {
-				this.osName = null;
-			} else
-				this.osName = primitive.getAsString();
+			this.osName = os.getString("name");
 		}
 
 	}
@@ -344,15 +349,15 @@ public class LauncherMeta {
 
 	public static final class HashedURL {
 		public final String hash, url, path;
-		public HashedURL(JsonObject artifact) {
-			this.hash = artifact.getAsJsonPrimitive("sha1").getAsString();
-			this.url = artifact.getAsJsonPrimitive("url").getAsString();
-			this.path = artifact.getAsJsonPrimitive("path").getAsString();
+		public HashedURL(Json.Obj artifact) {
+			this.hash = artifact.getString("sha1");
+			this.url = artifact.getString("url");
+			this.path = artifact.getString("path");
 		}
 
-		public HashedURL(JsonObject artifact, String path) {
-			this.hash = artifact.getAsJsonPrimitive("sha1").getAsString();
-			this.url = artifact.getAsJsonPrimitive("url").getAsString();
+		public HashedURL(Json.Obj artifact, String path) {
+			this.hash = artifact.getString("sha1");
+			this.url = artifact.getString("url");
 			this.path = path;
 		}
 

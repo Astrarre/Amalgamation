@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Iterables;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.FileCollectionDependency;
@@ -90,6 +91,10 @@ public abstract class AbstractSelfResolvingDependency extends AbstractDependency
 	@Override
 	public Set<File> resolve() {
 		return this.resolve(true);
+	}
+
+	public Path resolve1() {
+		return Iterables.getOnlyElement(this.resolve()).toPath();
 	}
 
 	protected Set<File> path() throws IOException {
