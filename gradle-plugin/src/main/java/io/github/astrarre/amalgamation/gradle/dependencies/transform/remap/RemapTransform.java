@@ -10,7 +10,7 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AbstractBinRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AmalgRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.bin.TRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.cls.TRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.OutputTag;

@@ -2,7 +2,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies.transform.remap;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AmalgRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.bin.TRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.cls.TRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.src.TrieHarderRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.inputs.InputType;

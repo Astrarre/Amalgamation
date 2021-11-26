@@ -10,7 +10,7 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AbstractBinRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.AmalgRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.bin.TRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.cls.TRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.remapper.src.TrieHarderRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
