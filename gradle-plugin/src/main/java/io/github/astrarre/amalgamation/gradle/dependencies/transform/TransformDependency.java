@@ -18,6 +18,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourcesOutput;
 import io.github.astrarre.amalgamation.gradle.dependencies.filters.SourcesOutput;
 import io.github.astrarre.amalgamation.gradle.dependencies.transform.inputs.InputType;
 import io.github.astrarre.amalgamation.gradle.dependencies.util.DependencyList;
@@ -242,6 +243,10 @@ public class TransformDependency<C extends TransformConfiguration<C, D>, D exten
 
 	public record Input<T>(Project project, InputType<?, ?> input, Dependency dependency, SingleTransformDependency representation, T value) {
 		public OutputTag resolve(OutputTag tag) {
+			if(tag instanceof ResourcesOutput) { // todo avoid special case, maybe InputType can return whether or not it transforms resources?
+				return tag;
+			}
+
 			Path transforms = this.input.cacheLocation().transforms(this.project).resolve(this.input.hint());
 			try {
 				Files.createDirectories(transforms);
@@ -250,7 +255,7 @@ public class TransformDependency<C extends TransformConfiguration<C, D>, D exten
 			}
 
 			OutputTag output = tag(tag, transforms.resolve(this.representation.jarName(tag instanceof SourcesOutput ? "sources" : null)));
-			this.representation.outputs.add(output);
+			//this.representation.outputs.add(output);
 			return output;
 		}
 

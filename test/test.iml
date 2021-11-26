@@ -17,25 +17,10 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/amalgamation/transforms/accessWidener/gson_1.1-Y56X_Fu7rxJh_lJwKMx9MHeEbt7hmQQuSXeOaP8JlZU=.jar!/"/>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/transforms/remap/moj-merged_1.17.1-2VsTjP40UA8ThmTnkaZSDodYrl_Z-yhHWIyovS4Jn70=.jar!/"/>
         </CLASSES>
         <JAVADOC/>
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/build/amalgamation/transforms/accessWidener/gson_1.1-Y56X_Fu7rxJh_lJwKMx9MHeEbt7hmQQuSXeOaP8JlZU=-sources.jar!/"/>
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/d1aed0b642aa81cc1fd0413b87ddcff53112c4f7/gson-1.1.jar!/"/>
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/ac8920a0925daa3a36a8cb1d15a17108e546fe67/gson-1.1-javadoc.jar!/"/>
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://C:/Users/devan/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/1.1/cbf51ba4a88ae596f9b3acf937779a57ce602f25/gson-1.1-sources.jar!/"/>
-        </SOURCES>
+        <SOURCES/>
       </library>
     </orderEntry>
   </component>

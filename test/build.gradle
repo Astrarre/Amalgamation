@@ -42,9 +42,6 @@ allprojects {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
-        flatDir {
-            dir("C:\\Users\\devan\\AppData\\Roaming\\.minecraft\\libraries")
-        }
     }
 }
 
@@ -117,9 +114,6 @@ compileJava {
     compilerArgs.add("-AdefaultObfuscationEnv=named:intermediary" as String)
     dependsOn tasks.unzip
 }
-
-// todo maybe just add an Extension with name RemapJar with RemapJar.class
-//      sometimes, my genius, it generates gravity
 
 /*task testDiff(type: JavaExec) {
     group = "tests"

@@ -143,6 +143,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
+		this.getPath();
 		try(OutputStream stream = Files.newOutputStream(this.cachePath)) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);

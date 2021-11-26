@@ -30,7 +30,7 @@ public class LauncherMeta {
 	private final Path globalCache;
 	private final Logger logger;
 	private final Project project;
-	private Map<String, Version> versions = new HashMap<>();
+	private final Map<String, Version> versions = new HashMap<>();
 	private Json.Obj launcherMeta;
 
 	/**
@@ -78,10 +78,9 @@ public class LauncherMeta {
 			}
 		}
 
-		if (vers == null) { // if we don't, download it
+		if (vers == null) { // if we don't or the version isn't in the existing one, download it
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
 			cache.output = path;
-			this.logger.lifecycle("Downloading launchermeta...");
 			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
 				this.launcherMeta = new Json.Obj(Files.readString(cache.resolve1()), 0);
 			} catch (IOException e) {

@@ -98,5 +98,4 @@ public class MojMergedDependency extends ZipProcessDependency {
 		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version);
 		return isClient ? vers.getClientMojMap() : vers.getServerMojmap();
 	}
-
 }
