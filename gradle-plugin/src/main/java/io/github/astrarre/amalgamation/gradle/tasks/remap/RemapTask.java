@@ -53,7 +53,7 @@ public interface RemapTask extends Task {
 			MappingEntry entry = new MappingEntry();
 			entry.from = from;
 			entry.to = to;
-			entry.mappings = AmalgIO.resolve(this.getProject(), dep);
+			entry.mappings = AmalgIO.resolveFile(this.getProject(), dep);
 			return entry;
 		});
 		this.getMappings().add(this.getProject().provider(lazy));

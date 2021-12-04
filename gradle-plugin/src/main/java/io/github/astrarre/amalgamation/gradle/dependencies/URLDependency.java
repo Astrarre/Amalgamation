@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 public class URLDependency extends ZipProcessDependency implements SelfResolvingDependencyInternal {
 	final String url;
 	final boolean compressed;
+	public String group, name, version;
 	public boolean shouldOutput = true;
 	public boolean isOptional = false;
 	public Path output;
@@ -58,6 +59,14 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 		super(project);
 		this.url = url;
 		this.compressed = compressed;
+		try {
+			URL ur = new URL(url);
+			this.group = ur.getHost();
+			this.name = strip(ur.getPath());
+			this.version = "NaN";
+		} catch(MalformedURLException e) {
+			throw U.rethrow(e);
+		}
 	}
 
 	@Override
@@ -136,17 +145,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 			}
 		}
 
-		URL url = new URL(this.url);
-		String host = url.getHost();
-		return List.of(new Artifact.File(
-				this.project,
-				host,
-				strip(url.getPath()),
-				"NaN",
-				resolvedPath,
-				this.getCurrentHash(),
-				Artifact.Type.MIXED
-		));
+		return List.of(createArtifact(resolvedPath));
 	}
 
 	static String strip(String s) {
@@ -154,9 +153,19 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 		return end == -1 ? s.substring(start) : s.substring(start, end);
 	}
 
+	Artifact createArtifact(Path path) throws MalformedURLException {
+		return new Artifact.File(
+				this.project, this,
+				path,
+				this.getCurrentHash(),
+				Artifact.Type.MIXED
+		);
+	}
+
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
+		Path output;
 		if(isOutdated) {
 			var result = this.getResult();
 			if(result.error != null) {
@@ -166,6 +175,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 					throw result.error;
 				}
 			}
+
 			if(path == null) { // virtual output
 				FileSystem virtual = Jimfs.newFileSystem();
 				Path temp = virtual.getPath("temp.jar");
@@ -174,10 +184,10 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 				} finally {
 					result.close();
 				}
-				process.addProcessed(temp);
+				process.addProcessed(createArtifact(temp));
 				process.addCloseable(virtual);
 			} else { // real output
-				ZipTag tag = process.createZipTag(path);
+				ZipTag tag = process.createZipTag(createArtifact(resolvedPath));
 				process.afterExecute(() -> {
 					try(ZipInputStream zis = new ZipInputStream(result.stream)) {
 						ReadableByteChannel channel = Channels.newChannel(zis);
@@ -190,11 +200,12 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 						throw U.rethrow(e);
 					}
 				});
+				return;
 			}
-		} else if(path != null && Files.exists(path)) {
-			process.addProcessed(path);
-		} else {
+		} else if(path == null || !Files.exists(path)) {
 			throw new IllegalStateException("shouldOutput is false, did not expect multi-use! " + this.url);
+		} else {
+			process.addProcessed(createArtifact(resolvedPath));
 		}
 	}
 
@@ -253,22 +264,18 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	@Nullable
 	@Override
 	public String getGroup() {
-		try {
-			return new URL(this.url).getHost();
-		} catch(MalformedURLException e) {
-			throw U.rethrow(e);
-		}
+		return this.group;
 	}
 
 	@Override
 	public String getName() {
-		return "download";
+		return this.name;
 	}
 
 	@Nullable
 	@Override
 	public String getVersion() {
-		return "NaN";
+		return this.version;
 	}
 
 	@Override

@@ -98,7 +98,7 @@ public abstract class ZipProcessDependency extends CachedDependency {
 		List<TaskTransform> transforms = new ArrayList<>();
 		for(Object dep : dependencies) {
 			if(dep instanceof ZipProcessDependency p) {
-				transforms.add(process.linkProcess(p.process(), (UnaryOperator) output));
+				transforms.add(process.linkProcess(p.process(), o -> output.apply((Artifact) o)));
 			} else {
 				for(Artifact artifact : this.artifacts(dep, true)) {
 					transforms.add(process.addZip(artifact.path, output.apply(artifact)));

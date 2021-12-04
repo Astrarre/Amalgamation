@@ -14,6 +14,7 @@ import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradle
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -34,6 +35,8 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	public void hashDep(Hasher hasher, Object notation) throws IOException {
 		if(notation instanceof CachedDependency c) {
 			c.hashInputs(hasher);
+		} else if(notation instanceof Dependency d) {
+			AmalgIO.hashDep(hasher, this.project, d);
 		} else {
 			var resolved = this.project.getDependencies().create(notation);
 			AmalgIO.hashDep(hasher, this.project, resolved);

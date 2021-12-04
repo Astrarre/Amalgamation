@@ -65,19 +65,18 @@ dependencies {
 
     //aaaaa intermediaryMinecraft
 
-    aaaaa Set.of("net.fabricmc:yarn:1.17.1+build.61")
-    aaaaa ag.map {
+    /*aaaaa ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61', 'intermediary', 'named')
         inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
         })
+    }*/
+
+    aaaaa ag.accessWidener("com.google.code.gson:gson:1.1") {
+        accessWidener(files("$projectDir/src/main/resources/cope.aw"))
     }
-    /*aaaaa ag.accessWidener {
-        input("com.google.code.gson:gson:1.1")
-        aw(files("$projectDir/src/main/resources/cope.aw"))
-    }
-    aaaaa "com.google.code.gson:gson:1.1"*/
+    //aaaaa "com.google.code.gson:gson:1.1"*/
     //aaaaa ag.libraries(mc_vers)
 
     //aaaaa "com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="

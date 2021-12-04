@@ -107,7 +107,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	// todo Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
+	Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
 
 	default Object libraries(String version) {
         return this.libraries(version, NOTHING);

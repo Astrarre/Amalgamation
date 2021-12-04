@@ -72,7 +72,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		List<Dependency> dependencies = new ArrayList<>();
 		DependencyHandler handler = this.project.getDependencies();
 		dependencies.add(handler.create("net.fabricmc:fabric-loader:" + version));
-		File json = AmalgIO.resolve(this.project, "net.fabricmc:fabric-loader:" + version + "@json");
+		File json = AmalgIO.resolveFile(this.project, "net.fabricmc:fabric-loader:" + version + "@json");
 		try(BufferedReader reader = Files.newBufferedReader(json.toPath())) {
 			JsonObject object = LauncherMeta.GSON.fromJson(reader, JsonObject.class);
 			JsonObject libs = object.getAsJsonObject("libraries");
@@ -85,6 +85,13 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 			throw new RuntimeException(e);
 		}
 		return dependencies;
+	}
+
+	@Override
+	public Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException {
+		AccessWidenerDependency dependency = new AccessWidenerDependency(this.project, depNotation);
+		configure.execute(dependency);
+		return dependency;
 	}
 
 

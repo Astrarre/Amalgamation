@@ -37,6 +37,10 @@ public class MinecraftFileHelper {
 		Path jar = globalCache.resolve(version).resolve(area + ".jar");
 		Path unstripped = globalCache.resolve(version).resolve(area + ".jar");
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
+		dependency.group = "net.minecraft";
+		dependency.name = isClient ? "client" : "server";
+		dependency.version = version;
+
 		if(doStrip || doSplit) {
 			dependency.shouldOutput = false;
 		}
@@ -44,7 +48,7 @@ public class MinecraftFileHelper {
 		dependency.output = unstripped;
 		Object f;
 		if(doSplit) {
-			SplitDependency split = new SplitDependency(project, version, dependency);
+			SplitDependency split = new SplitDependency(project, dependency);
 			split.outputDir = globalCache.resolve(version).resolve("split");
 			f = split;
 		} else {

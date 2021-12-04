@@ -34,7 +34,7 @@ public class Mappings {
 	}
 
 	public static Namespaced read(Project project, Dependency dependency, String from, String to) throws IOException {
-		Path mappings = AmalgIO.resolve(project, dependency).toPath();
+		Path mappings = AmalgIO.resolveFile(project, dependency).toPath();
 		return Mappings.from(mappings, from, to);
 	}
 

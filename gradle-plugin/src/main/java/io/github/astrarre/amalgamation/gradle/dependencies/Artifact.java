@@ -11,6 +11,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Artifact extends OutputTag {
@@ -20,10 +21,14 @@ public abstract class Artifact extends OutputTag {
 	public final Type type;
 
 	public enum Type {
-		MIXED,
-		CLASSES,
-		SOURCES,
-		RESOURCES;
+		MIXED(""),
+		CLASSES(""),
+		SOURCES("-sources"),
+		RESOURCES("-resources");
+
+		public final String classifier;
+
+		Type(String classifier) {this.classifier = classifier;}
 
 		public boolean isResources() {
 			return this == RESOURCES;
@@ -92,8 +97,8 @@ public abstract class Artifact extends OutputTag {
 		}
 
 		static String get(ComponentArtifactIdentifier id, Function<ModuleComponentIdentifier, String> nameGetter, String default_) {
-			if(id instanceof ModuleComponentIdentifier m) {
-				return nameGetter.apply(m);
+			if(id instanceof ModuleComponentArtifactIdentifier m) {
+				return nameGetter.apply(m.getComponentIdentifier());
 			} else {
 				return default_;
 			}

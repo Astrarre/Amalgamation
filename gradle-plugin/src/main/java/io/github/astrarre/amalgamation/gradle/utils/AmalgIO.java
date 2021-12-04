@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
@@ -42,8 +44,14 @@ public class AmalgIO {
 	public static void hashDep(Hasher hasher, Project project, Object dependency) throws IOException {
 		if(dependency instanceof CachedDependency c) {
 			c.hashInputs(hasher);
+		} else if(dependency instanceof AmalgamationDependency a) {
+			for(Artifact artifact : a.getArtifacts()) {
+				hasher.putBytes(artifact.hash);
+			}
 		} else {
-			AmalgIO.hash(hasher, AmalgIO.resolve(project, List.of(dependency)));
+			for(File file : AmalgIO.resolve(project, List.of((Dependency) dependency))) {
+				AmalgIO.hash(hasher, file);
+			}
 		}
 	}
 
@@ -121,9 +129,14 @@ public class AmalgIO {
 		}
 	}
 
-	public static Set<ResolvedDependency> resolveDeps(Project project, Iterable<Dependency> dependencies) {
+	public static void resolveDeps(Project project, Set<Dependency> dependencies, Set<ResolvedDependency> resolved, List<Dependency> everythingElse) {
 		Configuration configuration = project.getConfigurations().detachedConfiguration(Iterables.toArray(dependencies, Dependency.class));
-		var deps = new HashSet<>(configuration.getResolvedConfiguration().getFirstLevelModuleDependencies());
+		Set<Dependency> unvisited = new HashSet<>(dependencies);
+		var deps = new HashSet<>(configuration.getResolvedConfiguration().getFirstLevelModuleDependencies(s -> {
+			unvisited.remove(s);
+			return true;
+		}));
+		everythingElse.addAll(unvisited);
 		List<ResolvedDependency> toProcess = new ArrayList<>(deps);
 		while(!toProcess.isEmpty()) {
 			int orig = toProcess.size();
@@ -134,7 +147,7 @@ public class AmalgIO {
 			}
 			toProcess.subList(0, orig).clear();
 		}
-		return deps;
+		resolved.addAll(deps);
 	}
 
 	public static List<File> resolve(Project project, Iterable<Dependency> dependencies) {
@@ -157,7 +170,7 @@ public class AmalgIO {
 		return resolved;
 	}
 
-	public static File resolve(Project project, Object notation) {
+	public static File resolveFile(Project project, Object notation) {
 		Dependency dependency = project.getDependencies().create(notation);
 		return Iterables.getOnlyElement(resolve(project, List.of(dependency)));
 	}

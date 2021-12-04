@@ -168,7 +168,7 @@ public class BasicResolvedClassDeclaration implements ResolvedClassDeclaration {
 		@Override
 		public SymbolReference<ResolvedReferenceTypeDeclaration> tryToSolveType(String name) {
 			boolean found = false;
-			if(contains(name)) {
+			if(contains(name.replace('.', '/'))) {
 				found = true;
 			} else {
 				int index;

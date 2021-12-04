@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.HashedURLDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler;
@@ -65,6 +66,15 @@ public class MojMergedDependency extends ZipProcessDependency {
 
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+		Artifact.File file = new Artifact.File(
+				this.project,
+				"net.minecraft",
+				"merged",
+				this.version,
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.MIXED
+		);
 		if(isOutdated) {
 			Mappings.Namespaced server = this.serverMappings.read(), client = this.clientMappings.read();
 			process.setEntryProcessor(buffer -> {
@@ -80,12 +90,13 @@ public class MojMergedDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			resolver.apply(this.of(this.client), p -> p.derive(resolvedPath, this.getCurrentHash()));
+			resolver.apply(this.of(this.client), p -> file);
 		} else {
-			for(TaskTransform transform : resolver.apply(this.of(this.client), p -> p.derive(resolvedPath, this.getCurrentHash()))) {
+			Object of = this.of(this.client);
+			for(TaskTransform transform : resolver.apply(of, p -> null)) {
 				transform.setZipFilter(o -> ResourceZipFilter.SKIP);
 			}
-			process.addProcessed(resolvedPath);
+			process.addProcessed(file);
 		}
 	}
 

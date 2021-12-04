@@ -58,8 +58,8 @@ public abstract class MigrateSourcesTask extends DefaultTask {
 	public abstract Property<FileCollection> getClasspath();
 
 	public void mappings(Object from, Object to, String fromName, String fromIntermediary, String toName, String toIntermediary) {
-		this.getSrcMappings().set(AmalgIO.resolve(this.getProject(), from));
-		this.getDstMappings().set(AmalgIO.resolve(this.getProject(), to));
+		this.getSrcMappings().set(AmalgIO.resolveFile(this.getProject(), from));
+		this.getDstMappings().set(AmalgIO.resolveFile(this.getProject(), to));
 		this.getSrcName().set(fromName);
 		this.getSrcIntermediateName().set(fromIntermediary);
 		this.getDstName().set(toName);

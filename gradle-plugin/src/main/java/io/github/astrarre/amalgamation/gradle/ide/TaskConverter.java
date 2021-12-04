@@ -35,8 +35,7 @@ public abstract class TaskConverter<T extends Task> {
 
 	protected static File getManifestJar(JavaExec task) {
 		String path = task.getPath();
-		ManifestJarDependency dependency = new ManifestJarDependency(task.getProject(), path, task);
-		return dependency.getArtifacts().get(0).path.toFile();
+		return new ManifestJarDependency(task.getProject(), path, task).getArtifacts().get(0).path.toFile();
 	}
 
 	public static List<String> getClasspath(JavaExec task) {

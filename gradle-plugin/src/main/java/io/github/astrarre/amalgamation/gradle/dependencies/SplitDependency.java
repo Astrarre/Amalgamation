@@ -18,7 +18,7 @@ import org.gradle.api.artifacts.Dependency;
 public class SplitDependency extends ZipProcessDependency {
 	public final Dependency dependency;
 	public Path outputDir;
-	public SplitDependency(Project project, String version, Dependency dependency) {
+	public SplitDependency(Project project, Dependency dependency) {
 		super(project);
 		this.dependency = dependency;
 	}
@@ -37,7 +37,7 @@ public class SplitDependency extends ZipProcessDependency {
 		return new Artifact.File(
 				this.project,
 				this.dependency.getGroup(),
-				this.dependency.getName() + "-" + type.name().toLowerCase(Locale.ROOT),
+				this.dependency.getName() + type.classifier,
 				this.dependency.getVersion(),
 				dest,
 				this.getCurrentHash(),

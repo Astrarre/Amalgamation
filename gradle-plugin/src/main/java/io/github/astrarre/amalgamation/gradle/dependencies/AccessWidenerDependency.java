@@ -34,21 +34,23 @@ import net.fabricmc.accesswidener.javaparser.SourceAccessWidenerTransformer;
 public class AccessWidenerDependency extends CachedDependency {
 	public final Object widen;
 	public final List<Object> accessWideners = new ArrayList<>();
-	public final AmalgDirs dirs;
+	public AmalgDirs dirs = AmalgDirs.ROOT_PROJECT;
 
-	public AccessWidenerDependency(Project project, Object widen, AmalgDirs dirs) {
+	public AccessWidenerDependency(Project project, Object widen) {
 		super(project);
 		this.widen = widen;
-		this.dirs = dirs;
 	}
 
 	public void accessWidener(Object object) {
-		this.accessWideners.add(object);
+		this.accessWideners.add(this.of(object));
 	}
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
-		this.hashDep(hasher, this.accessWideners);
+		for(Object widener : this.accessWideners) {
+			this.hashDep(hasher, widener);
+		}
+
 		this.hashDep(hasher, this.widen);
 	}
 
@@ -64,9 +66,10 @@ public class AccessWidenerDependency extends CachedDependency {
 		List<Artifact> artifacts = new ArrayList<>();
 		List<FsPair> systems = new ArrayList<>();
 		for(Artifact artifact : this.artifacts(this.widen, true)) {
-			Artifact out = artifact.deriveMaven(artifact.path, this.getCurrentHash());
+			Artifact out = artifact.deriveMaven(this.dirs.aws(this.project), this.getCurrentHash());
 			artifacts.add(out);
-			if(isOutdated) {
+			if(isOutdated) { // todo sources not appearing?
+				Files.deleteIfExists(out.path);
 				Files.copy(artifact.path, out.path);
 				systems.add(new FsPair(U.openZip(artifact.path), U.openZip(out.path)));
 			}
@@ -126,6 +129,11 @@ public class AccessWidenerDependency extends CachedDependency {
 					}
 				}
 			}
+		}
+
+		for(FsPair system : systems) {
+			system.input.close();
+			system.output.close();
 		}
 		return artifacts;
 	}

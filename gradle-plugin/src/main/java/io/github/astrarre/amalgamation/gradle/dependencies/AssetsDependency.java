@@ -72,7 +72,7 @@ public class AssetsDependency extends CachedDependency {
 		this.logger.lifecycle("downloading assets . . .");
 		// if an index file exists, then we know we've downloaded the assets for that version
 		Artifact.File file = new Artifact.File(this.project,
-				"com.mojang.minecraft",
+				"net.minecraft",
 				"assets",
 				this.version,
 				resolvedPath,
