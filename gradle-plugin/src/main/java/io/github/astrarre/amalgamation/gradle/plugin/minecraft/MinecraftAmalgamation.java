@@ -23,16 +23,16 @@ import java.io.IOException;
 import java.util.List;
 
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerHelper;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.aw.AccessWidenerTransform;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapHelper;
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
-import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
+import io.github.astrarre.amalgamation.gradle.utils.json.Json;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
@@ -49,7 +49,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 		return NOTHING;
 	}
 
-	default Dependency client(String version) {
+	default Object client(String version) {
 		return this.client(version, true);
 	}
 
@@ -57,16 +57,16 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param version the minecraft version string, should match up with launchermeta
 	 * @return a clientMappings for the obfuscated client jar
 	 */
-	Dependency client(String version, boolean split);
+	Object client(String version, boolean split);
 
-	default Dependency server(String version) {
+	default Object server(String version) {
 		return this.server(version, true);
 	}
 
 	/**
 	 * @param strip strip included dependencies
 	 */
-	default Dependency server(String version, boolean strip) {
+	default Object server(String version, boolean strip) {
 		return this.server(version, strip, true);
 	}
 
@@ -75,29 +75,29 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param split split jar into resources and classes jar for speed
 	 * @return a clientMappings for the obfuscated server jar (dependencies stripped)
 	 */
-	Dependency server(String version, boolean strip, boolean split);
+	Object server(String version, boolean strip, boolean split);
 
-	Dependency merged(String version, Action<CASMergedDependency> configurate);
+	Object merged(String version, Action<CASMergedDependency> configurate);
 
-	default Dependency mojmerged(String version, CASMerger.Handler handler, MappingTarget clientMappings) {
+	default Object mojmerged(String version, SideAnnotationHandler handler, MappingTarget clientMappings) {
 		return this.mojmerged(version, handler, true, clientMappings);
 	}
 
-	Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, MappingTarget clientMappings);
+	Object mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget clientMappings);
 
-	default Dependency mojmerged(String version, boolean split, MappingTarget clientMappings) {
-		return this.mojmerged(version, CASMerger.FABRIC, split, clientMappings);
+	default Object mojmerged(String version, boolean split, MappingTarget clientMappings) {
+		return this.mojmerged(version, SideAnnotationHandler.FABRIC, split, clientMappings);
 	}
 
-	default Dependency mojmerged(String version, MappingTarget clientMappings) {
+	default Object mojmerged(String version, MappingTarget clientMappings) {
 		return this.mojmerged(version, true, clientMappings);
 	}
 
-	default Dependency mojmerged(String version, boolean split) {
-		return this.mojmerged(version, CASMerger.FABRIC, split, this.intermediary(version));
+	default Object mojmerged(String version, boolean split) {
+		return this.mojmerged(version, SideAnnotationHandler.FABRIC, split, this.intermediary(version));
 	}
 
-	default Dependency mojmerged(String version) {
+	default Object mojmerged(String version) {
 		return this.mojmerged(version, true, this.intermediary(version));
 	}
 
@@ -107,9 +107,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	default Object accessWidener(Action<AccessWidenerHelper> configure) throws IOException {
-		return this.transformed(new AccessWidenerTransform(), configure);
-	}
+	// todo Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
 
 	default Object libraries(String version) {
         return this.libraries(version, NOTHING);
@@ -132,7 +130,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param mappings configurate mappings
 	 * @return a list of the remapped dependencies
 	 */
-	Object map(Action<RemapHelper> mappings) throws IOException;
+	Object map(Action<RemapDependencyConfig> mappings) throws IOException;
 
 	/**
 	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries

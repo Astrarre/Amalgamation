@@ -20,13 +20,15 @@ import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
 import org.gradle.api.Project;
 
 public class NativesDependency extends CachedDependency {
+	final String version;
 	final List<LauncherMeta.HashedURL> dependencies;
 	final Path nativesDir;
 
 	public NativesDependency(Project project, String version) {
-		super(project, "net.minecraft", "natives", version);
+		super(project);
+		this.version = version;
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		LauncherMeta.Version vers = meta.getVersion(this.version);
+		LauncherMeta.Version vers = meta.getVersion(version);
 		this.dependencies = new ArrayList<>();
 		for(LauncherMeta.Library library : vers.getLibraries()) {
 			this.dependencies.addAll(library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY));
@@ -47,7 +49,7 @@ public class NativesDependency extends CachedDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			for(Path path : UnsafeIterable.walkFiles(resolvedPath)) {
 				Files.delete(path);
@@ -57,7 +59,7 @@ public class NativesDependency extends CachedDependency {
 				DownloadUtil.Result result = DownloadUtil.read(dependency.getUrl(),
 						null,
 						-1,
-						this.getLogger(),
+						this.logger,
 						BaseAmalgamationGradlePlugin.offlineMode,
 						false);
 				if(result == null) {
@@ -72,7 +74,7 @@ public class NativesDependency extends CachedDependency {
 						Path toFile = resolvedPath.resolve(entry.getName()); // todo apparently this should be flattened linux?
 						if(Files.exists(toFile)) {
 							if(!toFile.toString().contains("META-INF")) {
-								this.getLogger().warn(toFile + " already exists!");
+								this.logger.warn(toFile + " already exists!");
 							}
 							continue;
 						}
@@ -86,12 +88,12 @@ public class NativesDependency extends CachedDependency {
 				}
 			}
 		}
-		return List.of(resolvedPath);
-	}
-
-	@Override
-	public String toString() {
-		this.resolve();
-		return this.nativesDir.toAbsolutePath().toString();
+		return List.of(new Artifact.File(
+				this.project,
+				"net.minecraft", "natives", version,
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.MIXED
+		));
 	}
 }

@@ -24,4 +24,12 @@ public enum AmalgDirs {
 	public Path transforms(Project project) {
 		return this.root(project).resolve("transforms");
 	}
+
+	public Path aws(Project project) {
+		return this.root(project).resolve("accessWideners");
+	}
+
+	public Path remaps(Project project) {
+		return this.root(project).resolve("remaps");
+	}
 }

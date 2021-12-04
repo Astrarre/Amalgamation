@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.SingleTransformDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
@@ -58,7 +56,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			List<Path> paths = new ArrayList<>();
 			for(AmalgDirs value : AmalgDirs.values()) {
 				paths.add(value.transforms(target).resolve("accessWidener"));
-				paths.add(value.transforms(target).resolve("remap"));
+				paths.add(value.remaps(target));
 			}
 			f.setDirs(paths.stream().map(Path::toAbsolutePath).map(Path::toFile).collect(Collectors.toSet()));
 		});

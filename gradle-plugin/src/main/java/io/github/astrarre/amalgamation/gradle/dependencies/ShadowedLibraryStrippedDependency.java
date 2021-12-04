@@ -4,26 +4,24 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.filters.Filters;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
 import org.gradle.api.Project;
 
 public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
-	// todo check if start / is there or not
 	public final Path destinationPath;
-	public boolean shouldOutput = true;
+	public boolean shouldOutput = true; // todo impl
 	public Object toStrip;
 	public String unobfPackage = "net/minecraft";
 
-	public ShadowedLibraryStrippedDependency(Project project, String version, Path path) {
-		super(project, "io.github.amalgamation", "stripped-dependency", version);
+	public ShadowedLibraryStrippedDependency(Project project, Path path) {
+		super(project);
 		this.destinationPath = path;
 	}
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
-		this.toStrip = this.hashDep(hasher, this.toStrip);
+		this.hashDep(hasher, this.toStrip);
 	}
 
 	@Override
@@ -44,7 +42,7 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			resolver.apply(this.of(this.toStrip), p -> Filters.from(p, resolvedPath));
+			resolver.apply(this.of(this.toStrip), p -> p.derive(resolvedPath, this.getCurrentHash()));
 		} else {
 			process.addProcessed(resolvedPath);
 		}

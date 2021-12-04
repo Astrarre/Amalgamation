@@ -25,23 +25,16 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 
 public interface BaseAmalgamation {
 
-    /**
-     * @param name a unique name for this transformed clientMappings
-     */
-    <T extends TransformConfiguration<T, C>, C extends TransformDependency.Transformer<T>> Object transformed(C name, Action<T> configure)
-            throws IOException;
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 
@@ -49,11 +42,11 @@ public interface BaseAmalgamation {
 
     List<File> resolveWithSources(Iterable<Dependency> dependency);
 
-    Dependency sources(Object object);
+    Provider<FileCollection> sources(Object object);
 
-    Dependency sources(Object object, Closure<ModuleDependency> config);
+    Provider<FileCollection> sources(Object object, Closure<ModuleDependency> config);
 
-    Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
+    //Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 
     /**
      * Adds a url as a direct dependency

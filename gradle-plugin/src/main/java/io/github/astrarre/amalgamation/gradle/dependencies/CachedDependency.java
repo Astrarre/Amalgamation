@@ -10,19 +10,15 @@ import java.util.List;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleDependency;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
-public abstract class CachedDependency extends AbstractSelfResolvingDependency {
-	public static final HashFunction HASHING = AmalgIO.HASHING;
+public abstract class CachedDependency extends AmalgamationDependency {
+	public static final HashFunction HASHING = AmalgIO.SHA256;
 	public static final int BYTES = 32; // should ideally remain this way and never change
 	@Nullable protected byte[] oldHash, currentHash;
 	boolean initOldHash;
@@ -31,26 +27,17 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	 */
 	protected byte isOutdated;
 	private Path cachePath, realPath;
-	public CachedDependency(Project project, String group, String name, String version) {
-		super(project, group, name, version);
+	public CachedDependency(Project project) {
+		super(project);
 	}
 
-	public Dependency of(Object notation) {
-		if(notation instanceof Dependency d) {
-			return d;
+	public void hashDep(Hasher hasher, Object notation) throws IOException {
+		if(notation instanceof CachedDependency c) {
+			c.hashInputs(hasher);
 		} else {
-			return this.project.getDependencies().create(notation);
+			var resolved = this.project.getDependencies().create(notation);
+			AmalgIO.hashDep(hasher, this.project, resolved);
 		}
-	}
-
-	public Dependency of(Object notation, Closure<ModuleDependency> config) {
-		return this.project.getDependencies().create(notation, config);
-	}
-
-	public Dependency hashDep(Hasher hasher, Object dependency) throws IOException {
-		Dependency resolved = this.of(dependency);
-		AmalgIO.hashDep(hasher, this.project, resolved);
-		return resolved;
 	}
 
 	public boolean isOutdated() {
@@ -75,7 +62,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	public abstract void hashInputs(Hasher hasher) throws IOException;
 
 	/**
-	 * This path does not have to actually contain any files, filename.extension.data stores the information on this dependency
+	 * This path does not have to actually contain any files, filename.extension.data stores the information on this notation
 	 */
 	protected abstract Path evaluatePath(byte[] hash) throws IOException;
 
@@ -124,11 +111,15 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		this.readInputs(null);
 	}
 
-	protected byte[] getCurrentHash() throws IOException {
+	protected byte[] getCurrentHash() {
 		byte[] current = this.currentHash;
 		if(current == null) {
 			Hasher hasher = HASHING.newHasher();
-			this.hashInputs(hasher);
+			try {
+				this.hashInputs(hasher);
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
 			byte[] hash = hasher.hash().asBytes();
 			if(hash.length != BYTES) {
 				hash = Arrays.copyOf(hash, BYTES);
@@ -139,7 +130,7 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 		return current;
 	}
 
-	protected abstract Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
+	protected abstract List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
@@ -153,10 +144,10 @@ public abstract class CachedDependency extends AbstractSelfResolvingDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolvePaths() throws IOException {
+	protected List<Artifact> resolveArtifacts() throws IOException {
 		boolean isOutdated = this.isOutdated();
 		Path path = this.getPath();
-		Iterable<Path> paths = this.resolve0(path, isOutdated);
+		var paths = this.resolve0(path, isOutdated);
 		if(isOutdated) {
 			this.writeHash();
 		}

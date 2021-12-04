@@ -17,7 +17,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Constants;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
 import net.devtech.zipio.impl.util.U;
@@ -28,21 +27,23 @@ public class AssetsDependency extends CachedDependency {
 	public final Path assetsDir;
 	public final String assetsDirPath;
 	public final String assetIndex;
+	public final String version;
 
 	public AssetsDependency(Project project, String version) {
-		super(project, "net.minecraft", "assets", version);
+		super(project);
+		this.version = version;
 		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
 		this.assetsDirPath = assetsDirPath;
 		Path assetsDir = Paths.get(assetsDirPath);
 		if(Files.exists(assetsDir)) {
-			this.getLogger().lifecycle("Found .minecraft assets folder");
+			this.logger.lifecycle("Found .minecraft assets folder");
 		} else {
-			this.getLogger().lifecycle("No .minecraft assets folder, using global cache!");
-			assetsDir = AmalgIO.globalCache(this.getProject()).resolve("assetsDir");
+			this.logger.lifecycle("No .minecraft assets folder, using global cache!");
+			assetsDir = AmalgIO.globalCache(project).resolve("assetsDir");
 		}
 		this.assetsDir = assetsDir;
 
-		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.getProject()).getVersion(version);
+		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version);
 		this.assetIndex = vers.getAssetIndexVersion();
 		this.assetIndexDependency = new HashedURLDependency(project, vers.getAssetIndexUrl());
 		Path assetIndexFile = assetsDir.resolve("indexes").resolve(this.assetIndex + ".json");
@@ -67,11 +68,19 @@ public class AssetsDependency extends CachedDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) {
-		this.getLogger().lifecycle("downloading assets . . .");
+	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) {
+		this.logger.lifecycle("downloading assets . . .");
 		// if an index file exists, then we know we've downloaded the assets for that version
+		Artifact.File file = new Artifact.File(this.project,
+				"com.mojang.minecraft",
+				"assets",
+				this.version,
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.RESOURCES);
+
 		if(!isOutdated) {
-			return List.of(resolvedPath);
+			return List.of(file);
 		}
 
 		try(Reader reader = this.assetIndexDependency.getOutdatedReader()) {
@@ -79,7 +88,7 @@ public class AssetsDependency extends CachedDependency {
 			JsonObject objects = assetsJson.getAsJsonObject("objects");
 			List<Future<?>> futures = new ArrayList<>(objects.entrySet().size());
 			for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
-				Future<?> future = Constants.SERVICE.submit(() -> {
+				Future<?> future = AmalgIO.SERVICE.submit(() -> {
 					JsonObject assetJson = entry.getValue().getAsJsonObject();
 					String hash = assetJson.getAsJsonPrimitive("hash").getAsString();
 					String minHash = hash.substring(0, 2);
@@ -87,7 +96,7 @@ public class AssetsDependency extends CachedDependency {
 							"https://resources.download.minecraft.net/" + minHash + "/" + hash,
 							entry.getKey());
 					// todo maybe not compress for PNG?
-					HashedURLDependency dependency = new HashedURLDependency(this.getProject(), url);
+					HashedURLDependency dependency = new HashedURLDependency(this.project, url);
 					dependency.output = resolvedPath.resolve(minHash).resolve(hash);
 					dependency.resolve();
 				});
@@ -100,6 +109,6 @@ public class AssetsDependency extends CachedDependency {
 			throw new RuntimeException(e);
 		}
 
-		return List.of(resolvedPath);
+		return List.of(file);
 	}
 }

@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Iterables;
 import com.google.common.hash.HashFunction;
@@ -24,6 +26,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -33,25 +36,14 @@ import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 
 public class AmalgIO {
-	public static final HashFunction HASHING = com.google.common.hash.Hashing.sha256();
-	/**
-	 * if the first entry of a zip file is a file with the name of this field, it is configured
-	 */
-	public static final String MERGER_META_FILE = "merger_metadata.properties";
-	// start merger meta properties
-	public static final String TYPE = "type"; // resources, java, classes, all
+	public static final HashFunction SHA256 = com.google.common.hash.Hashing.sha256();
+	public static final ExecutorService SERVICE = ForkJoinPool.commonPool();
 
-	public static void hashDep(Hasher hasher, Project project, Dependency dependency) throws IOException {
+	public static void hashDep(Hasher hasher, Project project, Object dependency) throws IOException {
 		if(dependency instanceof CachedDependency c) {
 			c.hashInputs(hasher);
 		} else {
 			AmalgIO.hash(hasher, AmalgIO.resolve(project, List.of(dependency)));
-		}
-	}
-
-	public static void hash(Hasher hasher, Iterable<File> files) {
-		for(File file : files) {
-			hash(hasher, file);
 		}
 	}
 
@@ -62,11 +54,6 @@ public class AmalgIO {
 			hasher.putUnencodedChars(file.getAbsolutePath());
 			hasher.putLong(file.lastModified());
 		}
-	}
-
-	public static String hash(Hasher hasher) {
-		byte[] data = hasher.hash().asBytes();
-		return Base64.getUrlEncoder().encodeToString(data);
 	}
 
 	public static Path cache(Project project, boolean global) {
@@ -99,6 +86,14 @@ public class AmalgIO {
 				.map(ComponentArtifactIdentifier::getComponentIdentifier)
 				.toList();
 
+		return getSources(project, ids)
+				.map(ResolvedArtifactResult::getFile)
+				.map(File::toPath)
+				.map(apply(Path::toRealPath))
+				.toList();
+	}
+
+	public static Stream<ResolvedArtifactResult> getSources(Project project, List<ComponentIdentifier> ids) {
 		return project.getDependencies()
 				.createArtifactResolutionQuery()
 				.forComponents(ids)
@@ -109,11 +104,7 @@ public class AmalgIO {
 				.map(c -> c.getArtifacts(SourcesArtifact.class))
 				.flatMap(Set::stream)
 				.filter(ResolvedArtifactResult.class::isInstance)
-				.map(ResolvedArtifactResult.class::cast)
-				.map(ResolvedArtifactResult::getFile)
-				.map(File::toPath)
-				.map(apply(Path::toRealPath))
-				.toList();
+				.map(ResolvedArtifactResult.class::cast);
 	}
 
 	public static <T> T[] toArray(Iterable<T> iterable, IntFunction<T[]> creator) {
@@ -128,6 +119,22 @@ public class AmalgIO {
 			}
 			return buf;
 		}
+	}
+
+	public static Set<ResolvedDependency> resolveDeps(Project project, Iterable<Dependency> dependencies) {
+		Configuration configuration = project.getConfigurations().detachedConfiguration(Iterables.toArray(dependencies, Dependency.class));
+		var deps = new HashSet<>(configuration.getResolvedConfiguration().getFirstLevelModuleDependencies());
+		List<ResolvedDependency> toProcess = new ArrayList<>(deps);
+		while(!toProcess.isEmpty()) {
+			int orig = toProcess.size();
+			for(int i = orig - 1; i >= 0; i--) {
+				Set<ResolvedDependency> children = toProcess.get(i).getChildren();
+				toProcess.addAll(children);
+				deps.addAll(children);
+			}
+			toProcess.subList(0, orig).clear();
+		}
+		return deps;
 	}
 
 	public static List<File> resolve(Project project, Iterable<Dependency> dependencies) {
@@ -159,26 +166,10 @@ public class AmalgIO {
 		return Base64.getUrlEncoder().encodeToString(data);
 	}
 
-	public static String insertName(Path path, String hash) {
-		String name = path.getFileName().toString();
-		int i = name.lastIndexOf('.');
-		if(i == -1) {
-			return name + "_" + hash;
-		} else {
-			return name.substring(0, i) + hash + name.substring(i);
-		}
-	}
-
 	public static void createFile(Path resolve) throws IOException {
 		if(!Files.exists(resolve)) {
 			Files.createFile(resolve);
 		}
-	}
-
-	public static String hash(Path path) {
-		Hasher hasher = HASHING.newHasher();
-		hash(hasher, path.toFile());
-		return hash(hasher);
 	}
 
 	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {

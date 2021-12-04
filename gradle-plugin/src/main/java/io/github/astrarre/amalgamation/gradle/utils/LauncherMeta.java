@@ -68,7 +68,7 @@ public class LauncherMeta {
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
 			cache.output = path;
 			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
-				Json.Obj versions = new Json.Obj(Files.readString(cache.resolve1()), 0);
+				Json.Obj versions = new Json.Obj(Files.readString(cache.resolve().iterator().next().toPath()), 0);
 				this.launcherMeta = versions;
 				if (findVersion(lookingFor) != null) {
 					vers = versions;
@@ -82,7 +82,7 @@ public class LauncherMeta {
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
 			cache.output = path;
 			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
-				this.launcherMeta = new Json.Obj(Files.readString(cache.resolve1()), 0);
+				this.launcherMeta = new Json.Obj(Files.readString(cache.resolve().iterator().next().toPath()), 0);
 			} catch (IOException e) {
 				throw U.rethrow(e);
 			}

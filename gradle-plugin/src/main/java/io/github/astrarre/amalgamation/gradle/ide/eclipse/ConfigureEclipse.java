@@ -18,7 +18,6 @@ import org.gradle.plugins.ide.eclipse.model.ClasspathEntry;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.eclipse.model.Library;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.AbstractSelfResolvingDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 
@@ -28,7 +27,7 @@ public class ConfigureEclipse {
 		var eclipse = project.getExtensions().getByType(EclipseModel.class);
 		var ag = (BaseAmalgamation) project.getExtensions().getByName("ag");
 
-		eclipse.getClasspath().getFile().whenMerged(c -> {
+/*		eclipse.getClasspath().getFile().whenMerged(c -> {
 			var classpath = (Classpath) c;
 
 			Set<Path> files = eclipse.getClasspath().getPlusConfigurations().stream()
@@ -38,7 +37,7 @@ public class ConfigureEclipse {
 					.flatMap(d -> ((AbstractSelfResolvingDependency) d).resolve().stream())
 					.map(File::toPath)
 					.collect(Collectors.toSet());
-			
+
 			Map<Path, Path> srcMap = new HashMap<>();
 
 			eclipse.getClasspath().getPlusConfigurations().stream()
@@ -48,7 +47,7 @@ public class ConfigureEclipse {
 					.map(d -> (LibrariesDependency) d)
 					.forEach(l -> {
 						Path libsDir = Paths.get(l.librariesDirectory);
-						
+
 						Set<File> libs = l.resolve();
 						for(var f : libs) {
 							Path libDir = f.toPath().getParent();
@@ -62,7 +61,7 @@ public class ConfigureEclipse {
 								modulePath = modulePath.getParent();
 							}
 							String depString = String.format("%s:%s:%s", group, module, version);
-							
+
 							String fname = f.toPath().getFileName().toString();
 							String expectedSrcName = fname.substring(0, fname.length() - 4) + "-sources.jar";
 							for(File src : ag.resolve(Collections.singleton(ag.sources(depString)))) {
@@ -110,7 +109,7 @@ public class ConfigureEclipse {
 					}
 				}
 			}
-		});
+		});*/
 
 		extension = new EclipseExtension();
 	}

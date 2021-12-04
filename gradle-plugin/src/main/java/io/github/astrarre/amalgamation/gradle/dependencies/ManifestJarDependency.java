@@ -22,7 +22,7 @@ public class ManifestJarDependency extends CachedDependency {
 	final List<String> files;
 
 	public ManifestJarDependency(Project project, String path, JavaExec files) {
-		super(project, "io.github.astrarre.amalgamation", "manifest", "0");
+		super(project);
 		this.path = path.replaceAll("[^A-Za-z0-9]", "_");
 		this.files = TaskConverter.getClasspath(files);
 	}
@@ -40,7 +40,7 @@ public class ManifestJarDependency extends CachedDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			try(FileSystem write = U.createZip(resolvedPath)) {
 				Path path = write.getPath("META-INF/MANIFEST.MF");
@@ -48,6 +48,14 @@ public class ManifestJarDependency extends CachedDependency {
 				Files.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)));
 			}
 		}
-		return List.of(resolvedPath);
+		return List.of(new Artifact.File(
+				this.project,
+				"io.github.astrarre.amalgamation",
+				"manifest",
+				"0",
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.RESOURCES
+		));
 	}
 }

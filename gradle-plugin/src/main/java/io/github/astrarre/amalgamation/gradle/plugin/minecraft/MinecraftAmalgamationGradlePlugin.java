@@ -60,6 +60,6 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 
 	@Override
 	protected void registerProvider(Project target) {
-		MinecraftAmalgamation register = this.register(target, MinecraftAmalgamation.class, MinecraftAmalgamationImpl.class);
+		this.register(target, MinecraftAmalgamation.class, MinecraftAmalgamationImpl.class);
 	}
 }

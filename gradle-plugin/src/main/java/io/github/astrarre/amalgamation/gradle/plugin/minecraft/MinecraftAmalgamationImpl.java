@@ -6,24 +6,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.CASMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.util.MinecraftFileHelper;
-import io.github.astrarre.amalgamation.gradle.dependencies.MojMergedDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.mojmerge.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.MappingTarget;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapHelper;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.remap.RemapTransform;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.gradle.utils.casmerge.CASMerger;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -42,28 +42,28 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Dependency client(String version, boolean split) {
+	public Object client(String version, boolean split) {
 		return this.mc(version, true, false, split);
 	}
 
 	@Override
-	public Dependency server(String version, boolean strip, boolean split) {
+	public Object server(String version, boolean strip, boolean split) {
 		return this.mc(version, false, strip, split);
 	}
 
-	Dependency mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
+	Object mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		return MinecraftFileHelper.getDependency(project, version, isClient, doStrip, doSplit);
 	}
 
 	@Override
-	public Dependency merged(String version, Action<CASMergedDependency> configurate) {
+	public Object merged(String version, Action<CASMergedDependency> configurate) {
 		CASMergedDependency dependency = new CASMergedDependency(this.project, version);
 		configurate.execute(dependency);
 		return dependency;
 	}
 
 	@Override
-	public Dependency mojmerged(String version, CASMerger.Handler handler, boolean split, MappingTarget dependency) {
+	public Object mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget dependency) {
 		return new MojMergedDependency(this.project, version, handler, this.client(version, split), dependency);
 	}
 
@@ -87,6 +87,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		return dependencies;
 	}
 
+
 	@Override
 	public MappingTarget mappings(Object depNotation, String from, String to) {
 		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation), from, to);
@@ -101,7 +102,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	public Object libraries(String version, Action<LibrariesDependency> configure) {
 		LibrariesDependency dependency = new LibrariesDependency(this.project, version);
 		configure.execute(dependency);
-		return dependency.list();
+		return dependency;
 	}
 
 	@Override
@@ -115,8 +116,10 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Object map(Action<RemapHelper> mappings) throws IOException {
-		return this.transformed(new RemapTransform(), mappings);
+	public Object map(Action<RemapDependencyConfig> mappings) throws IOException {
+		RemapDependency dependency = new RemapDependency(this.project);
+		mappings.execute(dependency.config);
+		return dependency;
 	}
 
 	@Override

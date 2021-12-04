@@ -3,10 +3,10 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -18,6 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -30,12 +33,16 @@ import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.internal.artifacts.dependencies.SelfResolvingDependencyInternal;
+import org.gradle.api.tasks.TaskDependency;
 import org.jetbrains.annotations.Nullable;
 
 // todo this queries download url twice for some unknown reason...
-public class URLDependency extends ZipProcessDependency {
+public class URLDependency extends ZipProcessDependency implements SelfResolvingDependencyInternal {
 	final String url;
-	public boolean compressed = true;
+	final boolean compressed;
 	public boolean shouldOutput = true;
 	public boolean isOptional = false;
 	public Path output;
@@ -44,12 +51,11 @@ public class URLDependency extends ZipProcessDependency {
 	DownloadUtil.Result result;
 
 	public URLDependency(Project project, String url) {
-		super(project, "io.github.amalgamation", "download", "0.0.0");
-		this.url = url;
+		this(project, url, true);
 	}
 
 	public URLDependency(Project project, String url, boolean compressed) {
-		super(project, "io.github.amalgamation", "download", "0.0.0");
+		super(project);
 		this.url = url;
 		this.compressed = compressed;
 	}
@@ -101,19 +107,9 @@ public class URLDependency extends ZipProcessDependency {
 
 	public BufferedReader getOutdatedReader() throws IOException {
 		if(!Files.exists(this.getPath())) {
-			this.resolve();
+			this.getArtifacts();
 		}
 		return Files.newBufferedReader(this.getPath());
-	}
-
-	@Nullable
-	@Override
-	public String getVersion() {
-		try {
-			return AmalgIO.b64(this.getCurrentHash());
-		} catch(IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override
@@ -124,7 +120,7 @@ public class URLDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			DownloadUtil.Result result = this.getResult();
 			if(result.error != null) {
@@ -139,7 +135,23 @@ public class URLDependency extends ZipProcessDependency {
 				Files.copy(result.stream, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
 			}
 		}
-		return List.of(resolvedPath);
+
+		URL url = new URL(this.url);
+		String host = url.getHost();
+		return List.of(new Artifact.File(
+				this.project,
+				host,
+				strip(url.getPath()),
+				"NaN",
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.MIXED
+		));
+	}
+
+	static String strip(String s) {
+		int start = s.lastIndexOf('/')+1, end = s.lastIndexOf('.');
+		return end == -1 ? s.substring(start) : s.substring(start, end);
 	}
 
 	@Override
@@ -193,7 +205,7 @@ public class URLDependency extends ZipProcessDependency {
 					new URL(this.url),
 					this.etag,
 					this.lastModifyDate,
-					this.getLogger(),
+					this.logger,
 					BaseAmalgamationGradlePlugin.offlineMode,
 					this.compressed);
 			if(!this.isOptional && this.result != null && this.result.error != null) {
@@ -211,5 +223,114 @@ public class URLDependency extends ZipProcessDependency {
 		if(this.result != null && this.result.stream != null) {
 			this.result.stream.close();
 		}
+	}
+
+	@Nullable
+	@Override
+	public ComponentIdentifier getTargetComponentId() {
+		return this::toString;
+	}
+
+	@Override
+	public Set<File> resolve() {
+		return this.getArtifacts()
+				       .stream()
+				       .map(a -> a.path)
+				       .map(Path::toFile)
+				       .collect(Collectors.toSet());
+	}
+
+	@Override
+	public Set<File> resolve(boolean transitive) {
+		return resolve();
+	}
+
+	@Override
+	public TaskDependency getBuildDependencies() {
+		return task -> Set.of();
+	}
+
+	@Nullable
+	@Override
+	public String getGroup() {
+		try {
+			return new URL(this.url).getHost();
+		} catch(MalformedURLException e) {
+			throw U.rethrow(e);
+		}
+	}
+
+	@Override
+	public String getName() {
+		return "download";
+	}
+
+	@Nullable
+	@Override
+	public String getVersion() {
+		return "NaN";
+	}
+
+	@Override
+	public boolean contentEquals(Dependency dependency) {
+		return this.equals(dependency);
+	}
+
+	@Override
+	public Dependency copy() {
+		return this;
+	}
+
+	String reason;
+	@Nullable
+	@Override
+	public String getReason() {
+		return this.reason;
+	}
+
+	@Override
+	public void because(@Nullable String reason) {
+		this.reason = reason;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(this == o) {
+			return true;
+		}
+		if(!(o instanceof URLDependency objects)) {
+			return false;
+		}
+		if(!super.equals(o)) {
+			return false;
+		}
+
+		if(this.compressed != objects.compressed) {
+			return false;
+		}
+		if(this.shouldOutput != objects.shouldOutput) {
+			return false;
+		}
+		if(this.isOptional != objects.isOptional) {
+			return false;
+		}
+		if(!Objects.equals(this.url, objects.url)) {
+			return false;
+		}
+		if(!Objects.equals(this.output, objects.output)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result1 = super.hashCode();
+		result1 = 31 * result1 + (this.url != null ? this.url.hashCode() : 0);
+		result1 = 31 * result1 + (this.compressed ? 1 : 0);
+		result1 = 31 * result1 + (this.shouldOutput ? 1 : 0);
+		result1 = 31 * result1 + (this.isOptional ? 1 : 0);
+		result1 = 31 * result1 + (this.output != null ? this.output.hashCode() : 0);
+		return result1;
 	}
 }

@@ -4,13 +4,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.filters.Filters;
-import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourceZipFilter;
-import io.github.astrarre.amalgamation.gradle.dependencies.filters.SourcesOutput;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.ZipProcessable;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.impl.util.U;
@@ -18,27 +15,32 @@ import net.devtech.zipio.processes.ZipProcess;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
 
-public abstract class ZipProcessDependency extends CachedDependency implements ZipProcessable {
-	public ZipProcessDependency(Project project, String group, String name, String version) {
-		super(project, group, name, version);
+public abstract class ZipProcessDependency extends CachedDependency {
+	public ZipProcessDependency(Project project) {
+		super(project);
 	}
 
-	@Override
 	public ZipProcess process() throws IOException {
 		// todo ZipProcess piping whereby a single process can have multiple dependents
 		// todo cache TR classpaths at some point:tm:
 		ZipProcessBuilder builder = ZipProcess.builder();
 		builder.defaults().setZipFilter(p -> ResourceZipFilter.FILTER);
 		boolean isOutdated = this.isOutdated();
-		TaskInputResolver resolver = (dependencies, tag) -> ZipProcessable.apply(this.project, builder, dependencies, tag);
+		TaskInputResolver resolver = (dependencies, tag) -> this.apply(builder, dependencies, tag);
 		this.add(resolver, builder, this.getPath(), isOutdated);
-		builder.afterExecute(() -> {
-			this.after(isOutdated);
-		});
-
+		builder.afterExecute(() -> this.after(isOutdated));
 		return builder;
+	}
+
+	public void appendToProcess(ZipProcessBuilder builder, boolean isOutdated) throws IOException {
+		TaskInputResolver resolver = (dependencies, tag) -> this.apply(builder, dependencies, tag);
+		this.add(resolver, builder, this.getPath(), isOutdated);
+		builder.afterExecute(() -> this.after(isOutdated));
+	}
+
+	public void appendToProcess(ZipProcessBuilder builder) throws IOException {
+		this.appendToProcess(builder, this.isOutdated());
 	}
 
 	public boolean requiresSources() {
@@ -55,28 +57,22 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 		}
 	}
 
-	protected static OutputTag tag(OutputTag tag, Path path) {
-		return Filters.from(tag, path);
-	}
-
 	@Override
-	protected Iterable<Path> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
-		try(Clock ignore = new Clock("Processed " + this + " in %sms", this.getLogger())) {
+	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+		try(Clock ignore = new Clock("Processed " + this + " in %sms", this.logger)) {
 			ZipProcess process = this.process();
 			process.execute();
-			List<Path> paths = new ArrayList<>();
+			List<Artifact> paths = new ArrayList<>();
 			for(OutputTag output : process.getOutputs()) {
+				if(!(output instanceof Artifact a)) {
+					throw new IllegalArgumentException("Output of type other than Artifact! " + output.getClass());
+				}
 				if(output.path != null) {
-					paths.add(output.path);
+					paths.add(a);
 				}
 			}
 			return paths;
 		}
-	}
-
-	@Override
-	public Iterable<Path> resolvePaths() throws IOException {
-		return super.resolvePaths();
 	}
 
 	/**
@@ -84,21 +80,31 @@ public abstract class ZipProcessDependency extends CachedDependency implements Z
 	 */
 	protected abstract void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException;
 
-	public List<TaskTransform> apply(ZipProcessBuilder builder, Iterable<Dependency> dependencies, UnaryOperator<OutputTag> tag)
+	public List<TaskTransform> apply(ZipProcessBuilder builder, Object dep, Function<Artifact, OutputTag> tag)
 			throws IOException {
-		return ZipProcessable.apply(this.project, builder, dependencies, tag);
-	}
-
-	public List<TaskTransform> apply(ZipProcessBuilder builder, Dependency dep, UnaryOperator<OutputTag> tag)
-			throws IOException {
-		return ZipProcessable.apply(this.project, builder, dep, tag);
+		return this.apply(builder, List.of(dep), tag);
 	}
 
 	public interface TaskInputResolver {
-		List<TaskTransform> apply(Iterable<Dependency> dependencies, UnaryOperator<OutputTag> tag) throws IOException;
+		List<TaskTransform> apply(Iterable<Object> dependencies, Function<Artifact, OutputTag> tag) throws IOException;
 
-		default List<TaskTransform> apply(Dependency dependency, UnaryOperator<OutputTag> tag) throws IOException {
+		default List<TaskTransform> apply(Object dependency, Function<Artifact, OutputTag> tag) throws IOException {
 			return this.apply(List.of(dependency), tag);
 		}
+	}
+
+	public List<TaskTransform> apply(ZipProcessBuilder process, Iterable<Object> dependencies, Function<Artifact, OutputTag> output)
+			throws IOException {
+		List<TaskTransform> transforms = new ArrayList<>();
+		for(Object dep : dependencies) {
+			if(dep instanceof ZipProcessDependency p) {
+				transforms.add(process.linkProcess(p.process(), (UnaryOperator) output));
+			} else {
+				for(Artifact artifact : this.artifacts(dep, true)) {
+					transforms.add(process.addZip(artifact.path, output.apply(artifact)));
+				}
+			}
+		}
+		return transforms;
 	}
 }

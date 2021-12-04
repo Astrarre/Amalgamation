@@ -1,32 +1,22 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.google.common.collect.Iterables;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.DeJiJDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.FilesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.SingleTransformDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformConfiguration;
-import io.github.astrarre.amalgamation.gradle.dependencies.transform.TransformDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.util.DependencyList;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
 import org.jetbrains.annotations.NotNull;
@@ -38,13 +28,6 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	public BaseAmalgamationImpl(Project project) {
 		this.project = project;
 		this.logger = project.getLogger();
-	}
-
-	@Override
-	public <T extends TransformConfiguration<T, C>, C extends TransformDependency.Transformer<T>> Object transformed(C name,
-			Action<T> configure) throws IOException {
-		TransformDependency<T, C> dependency = TransformDependency.create(this.project, name, configure);
-		return dependency.getDependencies();
 	}
 
 	@Override
@@ -68,27 +51,20 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		return resolve;
 	}
 
-	private Dependency sources0(Dependency dependency) {
-		Supplier<Iterable<Path>> supplier = () -> AmalgIO.resolveSources(this.project, List.of(dependency));
-		return new FilesDependency(this.project, dependency.getGroup(), dependency.getName() + "-sources", dependency.getVersion(), supplier);
+	private Provider<FileCollection> sources0(Dependency dependency) {
+		return this.provideLazy(() -> this.project.files(
+				(Object[]) AmalgIO.resolveSources(this.project, List.of(dependency)).stream().map(Path::toFile).toArray(File[]::new)
+		));
 	}
 
 	@Override
-	public Dependency sources(Object object) {
+	public Provider<FileCollection> sources(Object object) {
 		return this.sources0(this.project.getDependencies().create(object));
 	}
 
 	@Override
-	public Dependency sources(Object object, Closure<ModuleDependency> config) {
+	public Provider<FileCollection> sources(Object object, Closure<ModuleDependency> config) {
 		return this.sources0(this.project.getDependencies().create(object, config));
-	}
-
-	@Override
-	public Dependency deJiJ(String name, Action<DeJiJDependency> configuration) {
-		//DeJiJDependency dependency = new DeJiJDependency(this.project, name);
-		//configuration.execute(dependency);
-		//return dependency;
-		return null;
 	}
 
 	@Override

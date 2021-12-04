@@ -4,15 +4,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.filters.ResourcesOutput;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
-import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -20,7 +19,7 @@ public class SplitDependency extends ZipProcessDependency {
 	public final Dependency dependency;
 	public Path outputDir;
 	public SplitDependency(Project project, String version, Dependency dependency) {
-		super(project, "io.github.astrarre.amalgamation", "split-dependency", version);
+		super(project);
 		this.dependency = dependency;
 	}
 
@@ -34,13 +33,27 @@ public class SplitDependency extends ZipProcessDependency {
 		return this.outputDir;
 	}
 
+	Artifact.File artifact(Path dest, Artifact.Type type) {
+		return new Artifact.File(
+				this.project,
+				this.dependency.getGroup(),
+				this.dependency.getName() + "-" + type.name().toLowerCase(Locale.ROOT),
+				this.dependency.getVersion(),
+				dest,
+				this.getCurrentHash(),
+				type
+		);
+	}
+
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Files.createDirectories(resolvedPath);
 		AmalgIO.createFile(resolvedPath.resolve("resources.jar.rss_marker"));
-		Path cls = resolvedPath.resolve("classes.jar"), rss = resolvedPath.resolve("resources.jar"), sources = resolvedPath.resolve("sources.jar");
+		Artifact cls = this.artifact(resolvedPath.resolve("classes.jar"), Artifact.Type.MIXED);
+		Artifact rss = this.artifact(resolvedPath.resolve("resources.jar"), Artifact.Type.RESOURCES);
+		Artifact sources = this.artifact(resolvedPath.resolve("sources.jar"), Artifact.Type.SOURCES);
 		if(isOutdated) {
-			ZipTag clsTag = process.createZipTag(cls), rssTag = process.createZipTag(new ResourcesOutput(rss)), sourcesTag = process.createZipTag(sources);
+			ZipTag clsTag = process.createZipTag(cls), rssTag = process.createZipTag(rss), sourcesTag = process.createZipTag(sources);
 			process.setEntryProcessor(buffer -> {
 				String path = buffer.path();
 				if(path.endsWith(".class") || path.contains("META-INF")) {
@@ -55,7 +68,7 @@ public class SplitDependency extends ZipProcessDependency {
 			resolver.apply(this.dependency, o -> OutputTag.INPUT);
 		} else {
 			process.addProcessed(cls);
-			process.addProcessed(new ResourcesOutput(rss));
+			process.addProcessed(rss);
 			process.addProcessed(sources);
 		}
 	}
