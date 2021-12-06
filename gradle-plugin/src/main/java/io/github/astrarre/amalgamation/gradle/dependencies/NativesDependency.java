@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -49,7 +50,7 @@ public class NativesDependency extends CachedDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			for(Path path : UnsafeIterable.walkFiles(resolvedPath)) {
 				Files.delete(path);
@@ -88,7 +89,7 @@ public class NativesDependency extends CachedDependency {
 				}
 			}
 		}
-		return List.of(new Artifact.File(
+		return Set.of(new Artifact.File(
 				this.project,
 				"net.minecraft", "natives", version,
 				resolvedPath,

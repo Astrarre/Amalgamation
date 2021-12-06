@@ -5,7 +5,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
@@ -62,12 +64,15 @@ public class AccessWidenerDependency extends CachedDependency {
 	public record FsPair(FileSystem input, FileSystem output) {}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
-		List<Artifact> artifacts = new ArrayList<>();
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+		Set<Artifact> artifacts = new HashSet<>();
 		List<FsPair> systems = new ArrayList<>();
 		for(Artifact artifact : this.artifacts(this.widen, true)) {
 			Artifact out = artifact.deriveMaven(this.dirs.aws(this.project), this.getCurrentHash());
 			artifacts.add(out);
+			if(out.equals(artifact)) {
+				continue;
+			}
 			if(isOutdated) { // todo sources not appearing?
 				Files.deleteIfExists(out.path);
 				Files.copy(artifact.path, out.path);

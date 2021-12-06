@@ -38,15 +38,11 @@ dependencies {
 
     implementation(rootProject.project(":api"))
     implementation("com.google.guava", "guava", "30.1-jre")
-    implementation("net.devtech", "signutil", "1.0.0")
+    //implementation("net.devtech", "signutil", "1.0.0")
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("net.fabricmc:mercury:0.2.4")
-    implementation("org.cadixdev", "lorenz", "0.5.6")
-    implementation("org.apache.commons", "commons-collections4", "4.4")
     implementation("io.github.astrarre", "tiny-remapper", "1.0.0")
-    implementation("net.fabricmc", "lorenz-tiny", "3.0.0")
-    implementation("net.fabricmc", "dev-launch-injector", "0.2.1+build.8")
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
@@ -59,8 +55,7 @@ dependencies {
     implementation("com.google.jimfs:jimfs:1.2")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
     implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
-
-
+    implementation("net.fabricmc:fabric-fernflower:1.4.1")
 }
 
 gradlePlugin {

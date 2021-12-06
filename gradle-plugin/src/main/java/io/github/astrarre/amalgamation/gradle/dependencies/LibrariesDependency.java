@@ -5,7 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -17,7 +19,6 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 
 public class LibrariesDependency extends AmalgamationDependency {
 	public final String version;
-	final List<Object> dependencyObjectNotation = new ArrayList<>();
 	/**
 	 * defaults to your .minecraft installation, if not found, uses amalgamation cache
 	 */
@@ -39,15 +40,15 @@ public class LibrariesDependency extends AmalgamationDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolveArtifacts() throws IOException { // todo this will not do ir
+	protected Set<Artifact> resolveArtifacts() throws IOException { // todo this will not do ir
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
 		final Path dir = Paths.get(this.librariesDirectory);
 		List<LauncherMeta.Library> libraries = meta.getVersion(this.version).getLibraries();
-		List<Artifact> files = new ArrayList<>();
+		Set<Artifact> files = new HashSet<>();
 
 		for(LauncherMeta.Library library : libraries) {
-			this.dependencyObjectNotation.add(library.name);
 			if(!this.download) {
+				files.addAll(this.artifacts(library.name, true, true));
 				continue;
 			}
 

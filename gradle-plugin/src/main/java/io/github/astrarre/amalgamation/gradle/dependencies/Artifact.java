@@ -1,6 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -78,7 +79,35 @@ public abstract class Artifact extends OutputTag {
 			super(project, dependency, file, hash, sources);
 		}
 
-		public File(Project project, ComponentArtifactIdentifier id, java.io.File art, String classifier) {
+		public File(Artifact artifact, Path path, byte[] hash) {
+			super(artifact, path, hash);
+		}
+
+		@Override
+		public Object toDependencyNotation() {
+			return this.project.files(this.path.toFile());
+		}
+
+		@Override
+		public Artifact derive(Path newPath, @Nullable byte[] hash) {
+			if(this.type == Type.RESOURCES) {
+				return this;
+			}
+			return new File(this, newPath, hash);
+		}
+
+		@Override
+		public Artifact deriveMaven(Path directory, byte[] hash) {
+			if(this.type == Type.RESOURCES) {
+				return this;
+			}
+			return new Maven(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, this.type, hash), hash, this.type);
+		}
+	}
+
+	public static class Maven extends Artifact {
+		boolean isOutput;
+		public Maven(Project project, ComponentArtifactIdentifier id, java.io.File art, String classifier) {
 			super(project,
 					get(id, ModuleComponentIdentifier::getGroup, "unknown"),
 					get(id, ModuleComponentIdentifier::getModule, id.toString()),
@@ -92,10 +121,6 @@ public abstract class Artifact extends OutputTag {
 					Objects.equals(classifier, "sources") ? Type.SOURCES : Type.MIXED);
 		}
 
-		public File(Artifact artifact, Path path, byte[] hash) {
-			super(artifact, path, hash);
-		}
-
 		static String get(ComponentArtifactIdentifier id, Function<ModuleComponentIdentifier, String> nameGetter, String default_) {
 			if(id instanceof ModuleComponentArtifactIdentifier m) {
 				return nameGetter.apply(m.getComponentIdentifier());
@@ -104,23 +129,6 @@ public abstract class Artifact extends OutputTag {
 			}
 		}
 
-		@Override
-		public Object toDependencyNotation() {
-			return this.project.files(this.path.toFile());
-		}
-
-		@Override
-		public Artifact derive(Path newPath, @Nullable byte[] hash) {
-			return new File(this, newPath, hash);
-		}
-
-		@Override
-		public Artifact deriveMaven(Path directory, byte[] hash) {
-			return new File(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, this.type, hash), hash, this.type);
-		}
-	}
-
-	public static class Maven extends Artifact {
 		public Maven(Project project, String group, String name, String version, Path path, byte[] hash, Type sources) {
 			super(project, group, name, version, path, hash, sources);
 		}
@@ -135,16 +143,33 @@ public abstract class Artifact extends OutputTag {
 
 		@Override
 		public Object toDependencyNotation() {
-			return group + ':' + name + '_' + version + ':' + AmalgIO.b64(hash);
+			if(isOutput) {
+				String str = this.name;
+				if(group != null) {
+					str = group + ":" + str;
+				}
+				if(version != null) {
+					str = str + ":" + version;
+				}
+				return str;
+			} else {
+				return group + ':' + name + '_' + version + ':' + AmalgIO.b64(hash);
+			}
 		}
 
 		@Override
 		public Artifact derive(Path newPath, @Nullable byte[] hash) {
+			if(this.type == Type.RESOURCES) {
+				return this;
+			}
 			return new Maven(this, newPath, hash);
 		}
 
 		@Override
 		public Artifact deriveMaven(Path directory, byte[] hash) {
+			if(this.type == Type.RESOURCES) {
+				return this;
+			}
 			return new Maven(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, this.type, hash), hash, this.type);
 		}
 	}
@@ -155,5 +180,43 @@ public abstract class Artifact extends OutputTag {
 			file += "-sources";
 		}
 		return directory.resolve(file + ".jar");
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(this == o) {
+			return true;
+		}
+		if(!(o instanceof Artifact artifact)) {
+			return false;
+		}
+
+		if(!Objects.equals(this.project, artifact.project)) {
+			return false;
+		}
+		if(!Objects.equals(this.group, artifact.group)) {
+			return false;
+		}
+		if(!Objects.equals(this.name, artifact.name)) {
+			return false;
+		}
+		if(!Objects.equals(this.version, artifact.version)) {
+			return false;
+		}
+		if(!Arrays.equals(this.hash, artifact.hash)) {
+			return false;
+		}
+		return this.type == artifact.type;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = this.project != null ? this.project.hashCode() : 0;
+		result = 31 * result + (this.group != null ? this.group.hashCode() : 0);
+		result = 31 * result + (this.name != null ? this.name.hashCode() : 0);
+		result = 31 * result + (this.version != null ? this.version.hashCode() : 0);
+		result = 31 * result + Arrays.hashCode(this.hash);
+		result = 31 * result + (this.type != null ? this.type.hashCode() : 0);
+		return result;
 	}
 }

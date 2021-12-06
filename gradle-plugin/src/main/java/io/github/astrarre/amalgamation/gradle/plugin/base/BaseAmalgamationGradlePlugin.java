@@ -55,7 +55,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		target.getRepositories().flatDir(f -> {
 			List<Path> paths = new ArrayList<>();
 			for(AmalgDirs value : AmalgDirs.values()) {
-				paths.add(value.transforms(target).resolve("accessWidener"));
+				paths.add(value.aws(target));
 				paths.add(value.remaps(target));
 			}
 			f.setDirs(paths.stream().map(Path::toAbsolutePath).map(Path::toFile).collect(Collectors.toSet()));

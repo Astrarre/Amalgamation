@@ -3,7 +3,9 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -58,11 +60,11 @@ public abstract class ZipProcessDependency extends CachedDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		try(Clock ignore = new Clock("Processed " + this + " in %sms", this.logger)) {
 			ZipProcess process = this.process();
 			process.execute();
-			List<Artifact> paths = new ArrayList<>();
+			Set<Artifact> paths = new HashSet<>();
 			for(OutputTag output : process.getOutputs()) {
 				if(!(output instanceof Artifact a)) {
 					throw new IllegalArgumentException("Output of type other than Artifact! " + output.getClass());

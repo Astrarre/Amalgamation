@@ -24,7 +24,7 @@ public class RemapDependencyConfig extends RemapConfig {
 	}
 
 	public Object remap(Object object, boolean useGlobalCache) {
-		SingleRemapDependency dep = this.dependency.createDep(object, useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT, false);
+		SingleRemapDependency dep = this.dependency.createDep(this.of(object), useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT, false);
 		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(dep);
 		return dep;
 	}

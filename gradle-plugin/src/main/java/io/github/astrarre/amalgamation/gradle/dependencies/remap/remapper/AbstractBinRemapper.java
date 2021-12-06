@@ -73,7 +73,7 @@ public abstract class AbstractBinRemapper implements AmalgRemapper {
 
 		@Override
 		public ProcessResult apply(VirtualZipEntry buffer) {
-			if(buffer.path().endsWith(".class") && !binNeedsClasspath()) {
+			if(buffer.path().endsWith(".class") && AbstractBinRemapper.this.binNeedsClasspath()) {
 				ByteBuffer read = buffer.read();
 				AbstractBinRemapper.this.readFileToClassPath(buffer.path(), read);
 			}

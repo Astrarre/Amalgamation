@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
@@ -133,7 +134,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		return current;
 	}
 
-	protected abstract List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
+	protected abstract Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
@@ -147,7 +148,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolveArtifacts() throws IOException {
+	protected Set<Artifact> resolveArtifacts() throws IOException {
 		boolean isOutdated = this.isOutdated();
 		Path path = this.getPath();
 		var paths = this.resolve0(path, isOutdated);

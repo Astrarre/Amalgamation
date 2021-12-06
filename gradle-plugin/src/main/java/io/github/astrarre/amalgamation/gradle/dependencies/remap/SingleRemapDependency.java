@@ -3,13 +3,15 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.hash.Hasher;
-import io.github.astrarre.amalgamation.gradle.dependencies.util.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.util.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.processes.ZipProcessBuilder;
@@ -61,8 +63,9 @@ public class SingleRemapDependency extends ZipProcessDependency {
 		List<TaskTransform> apply = this.apply(builder, this.dependency, this::transform);
 		if(this.isOutdated() && !this.isClasspath) {
 			for(TaskTransform task : apply) {
-				task.setPreEntryProcessor(o -> this.remapper.remap());
-				task.setPostZipProcessor(o -> this.remapper.remap());
+				Map<Object, AmalgRemapper.Remap> reMap = new HashMap<>();
+				task.setPreEntryProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
+				task.setPostZipProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
 			}
 		} else {
 			for(TaskTransform task : apply) {

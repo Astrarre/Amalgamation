@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -68,7 +69,7 @@ public class AssetsDependency extends CachedDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) {
 		this.logger.lifecycle("downloading assets . . .");
 		// if an index file exists, then we know we've downloaded the assets for that version
 		Artifact.File file = new Artifact.File(this.project,
@@ -80,7 +81,7 @@ public class AssetsDependency extends CachedDependency {
 				Artifact.Type.RESOURCES);
 
 		if(!isOutdated) {
-			return List.of(file);
+			return Set.of(file);
 		}
 
 		try(Reader reader = this.assetIndexDependency.getOutdatedReader()) {
@@ -109,6 +110,6 @@ public class AssetsDependency extends CachedDependency {
 			throw new RuntimeException(e);
 		}
 
-		return List.of(file);
+		return Set.of(file);
 	}
 }

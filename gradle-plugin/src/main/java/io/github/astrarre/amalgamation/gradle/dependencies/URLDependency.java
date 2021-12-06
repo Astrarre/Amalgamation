@@ -129,12 +129,12 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			DownloadUtil.Result result = this.getResult();
 			if(result.error != null) {
 				if(this.isOptional) {
-					return List.of();
+					return Set.of();
 				} else {
 					throw result.error;
 				}
@@ -145,7 +145,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 			}
 		}
 
-		return List.of(createArtifact(resolvedPath));
+		return Set.of(createArtifact(resolvedPath));
 	}
 
 	static String strip(String s) {

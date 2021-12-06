@@ -6,6 +6,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
@@ -40,7 +41,7 @@ public class ManifestJarDependency extends CachedDependency {
 	}
 
 	@Override
-	protected List<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			try(FileSystem write = U.createZip(resolvedPath)) {
 				Path path = write.getPath("META-INF/MANIFEST.MF");
@@ -48,7 +49,7 @@ public class ManifestJarDependency extends CachedDependency {
 				Files.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)));
 			}
 		}
-		return List.of(new Artifact.File(
+		return Set.of(new Artifact.File(
 				this.project,
 				"io.github.astrarre.amalgamation",
 				"manifest",

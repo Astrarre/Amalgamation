@@ -20,7 +20,9 @@
           <root url="jar://$MODULE_DIR$/build/amalgamation/accessWideners/gson_1.1-BkwuQulbKfe2t8gIBLFefCqnkvDfxpRuLJFyH_KS2es=.jar!/"/>
         </CLASSES>
         <JAVADOC/>
-        <SOURCES/>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/accessWideners/gson_1.1-BkwuQulbKfe2t8gIBLFefCqnkvDfxpRuLJFyH_KS2es=-sources.jar!/"/>
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
