@@ -49,7 +49,7 @@ dependencies {
     implementation("net.fabricmc:access-widener-javaparser:3.0.0") {
         exclude("javaparser-symbol-solver-core")
     }
-    implementation("io.github.coolmineman:trieharder:0.0.1")
+    implementation("io.github.coolmineman:trieharder:0.1.2")
     implementation("net.devtech:zip-io:3.2.1")
     compileOnly("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     implementation("com.google.jimfs:jimfs:1.2")
