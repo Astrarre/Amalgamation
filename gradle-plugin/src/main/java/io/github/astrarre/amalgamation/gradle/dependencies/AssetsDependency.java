@@ -17,6 +17,7 @@ import com.google.common.hash.Hasher;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
+import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
@@ -25,13 +26,14 @@ import org.gradle.api.Project;
 
 public class AssetsDependency extends CachedDependency {
 	public final HashedURLDependency assetIndexDependency; // todo getOutdated because there is no hash for the download from minecraft
-	public final Path assetsDir;
+	private final Path assetsDir;
 	public final String assetsDirPath;
-	public final String assetIndex;
-	public final String version;
+	private final String assetIndex;
+	private final String version;
 
-	public AssetsDependency(Project project, String version) {
-		super(project);
+	public AssetsDependency(MinecraftAmalgamationImpl amalg, String version) {
+		super(amalg.project);
+		Project project = amalg.project;
 		this.version = version;
 		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
 		this.assetsDirPath = assetsDirPath;
@@ -42,7 +44,7 @@ public class AssetsDependency extends CachedDependency {
 			this.logger.lifecycle("No .minecraft assets folder, using global cache!");
 			assetsDir = AmalgIO.globalCache(project).resolve("assetsDir");
 		}
-		this.assetsDir = assetsDir;
+		this.assetsDir = assetsDir.toAbsolutePath();
 
 		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version);
 		this.assetIndex = vers.getAssetIndexVersion();
@@ -56,6 +58,15 @@ public class AssetsDependency extends CachedDependency {
 				throw U.rethrow(e);
 			}
 		}
+	}
+
+	public String getAssetIndex() {
+		return this.assetIndex;
+	}
+
+	public String getAssetsDir() {
+		this.getArtifacts();
+		return this.assetsDirPath;
 	}
 
 	@Override
@@ -99,7 +110,9 @@ public class AssetsDependency extends CachedDependency {
 					// todo maybe not compress for PNG?
 					HashedURLDependency dependency = new HashedURLDependency(this.project, url);
 					dependency.output = resolvedPath.resolve(minHash).resolve(hash);
-					dependency.resolve();
+					if(!Files.exists(dependency.output)) {
+						dependency.resolve();
+					}
 				});
 				futures.add(future);
 			}

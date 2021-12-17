@@ -49,6 +49,7 @@ public class AccessWidenerDependency extends CachedDependency {
 
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
+		// seperate aw hash is in order i rekon
 		for(Object widener : this.accessWideners) {
 			this.hashDep(hasher, widener);
 		}

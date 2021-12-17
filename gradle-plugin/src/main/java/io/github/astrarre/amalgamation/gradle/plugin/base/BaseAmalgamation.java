@@ -28,13 +28,25 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.publish.maven.MavenPublication;
 
 public interface BaseAmalgamation {
+    /**
+     * Reverts Amalg's strange rectified artifact names so that the outputted pom.xml is valid, this should be called after {@link #excludeConfiguration(MavenPublication, Configuration)}
+     */
+    void fixPom(MavenPublication publication);
 
+    /**
+     * Excludes all dependencies in the given configuration from the maven pom / module.json
+     *
+     * Calling this multiple times for the same publication does work
+     */
+    void excludeConfiguration(MavenPublication publication, Configuration configuration);
 
     <T> Provider<T> provideLazy(Supplier<T> action);
 

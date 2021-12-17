@@ -14,7 +14,7 @@ public record MappingTarget(Project project, Dependency forward, String from, St
 		return Mappings.read(this.project, this.forward, this.from, this.to);
 	}
 
-	public void hash(Hasher hasher) throws IOException {
+	public void hash(Hasher hasher) {
 		hasher.putString(this.from, StandardCharsets.UTF_8);
 		hasher.putString(this.to, StandardCharsets.UTF_8);
 		AmalgIO.hashDep(hasher, this.project, this.forward);

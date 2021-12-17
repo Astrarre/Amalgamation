@@ -3,9 +3,14 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.hash.Hasher;
+import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
@@ -16,6 +21,7 @@ import org.gradle.api.artifacts.Dependency;
 
 public class RemapDependency extends ZipProcessDependency {
 	public final RemapDependencyConfig config = new RemapDependencyConfig(this);
+	final Map<Artifact, Artifact> artifactSet = new HashMap<>();
 
 	public RemapDependency(Project project) {
 		super(project);

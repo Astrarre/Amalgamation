@@ -23,7 +23,7 @@ import org.gradle.api.Project;
 public class NativesDependency extends CachedDependency {
 	final String version;
 	final List<LauncherMeta.HashedURL> dependencies;
-	final Path nativesDir;
+	public final Path nativesDir;
 
 	public NativesDependency(Project project, String version) {
 		super(project);
@@ -34,7 +34,13 @@ public class NativesDependency extends CachedDependency {
 		for(LauncherMeta.Library library : vers.getLibraries()) {
 			this.dependencies.addAll(library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY));
 		}
-		this.nativesDir = AmalgIO.cache(project, true).resolve(version).resolve("natives");
+		this.nativesDir = AmalgIO.cache(project, true).resolve(version).resolve("natives").toAbsolutePath();
+	}
+
+	public String getNativesDirectory() {
+		this.getArtifacts();
+		System.out.println("aaaaaaaa");
+		return this.nativesDir.toString();
 	}
 
 	@Override

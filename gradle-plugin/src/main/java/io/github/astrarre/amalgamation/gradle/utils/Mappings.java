@@ -61,7 +61,7 @@ public class Mappings {
 	public static IMappingProvider from(List<Namespaced> mappings) {
 		return out -> {
 			for(Namespaced mapping : mappings) {
-				MemoryMappingTree tree = mapping.tree;
+				MappingTree tree = mapping.tree;
 				int from = mapping.fromI, to = mapping.toI;
 				for(MappingTree.ClassMapping cls : tree.getClasses()) {
 					String name = cls.getName(from);
@@ -116,8 +116,8 @@ public class Mappings {
 		return val == null ? apply.apply(context) : val;
 	}
 
-	public record Namespaced(MemoryMappingTree tree, String from, String to, int fromI, int toI) {
-		public Namespaced(MemoryMappingTree tree, String from, String to) {
+	public record Namespaced(MappingTree tree, String from, String to, int fromI, int toI) {
+		public Namespaced(MappingTree tree, String from, String to) {
 			this(tree, from, to, tree.getNamespaceId(from), tree.getNamespaceId(to));
 		}
 	}

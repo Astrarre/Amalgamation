@@ -24,7 +24,7 @@ public class RemapConfig {
 	final List<Object> classpath = new ArrayList<>();
 	byte[] mappingsHash;
 
-	AmalgRemapper remapper = new TRemapper(), srcRemapper;
+	AmalgRemapper remapper = new TRemapper(), srcRemapper = new TrieHarderRemapper();
 
 	public RemapConfig(Project project) {this.project = project;}
 
@@ -92,7 +92,7 @@ public class RemapConfig {
 		this.setRemapper(new TRemapper());
 	}
 
-	public void hashMappings(Hasher hasher) throws IOException {
+	public void hashMappings(Hasher hasher) {
 		for(var mapping : this.mappings) {
 			mapping.hash(hasher);
 		}
@@ -105,7 +105,7 @@ public class RemapConfig {
 		}
 	}
 
-	public byte[] getMappingsHash() throws IOException {
+	public byte[] getMappingsHash() {
 		byte[] hash = this.mappingsHash;
 		if(hash == null) {
 			Hasher hasher = AmalgIO.SHA256.newHasher();

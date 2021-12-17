@@ -23,7 +23,7 @@ plugins {
 
 allprojects {
     group = "io.github.astrarre.amalgamation"
-    version = "2.3.0"
+    version = "3.0.0"
 
     repositories {
         mavenCentral()
@@ -59,6 +59,14 @@ subprojects {
     apply(plugin = "signing")
     apply(plugin = "eclipse")
 
+    tasks.withType<GenerateModuleMetadata> {
+        println(this.name + " boil harder")
+        val meta = this
+        appendParallelSafeAction {
+            meta.outputFile.asFile.get()
+        }
+    }
+
     tasks.withType<AbstractArchiveTask> {
         from(rootProject.file("LICENSE"))
     }
@@ -73,7 +81,6 @@ subprojects {
         publications {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])
-
                 extensions.getByType<SigningExtension>().apply {
                     if (signatory != null) {
                         sign(this@create)

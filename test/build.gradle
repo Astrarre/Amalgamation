@@ -42,6 +42,9 @@ allprojects {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
+        maven {
+            url "https://maven.shedaniel.me"
+        }
     }
 }
 
@@ -65,9 +68,32 @@ dependencies {
 
     //aaaaa intermediaryMinecraft
 
-    aaaaa ag.accessWidener("com.google.code.gson:gson:1.1") {
+    /*aaaaa ag.accessWidener("com.google.code.gson:gson:1.1") {
         accessWidener(files("$projectDir/src/main/resources/cope.aw"))
+    }*/
+
+    def mc
+    def fapi
+    def reiImpl
+    def reiApi
+    ag.map {
+        mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
+        /*mc = inputLocal(ag.map {
+            mappings(ag.intermediary(mc_vers))
+            inputLocal(ag.mojmerged(mc_vers))
+        })*/
+        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")  {
+            exclude group: "net.fabricmc.fabric-api"
+            exclude module: 'fabric-loader'
+        }
+        reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347") {
+            exclude group: "net.fabricmc.fabric-api"
+            exclude module: 'fabric-loader'
+        }
     }
+    aaaaa reiImpl
+    aaaaa reiApi
+
 
     //aaaaa "com.google.code.gson:gson:1.1"*/
     //aaaaa ag.libraries(mc_vers)
@@ -85,34 +111,9 @@ dependencies {
 
     //aaaaa ag.fabricLoader("0.11.7")
     //aaaaa ag.libraries(mc_vers)
-    annotationProcessor("net.fabricmc:fabric-mixin-compile-extensions:0.4.3")
 }
 
-configurations {
-    annotationProcessor {
-        extendsFrom implementation
-    }
-}
-
-task unzip(type: Copy) {
-    inputs.files(ag.resolve([mergedMappings]))
-    from provider {
-        zipTree(ag.resolve([mergedMappings]).first())
-    }
-    into "$buildDir/unzip/"
-}
-
-compileJava {
-    def compilerArgs = options.compilerArgs
-    compilerArgs.add("-AinMapFileNamedIntermediary=$buildDir/unzip/mappings/mappings.tiny" as String)
-    compilerArgs.add("-AoutMapFileNamedIntermediary=$buildDir/test.tiny" as String)
-    // I have no idea what this does btw
-    compilerArgs.add("-AoutRefMapFile=${destinationDirectory.get().asFile}/test-refmap.json" as String)
-    compilerArgs.add("-AdefaultObfuscationEnv=named:intermediary" as String)
-    dependsOn tasks.unzip
-}
-
-/*task testDiff(type: JavaExec) {
+task testDiff(type: JavaExec) {
     group = "tests"
     description = "Test Diff:tm:"
     classpath sourceSets.main.runtimeClasspath
@@ -123,10 +124,10 @@ compileJava {
     systemProperty("java.library.globalCache", natives)
     systemProperty("org.lwjgl.librarypath", natives)
     def assets = ag.assets(mc_vers)
-    args("--assetIndex", assets.assetIndex, "--assetsDir", assets.assetsDir)
+    args("--assetIndex", assets.getAssetIndex(), "--assetsDir", assets.getAssetsDir())
     workingDir("$rootDir/run")
     dependsOn tasks.classes
-}*/
+}
 
 //ag.idea().java(testDiff) {}
 
@@ -144,7 +145,6 @@ task productionJar(type: RemapJar) {
     classpath = configurations.compileClasspath
     remapAw()
     mappings(mergedMappings, 'named', 'intermediary')
-    mappings(files("$buildDir${File.separator}test.tiny"), 'named', 'intermediary')
 }
 
 task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {
@@ -164,5 +164,22 @@ task migrateMappings(type: MigrateSourcesTask) {
 task loadMcEnv {
     doLast {
         println(configurations.aaaaa.resolve())
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            ag.excludeConfiguration(it, configurations.aaaaa)
+            ag.fixPom(it)
+            artifact(jar) {
+                builtBy jar
+            }
+        }
+    }
+
+    repositories {
+        mavenLocal()
     }
 }

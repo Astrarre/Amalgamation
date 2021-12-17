@@ -25,4 +25,6 @@ public interface AmalgRemapper {
 
 	interface Remap extends ZipEntryProcessor, PostZipProcessor {
 	}
+
+	default void close() {}
 }

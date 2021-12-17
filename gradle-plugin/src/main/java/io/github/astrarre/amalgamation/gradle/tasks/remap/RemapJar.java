@@ -36,6 +36,7 @@ import org.gradle.jvm.tasks.Jar;
 import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
+import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
 public abstract class RemapJar extends Jar implements RemapTask {
 	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();

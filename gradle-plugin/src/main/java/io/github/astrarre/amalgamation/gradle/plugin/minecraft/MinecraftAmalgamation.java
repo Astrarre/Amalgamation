@@ -36,6 +36,7 @@ import io.github.astrarre.amalgamation.gradle.utils.json.Json;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.provider.Provider;
 
 // todo support looms caches
 
@@ -124,7 +125,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	/**
 	 * The to string on this clientMappings returns the natives directory
 	 */
-	NativesDependency natives(String version);
+	String natives(String version);
 
 	/**
 	 * @param mappings configurate mappings

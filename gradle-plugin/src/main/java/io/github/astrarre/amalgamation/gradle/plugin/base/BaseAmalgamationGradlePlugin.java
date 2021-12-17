@@ -19,29 +19,35 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ComponentSelector;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.attributes.AttributeContainer;
-import org.gradle.api.capabilities.Capability;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.publish.tasks.GenerateModuleMetadata;
 import org.jetbrains.annotations.NotNull;
 
 public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
@@ -62,7 +68,6 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		});
 
 		this.registerProvider(target);
-
 		if(target == target.getRootProject()) {
 			StartParameter parameter = target.getGradle().getStartParameter();
 			refreshDependencies = parameter.isRefreshDependencies();

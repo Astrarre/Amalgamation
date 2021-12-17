@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.logging.Logger;
+import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AmalgamationDependency extends AbstractSet<Object> {
@@ -61,7 +64,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 
 	@Override
 	public int size() {
-		return this.getArtifacts().size();
+		return Iterators.size(iterator());
 	}
 
 	protected abstract Set<Artifact> resolveArtifacts() throws IOException;
@@ -103,7 +106,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 			dep = this.project.getDependencies().create(notation);
 		}
 		Set<Artifact> artifacts = new HashSet<>();
-		List<ComponentIdentifier> dependencyIds = new ArrayList<>();
+		Map<ComponentIdentifier, byte[]> dependencyIds = new HashMap<>();
 		Set<ResolvedDependency> dependencies = new HashSet<>();
 		List<Dependency> unresolved = new ArrayList<>();
 		AmalgIO.resolveDeps(this.project, Set.of(dep), dependencies, unresolved);
@@ -127,8 +130,8 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 			}
 		}
 
-		AmalgIO.getSources(project, dependencyIds)
-				.map(result -> new Artifact.Maven(project, result.getId(), result.getFile(), "sources"))
+		AmalgIO.getSources(project, dependencyIds.keySet())
+				.map(result -> new Artifact.Maven(project, result.getId(), result.getFile(), "sources", dependencyIds.get(result.getId().getComponentIdentifier())))
 				.forEach(artifacts::add);
 
 		for(Artifact artifact : artifacts) {
@@ -139,10 +142,16 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 		return artifacts;
 	}
 
-	protected void artifacts(ResolvedDependency dependency, Set<Artifact> artifacts, List<ComponentIdentifier> ids) {
-		for(ResolvedArtifact artifact : dependency.getModuleArtifacts()) {
-			ids.add(artifact.getId().getComponentIdentifier());
-			Artifact.Maven fact = new Artifact.Maven(this.project, artifact.getId(), artifact.getFile(), artifact.getClassifier());
+	protected void artifacts(ResolvedDependency dependency, Set<Artifact> artifacts, Map<ComponentIdentifier, byte[]> ids) {
+		Set<ResolvedArtifact> arts = dependency.getModuleArtifacts();
+		Hasher hasher = AmalgIO.SHA256.newHasher();
+		for(ResolvedArtifact art : arts) {
+			AmalgIO.hash(hasher, art.getFile());
+		}
+		byte[] hash = hasher.hash().asBytes();
+		for(ResolvedArtifact artifact : arts) {
+			ids.put(artifact.getId().getComponentIdentifier(), hash);
+			Artifact.Maven fact = new Artifact.Maven(this.project, artifact.getId(), artifact.getFile(), artifact.getClassifier(), hash);
 			artifacts.add(fact);
 		}
 	}

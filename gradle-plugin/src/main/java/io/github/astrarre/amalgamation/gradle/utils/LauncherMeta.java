@@ -349,14 +349,22 @@ public class LauncherMeta {
 	public static final class HashedURL {
 		public final String hash, url, path;
 		public HashedURL(Json.Obj artifact) {
-			this.hash = artifact.getString("sha1");
-			this.url = artifact.getString("url");
-			this.path = artifact.getString("path");
+			if(artifact != null) {
+				this.hash = artifact.getString("sha1");
+				this.url = artifact.getString("url");
+				this.path = artifact.getString("path");
+			} else {
+				this.hash = this.url = this.path = null;
+			}
 		}
 
 		public HashedURL(Json.Obj artifact, String path) {
-			this.hash = artifact.getString("sha1");
-			this.url = artifact.getString("url");
+			if(artifact != null) {
+				this.hash = artifact.getString("sha1");
+				this.url = artifact.getString("url");
+			} else {
+				this.hash = this.url = null;
+			}
 			this.path = path;
 		}
 

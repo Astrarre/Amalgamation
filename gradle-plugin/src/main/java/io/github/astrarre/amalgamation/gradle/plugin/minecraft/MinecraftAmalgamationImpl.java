@@ -29,6 +29,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.provider.Provider;
 
 public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements MinecraftAmalgamation {
 	private String librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";
@@ -114,12 +115,12 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 
 	@Override
 	public AssetsDependency assets(String version) {
-		return new AssetsDependency(this.project, version);
+		return new AssetsDependency(this, version);
 	}
 
 	@Override
-	public NativesDependency natives(String version) {
-		return new NativesDependency(this.project, version);
+	public String natives(String version) {
+		return new NativesDependency(this.project, version).getNativesDirectory();
 	}
 
 	@Override

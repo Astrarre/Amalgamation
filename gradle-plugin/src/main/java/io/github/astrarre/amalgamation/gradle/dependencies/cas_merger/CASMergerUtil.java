@@ -76,21 +76,25 @@ public class CASMergerUtil {
 	public class ClassAnnotater implements ZipEntryProcessor {
 		@Override
 		public ProcessResult apply(VirtualZipEntry entry) {
-			ClassEntry cls = CASMergerUtil.this.serverClasses.get(entry.path());
-			ByteBuffer buffer = entry.read();
-			byte[] buf = buffer.array();
-			byte[] code;
-			ClassReader clientReader = new ClassReader(buf, buffer.arrayOffset(), buffer.capacity());
-			ClassWriter writer = new ClassWriter(clientReader, 0);
-			if(cls != null) {
-				CASMerger merger = new CASMerger(writer, Opcodes.ASM9, cls, CASMergerUtil.this.handler, CASMergerUtil.this.checkForServerOnly);
-				clientReader.accept(merger, 0);
+			if(entry.path().endsWith(".class")) {
+				ClassEntry cls = CASMergerUtil.this.serverClasses.get(entry.path());
+				ByteBuffer buffer = entry.read();
+				byte[] buf = buffer.array();
+				byte[] code;
+				ClassReader clientReader = new ClassReader(buf, buffer.arrayOffset(), buffer.capacity());
+				ClassWriter writer = new ClassWriter(clientReader, 0);
+				if(cls != null) {
+					CASMerger merger = new CASMerger(writer, Opcodes.ASM9, cls, CASMergerUtil.this.handler, CASMergerUtil.this.checkForServerOnly);
+					clientReader.accept(merger, 0);
+				} else {
+					clientReader.accept(writer, 0);
+					CASMergerUtil.this.handler.accept(writer.visitAnnotation(CASMergerUtil.this.handler.normalDesc(), false), true);
+				}
+				code = writer.toByteArray();
+				entry.write(entry.path(), ByteBuffer.wrap(code));
 			} else {
-				clientReader.accept(writer, 0);
-				CASMergerUtil.this.handler.accept(writer.visitAnnotation(CASMergerUtil.this.handler.normalDesc(), false), true);
+				entry.copyToOutput();
 			}
-			code = writer.toByteArray();
-			entry.write(entry.path(), ByteBuffer.wrap(code));
 			return ProcessResult.HANDLED;
 		}
 	}
@@ -98,12 +102,16 @@ public class CASMergerUtil {
 	public class ServerCollector implements ZipEntryProcessor {
 		@Override
 		public ProcessResult apply(VirtualZipEntry entry) {
-			ClassEntry clsEntry = new ClassEntry(new HashSet<>(), new Key2Set<>(4), new Key2Set<>(4), new HashSet<>());
-			CASMergerUtil.this.serverClasses.put(entry.path(), clsEntry);
-			ServerCollectingVisitor visitor = new ServerCollectingVisitor(Opcodes.ASM9, clsEntry);
-			ByteBuffer buffer = entry.read();
-			ClassReader serverReader = new ClassReader(buffer.array(), buffer.arrayOffset(), buffer.capacity());
-			serverReader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+			if(entry.path().endsWith(".class")) {
+				ClassEntry clsEntry = new ClassEntry(new HashSet<>(), new Key2Set<>(4), new Key2Set<>(4), new HashSet<>());
+				CASMergerUtil.this.serverClasses.put(entry.path(), clsEntry);
+				ServerCollectingVisitor visitor = new ServerCollectingVisitor(Opcodes.ASM9, clsEntry);
+				ByteBuffer buffer = entry.read();
+				ClassReader serverReader = new ClassReader(buffer.array(), buffer.arrayOffset(), buffer.capacity());
+				serverReader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+			} else {
+				entry.copyToOutput();
+			}
 			return ProcessResult.HANDLED;
 		}
 	}

@@ -13,6 +13,7 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 	public boolean shouldOutput = true; // todo impl
 	public Object toStrip;
 	public String unobfPackage = "net/minecraft";
+	public String version = "NaN";
 
 	public ShadowedLibraryStrippedDependency(Project project, Path path) {
 		super(project);
@@ -31,6 +32,15 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
+		Artifact.File file = new Artifact.File(
+				this.project,
+				"net.minecraft",
+				"stripped",
+				this.version,
+				resolvedPath,
+				this.getCurrentHash(),
+				Artifact.Type.MIXED
+		);
 		if(isOutdated) {
 			process.setEntryProcessor(buffer -> {
 				String name = buffer.path();
@@ -42,9 +52,9 @@ public class ShadowedLibraryStrippedDependency extends ZipProcessDependency {
 				}
 				return ProcessResult.HANDLED;
 			});
-			resolver.apply(this.of(this.toStrip), p -> p.derive(resolvedPath, this.getCurrentHash()));
+			resolver.apply(this.of(this.toStrip), p -> file);
 		} else {
-			process.addProcessed(resolvedPath);
+			process.addProcessed(file);
 		}
 	}
 }

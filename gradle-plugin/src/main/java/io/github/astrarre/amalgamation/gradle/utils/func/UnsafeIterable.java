@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.gradle.utils.func;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -14,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 public interface UnsafeIterable<T> extends Iterable<T> {
 	static UnsafeIterable<Path> walkFiles(Path path) {
+		if(!Files.exists(path)) {
+			return Collections::emptyIterator;
+		}
 		return () -> Files.walk(path).filter(Files::isRegularFile).iterator();
 	}
 

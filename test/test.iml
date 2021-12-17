@@ -17,11 +17,53 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/build/amalgamation/accessWideners/gson_1.1-BkwuQulbKfe2t8gIBLFefCqnkvDfxpRuLJFyH_KS2es=.jar!/"/>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/cloth-config-fabric_5.1.40-C_IbXoBWIfD5i18c6qR2HFDppdBKlR5jgDqAkiE3Am4=_19.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES/>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/RoughlyEnoughItems-fabric_6.2.347-58yEsaSugLDDLn9bYGzhvFh681gYoucjx1RWAAL-XLk=_25.jar!/"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/build/amalgamation/accessWideners/gson_1.1-BkwuQulbKfe2t8gIBLFefCqnkvDfxpRuLJFyH_KS2es=-sources.jar!/"/>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/RoughlyEnoughItems-fabric_6.2.347-58yEsaSugLDDLn9bYGzhvFh681gYoucjx1RWAAL-XLk=_25-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/basic-math_0.6.0-1vEhgIAG7su5CxWd2nbpKOB47MsW1JWQhg-JP4YDWSw=_10.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/basic-math_0.6.0-1vEhgIAG7su5CxWd2nbpKOB47MsW1JWQhg-JP4YDWSw=_10-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/architectury-fabric_2.6.35-EkDzCqvNNC80b3Vsy7lSRkMY6wv_DctFQoza6L-vFVo=_19.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/architectury-fabric_2.6.35-EkDzCqvNNC80b3Vsy7lSRkMY6wv_DctFQoza6L-vFVo=_19-sources.jar!/"/>
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/RoughlyEnoughItems-api-fabric_6.2.347-MfqcCYKJ3yCY6cDWBbcjb_VxQHir5ihZwDBTsehczf4=_29.jar!/"/>
+        </CLASSES>
+        <JAVADOC/>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/build/amalgamation/remaps/RoughlyEnoughItems-api-fabric_6.2.347-MfqcCYKJ3yCY6cDWBbcjb_VxQHir5ihZwDBTsehczf4=_29-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>

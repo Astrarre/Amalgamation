@@ -42,7 +42,7 @@ public abstract class RemapSourcesJar extends RemapJar {
 			try(FileSystem system = U.createZip(current)) {
 				mercury.rewrite(temp, system.getPath("/"));
 			} catch(Exception e) {
-				throw U.rethrow(e);
+				e.printStackTrace();
 			}
 		} finally {
 			this.clearDirectory(temp);

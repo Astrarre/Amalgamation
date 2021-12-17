@@ -3,9 +3,11 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
@@ -14,6 +16,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgR
 import io.github.astrarre.amalgamation.gradle.dependencies.util.ResourceZipFilter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
+import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
@@ -58,21 +61,29 @@ public class SingleRemapDependency extends ZipProcessDependency {
 		}
 	}
 
+	boolean resolving;
+
 	@Override
 	public void appendToProcess(ZipProcessBuilder builder, boolean isOutdated) throws IOException {
-		List<TaskTransform> apply = this.apply(builder, this.dependency, this::transform);
-		if(this.isOutdated() && !this.isClasspath) {
+		if(!isOutdated || this.isClasspath) {
+			List<TaskTransform> apply = this.apply(builder, this.dependency, o -> OutputTag.INPUT);
+			for(TaskTransform task : apply) {
+				task.setPreEntryProcessor(o -> this.remapper.classpath());
+			}
+			this.appendOutputs(builder);
+		} else {
+			List<TaskTransform> apply;
+			try {
+				this.resolving = true;
+				apply = this.apply(builder, this.dependency, this::transform);
+			} finally {
+				this.resolving = false;
+			}
 			for(TaskTransform task : apply) {
 				Map<Object, AmalgRemapper.Remap> reMap = new HashMap<>();
 				task.setPreEntryProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
 				task.setPostZipProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
 			}
-		} else {
-			for(TaskTransform task : apply) {
-				task.setPreEntryProcessor(o -> this.remapper.classpath());
-				task.setZipFilter(o -> ResourceZipFilter.SKIP);
-			}
-			this.appendOutputs(builder);
 		}
 	}
 
@@ -84,6 +95,15 @@ public class SingleRemapDependency extends ZipProcessDependency {
 
 	@NotNull
 	private Artifact transform(Artifact o) {
-		return o.deriveMaven(this.dirs.remaps(this.project), this.getCurrentHash());
+		Artifact artifact = this.remap.artifactSet.get(o);
+		if(artifact != null) {
+			return artifact;
+		}
+		return o.deriveMavenMixHash(this.dirs.remaps(this.project), this.remap.config.getMappingsHash());
+	}
+
+	@Override
+	protected boolean validateArtifact(Artifact artifact) {
+		return !this.resolving || this.remap.artifactSet.putIfAbsent(artifact, this.transform(artifact)) == null;
 	}
 }

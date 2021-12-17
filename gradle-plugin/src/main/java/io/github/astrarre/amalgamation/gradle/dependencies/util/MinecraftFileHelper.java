@@ -59,6 +59,7 @@ public class MinecraftFileHelper {
 			dependency.shouldOutput = false;
 			ShadowedLibraryStrippedDependency dep = new ShadowedLibraryStrippedDependency(project, jar);
 			dep.toStrip = f;
+			dep.version = version;
 			return dep;
 		} else {
 			return f;

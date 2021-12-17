@@ -13,6 +13,7 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
+import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Artifact extends OutputTag {
@@ -70,6 +71,13 @@ public abstract class Artifact extends OutputTag {
 
 	public abstract Artifact deriveMaven(Path directory, byte[] hash);
 
+	public Artifact deriveMavenMixHash(Path directory, byte[] hash) {
+		Hasher hasher = AmalgIO.SHA256.newHasher();
+		hasher.putBytes(hash);
+		hasher.putBytes(this.hash);
+		return this.deriveMaven(directory, hasher.hash().asBytes());
+	}
+
 	public static class File extends Artifact {
 		public File(Project project, String group, String name, String version, Path file, byte[] hash, Type sources) {
 			super(project, group, name, version, file, hash, sources);
@@ -107,17 +115,13 @@ public abstract class Artifact extends OutputTag {
 
 	public static class Maven extends Artifact {
 		boolean isOutput;
-		public Maven(Project project, ComponentArtifactIdentifier id, java.io.File art, String classifier) {
+		public Maven(Project project, ComponentArtifactIdentifier id, java.io.File art, String classifier, byte[] hash) {
 			super(project,
 					get(id, ModuleComponentIdentifier::getGroup, "unknown"),
 					get(id, ModuleComponentIdentifier::getModule, id.toString()),
 					get(id, ModuleComponentIdentifier::getVersion, "NaN"),
 					art.toPath(),
-					((Function<java.io.File, byte[]>) (r) -> {
-						Hasher hasher = AmalgIO.SHA256.newHasher();
-						AmalgIO.hash(hasher, r);
-						return hasher.hash().asBytes();
-					}).apply(art),
+					Objects.requireNonNull(hash, "no hash found for " + id.getComponentIdentifier()),
 					Objects.equals(classifier, "sources") ? Type.SOURCES : Type.MIXED);
 		}
 
@@ -153,7 +157,7 @@ public abstract class Artifact extends OutputTag {
 				}
 				return str;
 			} else {
-				return group + ':' + name + '_' + version + ':' + AmalgIO.b64(hash);
+				return group + ':' + name + '_' + version + ':' + AmalgIO.b64(hash) + "_" + name.length();
 			}
 		}
 
@@ -175,7 +179,7 @@ public abstract class Artifact extends OutputTag {
 	}
 
 	static Path resolve(Path directory, String name, String version, Type type, byte[] hash) {
-		String file = name + "_" + version + "-" + AmalgIO.b64(hash);
+		String file = name + "_" + version + "-" + AmalgIO.b64(hash) + "_" + name.length();
 		if(type == Type.SOURCES) {
 			file += "-sources";
 		}
@@ -191,9 +195,6 @@ public abstract class Artifact extends OutputTag {
 			return false;
 		}
 
-		if(!Objects.equals(this.project, artifact.project)) {
-			return false;
-		}
 		if(!Objects.equals(this.group, artifact.group)) {
 			return false;
 		}
@@ -211,7 +212,7 @@ public abstract class Artifact extends OutputTag {
 
 	@Override
 	public int hashCode() {
-		int result = this.project != null ? this.project.hashCode() : 0;
+		int result = 0;
 		result = 31 * result + (this.group != null ? this.group.hashCode() : 0);
 		result = 31 * result + (this.name != null ? this.name.hashCode() : 0);
 		result = 31 * result + (this.version != null ? this.version.hashCode() : 0);

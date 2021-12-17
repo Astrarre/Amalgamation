@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Iterables;
@@ -41,9 +42,13 @@ public class AmalgIO {
 	public static final HashFunction SHA256 = com.google.common.hash.Hashing.sha256();
 	public static final ExecutorService SERVICE = ForkJoinPool.commonPool();
 
-	public static void hashDep(Hasher hasher, Project project, Object dependency) throws IOException {
+	public static void hashDep(Hasher hasher, Project project, Object dependency) {
 		if(dependency instanceof CachedDependency c) {
-			c.hashInputs(hasher);
+			try {
+				c.hashInputs(hasher);
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
 		} else if(dependency instanceof AmalgamationDependency a) {
 			for(Artifact artifact : a.getArtifacts()) {
 				hasher.putBytes(artifact.hash);
@@ -101,7 +106,7 @@ public class AmalgIO {
 				.toList();
 	}
 
-	public static Stream<ResolvedArtifactResult> getSources(Project project, List<ComponentIdentifier> ids) {
+	public static Stream<ResolvedArtifactResult> getSources(Project project, Iterable<ComponentIdentifier> ids) {
 		return project.getDependencies()
 				.createArtifactResolutionQuery()
 				.forComponents(ids)
@@ -131,7 +136,7 @@ public class AmalgIO {
 
 	public static void resolveDeps(Project project, Set<Dependency> dependencies, Set<ResolvedDependency> resolved, List<Dependency> everythingElse) {
 		Configuration configuration = project.getConfigurations().detachedConfiguration(Iterables.toArray(dependencies, Dependency.class));
-		Set<Dependency> unvisited = new HashSet<>(dependencies);
+		Set<Dependency> unvisited = dependencies.stream().map(Dependency::copy).collect(Collectors.toCollection(HashSet::new));
 		var deps = new HashSet<>(configuration.getResolvedConfiguration().getFirstLevelModuleDependencies(s -> {
 			unvisited.remove(s);
 			return true;

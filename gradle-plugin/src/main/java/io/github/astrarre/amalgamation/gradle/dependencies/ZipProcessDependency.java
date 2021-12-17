@@ -103,10 +103,16 @@ public abstract class ZipProcessDependency extends CachedDependency {
 				transforms.add(process.linkProcess(p.process(), o -> output.apply((Artifact) o)));
 			} else {
 				for(Artifact artifact : this.artifacts(dep, true)) {
-					transforms.add(process.addZip(artifact.path, output.apply(artifact)));
+					if(this.validateArtifact(artifact)) {
+						transforms.add(process.addZip(artifact.path, output.apply(artifact)));
+					}
 				}
 			}
 		}
 		return transforms;
+	}
+
+	protected boolean validateArtifact(Artifact artifact) {
+		return true;
 	}
 }
