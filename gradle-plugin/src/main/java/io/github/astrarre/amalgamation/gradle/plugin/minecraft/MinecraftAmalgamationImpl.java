@@ -20,7 +20,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency
 import io.github.astrarre.amalgamation.gradle.dependencies.util.MinecraftFileHelper;
 import io.github.astrarre.amalgamation.gradle.dependencies.mojmerge.MojMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
@@ -29,7 +29,6 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.provider.Provider;
 
 public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements MinecraftAmalgamation {
 	private String librariesDirectory = LauncherMeta.activeMinecraftDirectory() + "/libraries";

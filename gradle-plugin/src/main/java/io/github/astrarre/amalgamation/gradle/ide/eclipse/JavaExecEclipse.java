@@ -37,7 +37,7 @@ public class JavaExecEclipse extends FileTaskConverter<JavaExec> {
 	}
 
 	@Override
-	public void emit() throws IOException {
+	public void emit(boolean immediateEmission) throws IOException {
 		Map<String, String> params = new HashMap<>();
 		params.put("%MAIN_CLASS%", Objects.requireNonNull(this.task.getMain(), "Main-Class autodetection is unsupported! Must set main in task!"));
 		List<String> progArgs = Objects.requireNonNullElse(this.task.getArgs(), List.of());

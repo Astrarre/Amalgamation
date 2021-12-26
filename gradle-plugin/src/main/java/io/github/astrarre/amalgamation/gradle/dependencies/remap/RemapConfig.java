@@ -1,30 +1,42 @@
-package io.github.astrarre.amalgamation.gradle.remap;
+package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AbstractBinRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.cls.TRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.src.TrieHarderRemapper;
+
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.binary.TinyRemapperImpl;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.AccessWidenerRemapperImpl;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.MetaInfFixerImpl;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.source.TrieHarderRemapperImpl;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
 
+import net.fabricmc.tinyremapper.TinyRemapper;
+
 public class RemapConfig {
+	static final List<AmalgRemapper> DEFAULT = List.of(
+			new TinyRemapperImpl(t -> {}),
+			new TrieHarderRemapperImpl(),
+			new AccessWidenerRemapperImpl(),
+			new MetaInfFixerImpl());
+
 	protected final Project project;
 	final List<MappingTarget> mappings = new ArrayList<>();
 	final List<Object> classpath = new ArrayList<>();
 	byte[] mappingsHash;
 
-	AmalgRemapper remapper = new TRemapper(), srcRemapper = new TrieHarderRemapper();
+	final List<AmalgRemapper> remappers = new ArrayList<>(DEFAULT);
+	final AmalgRemapper combined = new AmalgRemapper.Combined(this.remappers);
 
 	public RemapConfig(Project project) {this.project = project;}
 
@@ -54,42 +66,40 @@ public class RemapConfig {
 		this.mappings.add(dependency);
 	}
 
-	public AmalgRemapper getRemapper() {
-		return this.remapper;
-	}
-
-	public void setRemapper(AmalgRemapper remapper) {
-		this.remapper = remapper;
-		if(this.srcRemapper != null) {
-			this.setSrcRemapper(remapper);
-		}
-	}
-
-	public AmalgRemapper getSrcRemapper() {
-		return this.srcRemapper;
-	}
-
-	public void setSrcRemapper(AmalgRemapper remapper) {
-		if(this.remapper instanceof AbstractBinRemapper a) {
-			a.setSourceRemapper(remapper);
-			this.srcRemapper = remapper;
-		} else {
-			throw new UnsupportedOperationException("cannot set source remapper on non-AbstractRemapper remapper!");
-		}
-	}
 
 	/**
 	 * sets the source remapper to the TrieHarder source remapper
 	 */
 	public void trieHarder() {
-		this.setSrcRemapper(new TrieHarderRemapper());
+		avoidSecond(TrieHarderRemapperImpl.class);
+		this.remappers.add(new TrieHarderRemapperImpl());
 	}
 
 	/**
 	 * sets the class remapper to fabricmc/tiny-remapper
 	 */
 	public void tinyRemapper() {
-		this.setRemapper(new TRemapper());
+		this.tinyRemapper(t -> {});
+	}
+
+	public void tinyRemapper(Consumer<TinyRemapper.Builder> configuration) {
+		avoidSecond(TinyRemapperImpl.class);
+		this.remappers.add(new TinyRemapperImpl(configuration));
+	}
+
+	public void metaInfFixer() {
+		avoidSecond(MetaInfFixerImpl.class);
+		this.remappers.add(new MetaInfFixerImpl());
+	}
+
+	public void removeRemapper(int index) {
+		this.remappers.remove(index);
+	}
+
+	private void avoidSecond(Class<?> type) {
+		if(this.remappers.stream().anyMatch(type::isInstance)) {
+			throw new IllegalStateException("multiple instances of " + type + " in remapper configuration");
+		}
 	}
 
 	public void hashMappings(Hasher hasher) {
@@ -121,6 +131,10 @@ public class RemapConfig {
 
 	public List<Object> getClasspath() {
 		return Collections.unmodifiableList(this.classpath);
+	}
+
+	public AmalgRemapper getRemapper() {
+		return combined;
 	}
 
 	protected Object of(Object notation) {

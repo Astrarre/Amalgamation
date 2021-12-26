@@ -24,7 +24,6 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'amalgamation-minecraft'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1'
 }
 
 allprojects {
@@ -78,18 +77,12 @@ dependencies {
     def reiApi
     ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
-        /*mc = inputLocal(ag.map {
+        mc = inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
-        })*/
-        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")  {
-            exclude group: "net.fabricmc.fabric-api"
-            exclude module: 'fabric-loader'
-        }
-        reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347") {
-            exclude group: "net.fabricmc.fabric-api"
-            exclude module: 'fabric-loader'
-        }
+        })
+        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
+        reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
     aaaaa reiImpl
     aaaaa reiApi
@@ -129,7 +122,10 @@ task testDiff(type: JavaExec) {
     dependsOn tasks.classes
 }
 
-//ag.idea().java(testDiff) {}
+ag.idea().java(testDiff) {
+    it.overrideClasspath(project, sourceSets.main)
+    it.excludeDependency(tasks.classes)
+}
 
 /*
 task stripFabric_1_16(type: StripJar) {

@@ -9,4 +9,11 @@ public enum CompressCmd {
 	 * Create a dummy jar with the classpath META-INF/Manifest.mf
 	 */
 	MANIFEST_JAR;
+
+	public enum Idea {
+		NONE,
+		MANIFEST,
+		CLASSPATH_FILE,
+		ARGS_FILE
+	}
 }

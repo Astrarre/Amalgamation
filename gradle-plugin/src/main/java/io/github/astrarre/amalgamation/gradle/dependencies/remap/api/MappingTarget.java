@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.remap;
+package io.github.astrarre.amalgamation.gradle.dependencies.remap.api;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

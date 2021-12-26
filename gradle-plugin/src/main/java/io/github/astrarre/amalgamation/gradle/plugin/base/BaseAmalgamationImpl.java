@@ -9,10 +9,9 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
-import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdeaExt;
+import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.ConfigurationExcluder;
-import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.ModuleJsonFixer;
 import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.MvnMetaReader;
 import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.NotationFixer;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -98,15 +97,13 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 
 	@Override
 	public IdeaExtension idea() throws IllegalStateException {
-		return this.getExtension("idea-ext", "org.jetbrains.gradle.plugin.idea-ext", "version '1.1'", () -> ConfigIdeaExt.extension);
+		return this.getExtension("idea", "idea", "", () -> ConfigIdea.IDEA_EXTENSION);
 	}
 
 	@Override
 	public EclipseExtension eclipse() throws IllegalStateException {
 		return this.getExtension("eclipse", "eclipse", "", () -> ConfigureEclipse.extension);
 	}
-
-
 
 	private Provider<FileCollection> sources0(Dependency dependency) {
 		return this.provideLazy(() -> this.project.files((Object[]) AmalgIO.resolveSources(this.project, List.of(dependency))

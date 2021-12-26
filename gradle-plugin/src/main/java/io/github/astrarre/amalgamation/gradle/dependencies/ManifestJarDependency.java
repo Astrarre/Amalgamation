@@ -11,6 +11,7 @@ import java.util.Set;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.JavaExec;
@@ -37,7 +38,7 @@ public class ManifestJarDependency extends CachedDependency {
 
 	@Override
 	protected Path evaluatePath(byte[] hash) throws IOException {
-		return AmalgIO.projectCache(this.project).resolve("classpath_manifests").resolve(this.path + ".jar");
+		return AmalgDirs.PROJECT.root(this.project).resolve("classpath_manifests").resolve(this.path + ".jar");
 	}
 
 	@Override
@@ -45,6 +46,7 @@ public class ManifestJarDependency extends CachedDependency {
 		if(isOutdated) {
 			try(FileSystem write = U.createZip(resolvedPath)) {
 				Path path = write.getPath("META-INF/MANIFEST.MF");
+				Files.createDirectories(write.getPath("META-INF"));
 				String cp = String.join(" ", this.files);
 				Files.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)));
 			}

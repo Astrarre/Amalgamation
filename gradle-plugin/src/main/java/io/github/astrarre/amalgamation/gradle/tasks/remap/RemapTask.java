@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;

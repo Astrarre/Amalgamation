@@ -20,7 +20,7 @@ public abstract class TaskConverter<T extends Task> {
 
 	protected TaskConverter(T task) {this.task = task;}
 
-	public abstract void emit() throws IOException;
+	public abstract void emit(boolean immediateEmission) throws IOException;
 
 	public static void writeTemplate(Path path, String templateLocation, Map<String, String> parameters) throws IOException {
 		InputStream templateIn = TaskConverter.class.getResourceAsStream(templateLocation);
@@ -45,4 +45,5 @@ public abstract class TaskConverter<T extends Task> {
 	public Project getProject() {
 		return this.task.getProject();
 	}
+
 }

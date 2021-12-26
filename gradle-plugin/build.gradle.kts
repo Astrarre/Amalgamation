@@ -42,7 +42,7 @@ dependencies {
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("net.fabricmc:mercury:0.2.4")
-    implementation("io.github.astrarre", "tiny-remapper", "1.0.1")
+    implementation("io.github.astrarre", "tiny-remapper", "1.0.3")
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
@@ -51,10 +51,9 @@ dependencies {
     }
     implementation("io.github.coolmineman:trieharder:0.1.2")
     implementation("net.devtech:zip-io:3.2.1")
-    compileOnly("org.jetbrains.gradle.plugin.idea-ext:org.jetbrains.gradle.plugin.idea-ext.gradle.plugin:1.1")
     implementation("com.google.jimfs:jimfs:1.2")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
-    implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
+    //implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
     implementation("net.fabricmc:fabric-fernflower:1.4.1")
 }
 

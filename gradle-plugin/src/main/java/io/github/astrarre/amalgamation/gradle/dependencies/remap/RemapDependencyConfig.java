@@ -6,13 +6,9 @@ import java.util.List;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.remap.RemapConfig;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import io.github.astrarre.amalgamation.gradle.utils.json.Json;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
-import org.jetbrains.annotations.NotNull;
 
 public class RemapDependencyConfig extends RemapConfig {
 	final List<SingleRemapDependency> inputsLocal = new ArrayList<>(), inputsGlobal = new ArrayList<>();

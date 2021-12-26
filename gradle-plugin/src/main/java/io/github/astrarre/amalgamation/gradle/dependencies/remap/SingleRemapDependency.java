@@ -3,21 +3,21 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.remapper.AmalgRemapper;
-import io.github.astrarre.amalgamation.gradle.dependencies.util.ResourceZipFilter;
+
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.ZipRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.processes.ZipProcessBuilder;
+import net.devtech.zipio.processors.entry.ProcessResult;
 import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
@@ -66,9 +66,14 @@ public class SingleRemapDependency extends ZipProcessDependency {
 	@Override
 	public void appendToProcess(ZipProcessBuilder builder, boolean isOutdated) throws IOException {
 		if(!isOutdated || this.isClasspath) {
-			List<TaskTransform> apply = this.apply(builder, this.dependency, o -> OutputTag.INPUT);
-			for(TaskTransform task : apply) {
-				task.setPreEntryProcessor(o -> this.remapper.classpath());
+			if(this.remapper.requiresClasspath()) {
+				List<TaskTransform> apply = this.apply(builder, this.dependency, o -> OutputTag.INPUT);
+				for(TaskTransform task : apply) {
+					task.setPreEntryProcessor(o -> buffer -> {
+						this.remapper.createNew().visitEntry(buffer, true);
+						return ProcessResult.HANDLED;
+					});
+				}
 			}
 			this.appendOutputs(builder);
 		} else {
@@ -80,9 +85,22 @@ public class SingleRemapDependency extends ZipProcessDependency {
 				this.resolving = false;
 			}
 			for(TaskTransform task : apply) {
-				Map<Object, AmalgRemapper.Remap> reMap = new HashMap<>();
-				task.setPreEntryProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
-				task.setPostZipProcessor(o -> reMap.computeIfAbsent(o, $ -> this.remapper.remap()));
+				Map<Object, ZipRemapper> reMap = new HashMap<>();
+				task.setPreEntryProcessor(o -> {
+					var remap = reMap.computeIfAbsent(o, $ -> this.remapper.createNew());
+					return buffer -> {
+						if(!remap.visitEntry(buffer, false)) {
+							buffer.copyToOutput();
+						}
+						return ProcessResult.HANDLED;
+					};
+				});
+				if(this.remapper.hasPostStage()) {
+					task.setFinalizingZipProcessor(o -> {
+						var remap = reMap.computeIfAbsent(o, $ -> this.remapper.createNew());
+						return remap::acceptPost;
+					});
+				}
 			}
 		}
 	}

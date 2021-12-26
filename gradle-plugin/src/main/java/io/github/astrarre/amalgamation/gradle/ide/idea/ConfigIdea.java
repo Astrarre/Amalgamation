@@ -1,36 +1,19 @@
 package io.github.astrarre.amalgamation.gradle.ide.idea;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.List;
 import java.util.function.Consumer;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.DependencyArtifactSelector;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.plugins.ide.idea.model.Dependency;
-import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
-import org.gradle.plugins.ide.idea.model.Module;
-import org.gradle.plugins.ide.idea.model.ModuleLibrary;
 
 /**
  * Basic configuration
  */
 public class ConfigIdea {
+	public static final IdeaExtension IDEA_EXTENSION = new IdeaExtension();
 	public static void configure(Project project, Plugin<Project> ideaModel) {
 		// todo for sources
 		// step 1: put hash as part of file name (before classifier / extension)
@@ -45,10 +28,19 @@ public class ConfigIdea {
 		module.setDownloadJavadoc(true);
 		module.setDownloadSources(true);
 		module.setInheritOutputDirs(false);
+
 		project.getPlugins().withId("java", $ -> {
-			configureOutput(project, "compileJava", module::setOutputDir);
-			configureOutput(project, "compileTestJava", module::setTestOutputDir);
+			for(Project allproject : project.getAllprojects()) {
+				configureOutput(allproject, "compileJava", module::setOutputDir);
+				configureOutput(allproject, "compileTestJava", module::setTestOutputDir);
+			}
 		});
+
+		if(Boolean.getBoolean("idea.sync.active")) {
+			project.getRootProject().afterEvaluate(project1 -> {
+				IDEA_EXTENSION.configureQueue(false);
+			});
+		}
 	}
 
 	public static void configureOutput(Project project, String taskName, Consumer<File> listen) {

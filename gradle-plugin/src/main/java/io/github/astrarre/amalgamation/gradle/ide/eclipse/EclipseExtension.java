@@ -9,6 +9,6 @@ public class EclipseExtension {
 	public void java(JavaExec exec, Action<JavaExecEclipse> action) throws IOException {
 		JavaExecEclipse eclipse = new JavaExecEclipse(exec);
 		action.execute(eclipse);
-		eclipse.emit();
+		eclipse.emit(true);
 	}
 }

@@ -3,11 +3,6 @@ package io.github.astrarre.amalgamation.gradle.forge;
 import java.io.File;
 import java.util.ArrayList;
 
-import net.minecraftforge.installer.DownloadUtils;
-import net.minecraftforge.installer.actions.ProgressCallback;
-import net.minecraftforge.installer.json.Install;
-import net.minecraftforge.installer.json.Util;
-import net.minecraftforge.installer.json.Version;
 
 public class ForgeUtil {
 	/**
@@ -33,7 +28,7 @@ public class ForgeUtil {
 	}
 
 	private static void installLibs(File forgeLibs) {
-		Install profile = Util.loadInstallProfile();
+		/*Install profile = Util.loadInstallProfile();
 		for (Version.Library lib : profile.getLibraries()) {
 			if (!lib.getName().getLocalPath(forgeLibs).exists()) {
 				DownloadUtils.downloadLibrary((m, p) -> {
@@ -42,6 +37,6 @@ public class ForgeUtil {
 					}
 				}, profile.getMirror(), lib, forgeLibs, t -> true, new ArrayList<>());
 			}
-		}
+		}*/
 	}
 }

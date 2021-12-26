@@ -4,20 +4,19 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.ZipProcessDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.util.BasicRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
 
 public class RemapDependency extends ZipProcessDependency {
 	public final RemapDependencyConfig config = new RemapDependencyConfig(this);
@@ -60,7 +59,7 @@ public class RemapDependency extends ZipProcessDependency {
 			for(MappingTarget mapping : this.config.getMappings()) {
 				mappings.add(mapping.read());
 			}
-			this.config.getRemapper().init(mappings);
+			this.config.getRemapper().acceptMappings(mappings, new BasicRemapper(mappings));
 			for(SingleRemapDependency dependency : dependencies) {
 				dependency.appendToProcess(process);
 			}

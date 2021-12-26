@@ -59,14 +59,6 @@ subprojects {
     apply(plugin = "signing")
     apply(plugin = "eclipse")
 
-    tasks.withType<GenerateModuleMetadata> {
-        println(this.name + " boil harder")
-        val meta = this
-        appendParallelSafeAction {
-            meta.outputFile.asFile.get()
-        }
-    }
-
     tasks.withType<AbstractArchiveTask> {
         from(rootProject.file("LICENSE"))
     }

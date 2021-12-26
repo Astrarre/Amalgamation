@@ -27,16 +27,13 @@ import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependen
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.NativesDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.MappingTarget;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
-import io.github.astrarre.amalgamation.gradle.utils.json.Json;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
-import org.gradle.api.provider.Provider;
 
 // todo support looms caches
 

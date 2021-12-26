@@ -67,7 +67,7 @@ public interface BaseAmalgamation {
 
     /**
      * A utility class for intellij, most useful for generating intellij run configs from gradle tasks.
-     * @throws IllegalStateException if idea-ext is not installed
+     * @throws IllegalStateException if idea is not installed
      */
     IdeaExtension idea() throws IllegalStateException;
 
