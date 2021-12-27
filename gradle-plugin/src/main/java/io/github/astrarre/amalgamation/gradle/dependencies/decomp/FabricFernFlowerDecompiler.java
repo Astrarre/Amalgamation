@@ -30,15 +30,19 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.devtech.zipio.impl.util.U;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.struct.StructContext;
 
 import net.fabricmc.fernflower.api.IFabricJavadocProvider;
 
@@ -49,7 +53,23 @@ public final class FabricFernFlowerDecompiler implements LoomDecompiler {
 	}
 
 	@Override
-	public void decompile(Path compiledJar, Path sourcesDestination, Path linemapDestination, DecompilationMetadata metaData) {
+	public void decompile(List<Entry> entries, DecompilationMetadata metaData) throws IOException {
+		Map<String, Path> fileNames = new HashMap<>();
+		List<Path> temporaryFile = new ArrayList<>();
+		List<Entry> list = new ArrayList<>(entries);
+		for(int i = 0; i < list.size(); i++) {
+			LoomDecompiler.Entry entry = list.get(i);
+			Path input = entry.input();
+			Path put = fileNames.putIfAbsent(input.getFileName().toString(), input);
+			if(put != null) {
+				System.out.println("[Warn] duplicate file name between " + input.toAbsolutePath() + " and " + put.toAbsolutePath());
+				System.out.println("[Warn] copying " + input.toAbsolutePath() + " to temporary file to circumvent fernflower api restriction");
+				Path temp = Files.createTempFile("amalg_fernflower_hack"+i, ".jar");
+				temporaryFile.add(temp);
+				Files.copy(input, temp);
+				list.set(i, new Entry(temp, entry.output(), entry.lineMapOutput()));
+			}
+		}
 
 		final Map<String, Object> options = new HashMap<>(
 				Map.of(
@@ -64,8 +84,6 @@ public final class FabricFernFlowerDecompiler implements LoomDecompiler {
 		);
 
 		options.putAll(metaData.options());
-
-		IResultSaver saver = new ThreadSafeResultSaver(sourcesDestination::toFile, linemapDestination::toFile);
 
 		var provider = new IBytecodeProvider() {
 			final Map<String, FileSystem> systems = new ConcurrentHashMap<>();
@@ -91,21 +109,38 @@ public final class FabricFernFlowerDecompiler implements LoomDecompiler {
 			}
 		};
 
+		IResultSaver saver = new AsyncResultSaver(list);
 		Fernflower ff = new Fernflower(provider, saver, options, new FernflowerLogger(metaData.logger()));
 
 		for (Path library : metaData.libraries()) {
 			ff.addLibrary(library.toFile());
 		}
 
-		ff.addSource(compiledJar.toFile());
+		for(Entry entry : list) {
+			ff.addSource(entry.input().toFile());
+		}
 		ff.decompileContext();
 
+		IOException last = null;
+		for(Path path : temporaryFile) {
+			try {
+				Files.delete(path);
+			} catch(IOException e) {
+				last = e;
+				e.printStackTrace();
+			}
+		}
 		for(FileSystem value : provider.systems.values()) {
 			try {
 				value.close();
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				last = e;
+				e.printStackTrace();
 			}
+		}
+
+		if(last != null) {
+			throw last;
 		}
 	}
 }

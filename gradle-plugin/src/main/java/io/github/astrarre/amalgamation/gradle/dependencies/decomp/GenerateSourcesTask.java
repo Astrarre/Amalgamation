@@ -31,13 +31,20 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
 import org.gradle.api.DefaultTask;
@@ -253,12 +260,15 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 					getParameters().getOptions().get()
 			);
 
+			long start = System.currentTimeMillis();
+			List<LoomDecompiler.Entry> list = List.of(new LoomDecompiler.Entry(inputJar, sourcesDestinationJar, linemap));
+
 			decompiler.decompile(
-					inputJar,
-					sourcesDestinationJar,
-					linemap,
+					list,
 					metadata
 			);
+			long end = System.currentTimeMillis();
+			System.out.println("Decompiled in " + (end - start) + "ms (" + (end - start) / 1000 + "s)");
 
 			// Close the decompile loggers
 			try {
@@ -270,7 +280,10 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 			if (Files.exists(linemap)) {
 				try {
 					// Line map the actually jar used to run the game, not the one used to decompile
+					start = System.currentTimeMillis();
 					remapLineNumbers(metadata.logger(), inputJar, linemap, linemapJar);
+					end = System.currentTimeMillis();
+					System.out.println("Remapped line numbers in " + (end - start) + "ms");
 					Files.delete(linemap);
 				} catch (IOException e) {
 					throw new UncheckedIOException("Failed to remap line numbers", e);
