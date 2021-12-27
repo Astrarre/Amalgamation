@@ -77,13 +77,20 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		if(this.realPath == null) {
 			try {
 				Path record = this.realPath = this.evaluatePath(this.getCurrentHash());
-				this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
 				Files.createDirectories(record.getParent());
 			} catch(IOException e) {
 				throw U.rethrow(e);
 			}
 		}
 		return this.realPath;
+	}
+
+	protected Path getCachePath() {
+		if(this.cachePath == null) {
+			Path record = this.getPath();
+			this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
+		}
+		return this.cachePath;
 	}
 
 	protected void initOldHash() throws IOException {
@@ -93,7 +100,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		this.initOldHash = true;
 
 		Path realPath = this.getPath();
-		Path path = this.cachePath;
+		Path path = this.getCachePath();
 
 		if(Files.exists(path)) {
 			try(InputStream stream = Files.newInputStream(path)) {
@@ -137,8 +144,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
-		this.getPath();
-		try(OutputStream stream = Files.newOutputStream(this.cachePath)) {
+		try(OutputStream stream = Files.newOutputStream(this.getCachePath())) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);
 		}

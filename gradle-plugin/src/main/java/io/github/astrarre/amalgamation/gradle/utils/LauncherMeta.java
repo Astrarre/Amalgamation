@@ -65,10 +65,8 @@ public class LauncherMeta {
 		Json.Obj vers = this.launcherMeta;
 		Path path = this.globalCache.resolve("version_manifest.json");
 		if (vers == null && Files.exists(path)) { // if we already have launchermeta downloaded, use that
-			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
-			cache.output = path;
 			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
-				Json.Obj versions = new Json.Obj(Files.readString(cache.resolve().iterator().next().toPath()), 0);
+				Json.Obj versions = new Json.Obj(Files.readString(path), 0);
 				this.launcherMeta = versions;
 				if (findVersion(lookingFor) != null) {
 					vers = versions;
@@ -149,9 +147,9 @@ public class LauncherMeta {
 		}
 
 		public Json.Obj read(String output, String url) {
-			// todo pull from .minecraft
 			URLDependency dependency = new URLDependency(LauncherMeta.this.project, url);
 			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project).resolve(this.version).resolve(output);
+			dependency.isUnique = true;
 			try (BufferedReader reader = dependency.getOutdatedReader()) {
 				String collect = reader.lines().collect(Collectors.joining("\n"));
 				return (Json.Obj) Json.parseValue(collect, 0);

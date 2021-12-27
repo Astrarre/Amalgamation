@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,7 @@ public class AssetsDependency extends CachedDependency {
 		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
 		this.assetsDirPath = assetsDirPath;
 		Path assetsDir = Paths.get(assetsDirPath);
-		if(Files.exists(assetsDir)) {
+		if(false) {
 			this.logger.lifecycle("Found .minecraft assets folder");
 		} else {
 			this.logger.lifecycle("No .minecraft assets folder, using global cache!");
@@ -99,22 +100,26 @@ public class AssetsDependency extends CachedDependency {
 			JsonObject assetsJson = LauncherMeta.GSON.fromJson(reader, JsonObject.class);
 			JsonObject objects = assetsJson.getAsJsonObject("objects");
 			List<Future<?>> futures = new ArrayList<>(objects.entrySet().size());
+			Set<String> visitedHashes = new HashSet<>();
 			for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
-				Future<?> future = AmalgIO.SERVICE.submit(() -> {
-					JsonObject assetJson = entry.getValue().getAsJsonObject();
-					String hash = assetJson.getAsJsonPrimitive("hash").getAsString();
-					String minHash = hash.substring(0, 2);
-					LauncherMeta.HashedURL url = new LauncherMeta.HashedURL(hash,
-							"https://resources.download.minecraft.net/" + minHash + "/" + hash,
-							entry.getKey());
-					// todo maybe not compress for PNG?
-					HashedURLDependency dependency = new HashedURLDependency(this.project, url);
-					dependency.output = resolvedPath.resolve(minHash).resolve(hash);
-					if(!Files.exists(dependency.output)) {
-						dependency.resolve();
-					}
-				});
-				futures.add(future);
+				JsonObject assetJson = entry.getValue().getAsJsonObject();
+				String hash = assetJson.getAsJsonPrimitive("hash").getAsString();
+				if(visitedHashes.add(hash)) {
+					Future<?> future = AmalgIO.SERVICE.submit(() -> {
+						String minHash = hash.substring(0, 2);
+						LauncherMeta.HashedURL url = new LauncherMeta.HashedURL(hash,
+								"https://resources.download.minecraft.net/" + minHash + "/" + hash,
+								entry.getKey());
+						// todo maybe not compress for PNG?
+						HashedURLDependency dependency = new HashedURLDependency(this.project, url);
+						dependency.silent = true;
+						dependency.output = resolvedPath.resolve(minHash).resolve(hash);
+						if(!Files.exists(dependency.output)) {
+							dependency.resolve();
+						}
+					});
+					futures.add(future);
+				}
 			}
 			for (Future<?> future : futures) {
 				future.get();

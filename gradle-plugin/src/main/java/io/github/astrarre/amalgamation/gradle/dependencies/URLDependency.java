@@ -46,6 +46,8 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	public String group, name, version;
 	public boolean shouldOutput = true;
 	public boolean isOptional = false;
+	public boolean silent = false;
+	public boolean isUnique = false;
 	public Path output;
 	String etag;
 	long lastModifyDate = -1;
@@ -70,11 +72,18 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	}
 
 	@Override
+	public Path getPath() {
+		return this.output != null ? this.output : super.getPath();
+	}
+
+	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
-		DownloadUtil.Result result = this.getResult();
 		hasher.putString(this.url, StandardCharsets.UTF_8);
-		if(result != null && result.etag != null) {
-			hasher.putString(result.etag, StandardCharsets.UTF_8);
+		if(!isUnique) {
+			DownloadUtil.Result result = this.getResult();
+			if(result != null && result.etag != null) {
+				hasher.putString(result.etag, StandardCharsets.UTF_8);
+			}
 		}
 	}
 
@@ -165,7 +174,6 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Path path = this.shouldOutput ? resolvedPath : null;
-		Path output;
 		if(isOutdated) {
 			var result = this.getResult();
 			if(result.error != null) {
@@ -216,7 +224,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 					new URL(this.url),
 					this.etag,
 					this.lastModifyDate,
-					this.logger,
+					this.silent ? null : this.logger,
 					BaseAmalgamationGradlePlugin.offlineMode,
 					this.compressed);
 			if(!this.isOptional && this.result != null && this.result.error != null) {

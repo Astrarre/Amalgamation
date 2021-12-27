@@ -45,7 +45,7 @@ public class AsyncResultSaver implements IResultSaver, AutoCloseable {
 			if(entry == null) {
 				throw new IOException("Unknown input " + path + "/" + archiveName);
 			}
-			OutputEntry output = this.fileSystemCache.computeIfAbsent(archiveName, p -> new OutputEntry(U.openZip(entry.output()), entry.lineMapOutput(), new StringBuilder()));
+			OutputEntry output = this.fileSystemCache.computeIfAbsent(archiveName, p -> new OutputEntry(U.createZip(entry.output()), entry.lineMapOutput(), new StringBuilder()));
 			if(manifest != null) {
 				FileSystem system = output.system;
 				Path manifestPath = system.getPath(JarFile.MANIFEST_NAME);
