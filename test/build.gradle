@@ -72,20 +72,24 @@ dependencies {
     }*/
 
     def mc
-    def fapi
-    def reiImpl
-    def reiApi
+    //def fapi
+    //def reiImpl
+    //def reiApi
     ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
         mc = inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
         })
-        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
-        reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
+        //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
+        //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
-    aaaaa reiImpl
-    aaaaa reiApi
+    aaaaa ag.fernflower(mc) {
+        optionalTask("decompileMinecraft")
+        setJavadocs('net.fabricmc:yarn:1.17.1+build.61:v2', 'named')
+    }
+    //aaaaa reiImpl
+    //aaaaa reiApi
 
 
     //aaaaa "com.google.code.gson:gson:1.1"*/
@@ -106,8 +110,8 @@ dependencies {
     //aaaaa ag.libraries(mc_vers)
 }
 
-task testDiff(type: JavaExec) {
-    group = "tests"
+task aaaaa(type: JavaExec) {
+    group = null
     description = "Test Diff:tm:"
     classpath sourceSets.main.runtimeClasspath
     main = "net.fabricmc.loader.launch.knot.KnotClient"
@@ -122,7 +126,7 @@ task testDiff(type: JavaExec) {
     dependsOn tasks.classes
 }
 
-ag.idea().java(testDiff) {
+ag.idea().java(aaaaa) {
     it.overrideClasspath(project, sourceSets.main)
     it.excludeDependency(tasks.classes)
 }

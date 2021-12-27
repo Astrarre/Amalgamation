@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.hash.HashFunction;
@@ -151,10 +150,22 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	protected Set<Artifact> resolveArtifacts() throws IOException {
 		boolean isOutdated = this.isOutdated();
 		Path path = this.getPath();
-		var paths = this.resolve0(path, isOutdated);
+		Set<Artifact> paths;
+		try {
+			paths = this.resolve0(path, isOutdated);
+		} catch(Uncached u) {
+			paths = u.paths;
+			isOutdated = false;
+		}
 		if(isOutdated) {
 			this.writeHash();
 		}
 		return paths;
+	}
+
+	protected static final class Uncached extends RuntimeException {
+		final Set<Artifact> paths;
+
+		public Uncached(Set<Artifact> paths) {this.paths = paths;}
 	}
 }

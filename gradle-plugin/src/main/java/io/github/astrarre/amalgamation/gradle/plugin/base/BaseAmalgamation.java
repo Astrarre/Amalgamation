@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.FabricFernFlowerDecompiler;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
@@ -61,7 +64,7 @@ public interface BaseAmalgamation {
     //Dependency deJiJ(String name, Action<DeJiJDependency> configuration);
 
     /**
-     * Adds a url as a direct dependency
+     * creates a url as a direct dependency
      */
     Dependency url(String url);
 
@@ -75,4 +78,10 @@ public interface BaseAmalgamation {
      * same idea as {@link #idea()} but u need the "eclipse" plugin
      */
     EclipseExtension eclipse() throws IllegalStateException;
+
+    default Object fernflower(Object dependency, Action<DecompileDependency> configure) {
+        return this.decompile(dependency, new FabricFernFlowerDecompiler(), configure);
+    }
+
+    Object decompile(Object dependency, LoomDecompiler decompiler, Action<DecompileDependency> configure);
 }

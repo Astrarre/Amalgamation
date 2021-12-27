@@ -7,6 +7,8 @@ import java.util.function.Supplier;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
@@ -16,6 +18,7 @@ import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.MvnMetaReader;
 import io.github.astrarre.amalgamation.gradle.plugin.base.mvn.NotationFixer;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -103,6 +106,13 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	@Override
 	public EclipseExtension eclipse() throws IllegalStateException {
 		return this.getExtension("eclipse", "eclipse", "", () -> ConfigureEclipse.extension);
+	}
+
+	@Override
+	public Object decompile(Object dependency, LoomDecompiler decompiler, Action<DecompileDependency> configure) {
+		DecompileDependency dependency1 = new DecompileDependency(this.project, dependency, decompiler);
+		configure.execute(dependency1);
+		return dependency1;
 	}
 
 	private Provider<FileCollection> sources0(Dependency dependency) {

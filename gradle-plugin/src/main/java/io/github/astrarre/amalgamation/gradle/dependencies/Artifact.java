@@ -39,6 +39,10 @@ public abstract class Artifact extends OutputTag {
 		public boolean containsSources() {
 			return this == MIXED || this == SOURCES;
 		}
+
+		public boolean containsClasses() {
+			return this == MIXED || this == CLASSES;
+		}
 	}
 
 	public Artifact(Project project, String group, String name, String version, Path file, byte[] hash, Type sources) {
@@ -69,7 +73,16 @@ public abstract class Artifact extends OutputTag {
 
 	public abstract Artifact derive(Path newPath, @Nullable byte[] hash);
 
-	public abstract Artifact deriveMaven(Path directory, byte[] hash);
+	public Artifact deriveMaven(Path directory, byte[] hash) {
+		return this.deriveMaven(directory, hash, this.type);
+	}
+
+	public Artifact deriveMaven(Path directory, byte[] hash, Type type) {
+		if(this.type == Type.RESOURCES) {
+			return this;
+		}
+		return new Maven(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, type, hash), hash, type);
+	}
 
 	public Artifact deriveMavenMixHash(Path directory, byte[] hash) {
 		Hasher hasher = AmalgIO.SHA256.newHasher();
@@ -102,14 +115,6 @@ public abstract class Artifact extends OutputTag {
 				return this;
 			}
 			return new File(this, newPath, hash);
-		}
-
-		@Override
-		public Artifact deriveMaven(Path directory, byte[] hash) {
-			if(this.type == Type.RESOURCES) {
-				return this;
-			}
-			return new Maven(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, this.type, hash), hash, this.type);
 		}
 	}
 
@@ -168,14 +173,6 @@ public abstract class Artifact extends OutputTag {
 			}
 			return new Maven(this, newPath, hash);
 		}
-
-		@Override
-		public Artifact deriveMaven(Path directory, byte[] hash) {
-			if(this.type == Type.RESOURCES) {
-				return this;
-			}
-			return new Maven(this.project, this.group, this.name, this.version, resolve(directory, this.name, this.version, this.type, hash), hash, this.type);
-		}
 	}
 
 	static Path resolve(Path directory, String name, String version, Type type, byte[] hash) {
@@ -219,5 +216,10 @@ public abstract class Artifact extends OutputTag {
 		result = 31 * result + Arrays.hashCode(this.hash);
 		result = 31 * result + (this.type != null ? this.type.hashCode() : 0);
 		return result;
+	}
+
+	@Override
+	public String toString() {
+		return group + ":" + name + ":" + version + " " + this.path;
 	}
 }

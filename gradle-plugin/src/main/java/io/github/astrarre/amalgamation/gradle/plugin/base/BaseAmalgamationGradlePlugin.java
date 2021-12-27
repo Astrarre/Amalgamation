@@ -48,6 +48,7 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			for(AmalgDirs value : AmalgDirs.values()) {
 				paths.add(value.aws(target));
 				paths.add(value.remaps(target));
+				paths.add(value.decomps(target));
 			}
 			f.setDirs(paths.stream().map(Path::toAbsolutePath).map(Path::toFile).collect(Collectors.toSet()));
 		});

@@ -32,4 +32,8 @@ public enum AmalgDirs {
 	public Path remaps(Project project) {
 		return this.root(project).resolve("remaps");
 	}
+
+	public Path decomps(Project project) {
+		return this.root(project).resolve("decompiles");
+	}
 }
