@@ -34,18 +34,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
 import net.devtech.zipio.impl.util.U;
@@ -115,7 +109,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		}
 	}
 
-	public final LoomDecompiler.Type<?> decompiler;
+	public final AmalgDecompiler.Type<?> decompiler;
 
 	@Nested
 	public abstract ListProperty<DecompileEntry> getTasks();
@@ -145,7 +139,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 	public abstract WorkerDaemonClientsManager getWorkerDaemonClientsManager();
 
 	@Inject
-	public GenerateSourcesTask(LoomDecompiler.Type<?> decompiler) {
+	public GenerateSourcesTask(AmalgDecompiler.Type<?> decompiler) {
 		this.decompiler = decompiler;
 
 		getOutputs().upToDateWhen((o) -> false);
@@ -280,7 +274,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		}
 
 		private void doDecompile(IOStringConsumer logger) throws IOException {
-			final LoomDecompiler decompiler;
+			final AmalgDecompiler decompiler;
 
 			try {
 				decompiler = getDecompilerConstructor(getParameters().getDecompilerClass().get()).newInstance();
@@ -302,10 +296,10 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 			);
 
 			long start = System.currentTimeMillis();
-			List<LoomDecompiler.Entry> list = new ArrayList<>();
+			List<AmalgDecompiler.Entry> list = new ArrayList<>();
 			List<Path> linemapOutputs = new ArrayList<>();
 			for(DecompileInput entry : getParameters().getTasks().get()) {
-				list.add(new LoomDecompiler.Entry(
+				list.add(new AmalgDecompiler.Entry(
 						entry.input.toPath(),
 						entry.output.toPath(),
 						entry.temporary.toPath()
@@ -328,7 +322,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 			}
 
 			for(int i = 0; i < list.size(); i++) {
-				LoomDecompiler.Entry entry = list.get(i);
+				AmalgDecompiler.Entry entry = list.get(i);
 				if(Files.exists(entry.lineMapOutput())) {
 					try {
 						// Line map the actually jar used to run the game, not the one used to decompile
@@ -361,10 +355,10 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		}
 	}
 
-	private static Constructor<LoomDecompiler> getDecompilerConstructor(String clazz) {
+	private static Constructor<AmalgDecompiler> getDecompilerConstructor(String clazz) {
 		try {
 			//noinspection unchecked
-			return (Constructor<LoomDecompiler>) Class.forName(clazz).getConstructor();
+			return (Constructor<AmalgDecompiler>) Class.forName(clazz).getConstructor();
 		} catch (NoSuchMethodException | ClassNotFoundException e) {
 			return null;
 		}

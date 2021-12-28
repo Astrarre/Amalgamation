@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompilationMetadata;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.AmalgDecompiler;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.fabric.FabricFlowerJavadoc;
 import net.devtech.zipio.impl.util.U;
 import org.jetbrains.java.decompiler.main.Fernflower;
@@ -45,7 +45,7 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
-public final class FernFlowerDecompiler implements LoomDecompiler {
+public final class FernFlowerDecompiler implements AmalgDecompiler {
 
 	@Override
 	public void decompile(List<Entry> entries, DecompilationMetadata metaData) throws IOException {
@@ -53,7 +53,7 @@ public final class FernFlowerDecompiler implements LoomDecompiler {
 		List<Path> temporaryFile = new ArrayList<>();
 		List<Entry> list = new ArrayList<>(entries);
 		for(int i = 0; i < list.size(); i++) {
-			LoomDecompiler.Entry entry = list.get(i);
+			AmalgDecompiler.Entry entry = list.get(i);
 			Path input = entry.input();
 			Path put = fileNames.putIfAbsent(input.getFileName().toString(), input);
 			if(put != null) {

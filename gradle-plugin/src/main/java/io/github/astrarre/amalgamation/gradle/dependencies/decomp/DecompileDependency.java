@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,9 +20,7 @@ import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import io.github.astrarre.amalgamation.gradle.utils.Lazy;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
@@ -37,7 +34,7 @@ public class DecompileDependency extends CachedDependency {
 	private final List<Object> classpath = new ArrayList<>();
 	private final List<GenerateSourcesTask.JavadocEntry> javadocs = new ArrayList<>();
 	private final List<Object> decompilerClasspath = new ArrayList<>();
-	private LoomDecompiler.Type<?> decompiler;
+	private AmalgDecompiler.Type<?> decompiler;
 	private byte[] inputHash;
 	private AmalgDirs amalgDirs = AmalgDirs.GLOBAL;
 	private String optionalTask;
@@ -50,7 +47,7 @@ public class DecompileDependency extends CachedDependency {
 		if(this.decompiler != null) {
 			throw new IllegalStateException("Cannot set multiple decompilers!");
 		}
-		this.decompiler = LoomDecompiler.FERNFLOWER;
+		this.decompiler = AmalgDecompiler.FERNFLOWER;
 		this.decompilerClasspath.add(dependency);
 	}
 
@@ -58,7 +55,7 @@ public class DecompileDependency extends CachedDependency {
 		if(this.decompiler != null) {
 			throw new IllegalStateException("Cannot set multiple decompilers!");
 		}
-		this.decompiler = LoomDecompiler.FERNFLOWER;
+		this.decompiler = AmalgDecompiler.FERNFLOWER;
 		this.decompilerClasspath.add(this.of(dependency, dep));
 	}
 

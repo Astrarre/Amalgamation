@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.AmalgDecompiler;
 import net.devtech.zipio.impl.util.U;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 // todo allow for vanilla fernflower
 public class AsyncResultSaver implements IResultSaver, AutoCloseable {
-	final Map<String, LoomDecompiler.Entry> entries = new HashMap<>();
+	final Map<String, AmalgDecompiler.Entry> entries = new HashMap<>();
 
 	record OutputEntry(FileSystem system, Path linemapPath, StringBuilder lineMap) {}
 
@@ -33,8 +33,8 @@ public class AsyncResultSaver implements IResultSaver, AutoCloseable {
 	final Map<String, OutputEntry> fileSystemCache = new HashMap<>();
 	final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
 
-	public AsyncResultSaver(List<LoomDecompiler.Entry> entries) {
-		for(LoomDecompiler.Entry entry : entries) {
+	public AsyncResultSaver(List<AmalgDecompiler.Entry> entries) {
+		for(AmalgDecompiler.Entry entry : entries) {
 			this.entries.put(entry.input().getFileName().toString(), entry);
 		}
 	}
@@ -42,7 +42,7 @@ public class AsyncResultSaver implements IResultSaver, AutoCloseable {
 	@Override
 	public void createArchive(String path, String archiveName, Manifest manifest) {
 		try {
-			LoomDecompiler.Entry entry = this.entries.get(archiveName);
+			AmalgDecompiler.Entry entry = this.entries.get(archiveName);
 			if(entry == null) {
 				throw new IOException("Unknown input " + path + "/" + archiveName);
 			}

@@ -31,10 +31,10 @@ import java.util.List;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
 import net.devtech.zipio.impl.util.U;
 
-public interface LoomDecompiler {
+public interface AmalgDecompiler {
 	Type<FernFlowerDecompiler> FERNFLOWER = new Type<>("fernflower", FernFlowerDecompiler.class);
 
-	public static class Type<T extends LoomDecompiler> {
+	public static class Type<T extends AmalgDecompiler> {
 		public final String name;
 		public final Class<T> type;
 

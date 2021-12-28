@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;

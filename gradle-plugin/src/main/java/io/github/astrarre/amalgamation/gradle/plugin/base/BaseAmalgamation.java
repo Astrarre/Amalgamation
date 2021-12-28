@@ -25,8 +25,6 @@ import java.util.function.Supplier;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
