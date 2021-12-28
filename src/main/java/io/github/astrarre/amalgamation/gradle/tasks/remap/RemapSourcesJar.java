@@ -26,7 +26,6 @@ public abstract class RemapSourcesJar extends RemapJar {
 		Path temp = this.getProject().getBuildDir().toPath().resolve("amalg-remap-sources-temp");
 		try {
 			this.clearDirectory(temp);
-
 			try(FileSystem system = U.openZip(current)) {
 				for(Path directory : system.getRootDirectories()) {
 					for(Path path : UnsafeIterable.walkFiles(directory)) {

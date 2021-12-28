@@ -16,88 +16,128 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import java.net.URI
 
 plugins {
     base
+    `java-gradle-plugin`
+    `maven-publish`
+    `signing`
 }
 
-allprojects {
-    group = "io.github.astrarre.amalgamation"
-    version = "3.0.0"
+group = "io.github.astrarre.amalgamation"
+version = "3.0.0"
 
-    repositories {
-        mavenCentral()
-        mavenLocal()
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
+extensions.getByType<JavaPluginExtension>().apply {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
+
+java {
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url = uri("https://plugins.gradle.org/m2/")
+    }
+    maven {
+        name = "FabricMC"
+        url = uri("https://maven.fabricmc.net/")
+    }
+    maven {
+        name = "HalfOf2"
+        url = uri("https://storage.googleapis.com/devan-maven/")
+    }
+    maven {
+        name = "MinecraftForge"
+        url = uri("https://files.minecraftforge.net/maven")
+    }
+    maven {
+        url = uri("https://maven.hydos.cf/releases")
+    }
+    /*maven {
+        url = uri("https://jitpack.io")
+    }*/
+}
+
+dependencies {
+    compileOnly("org.jetbrains", "annotations", "20.1.0")
+    implementation(gradleApi())
+
+    implementation("com.google.guava", "guava", "30.1-jre")
+    implementation("com.google.code.gson", "gson", "2.8.6")
+    implementation("org.ow2.asm", "asm-tree", "9.1")
+    implementation("net.fabricmc:mercury:0.2.4")
+    implementation("io.github.astrarre", "tiny-remapper", "1.0.3")
+    implementation("it.unimi.dsi:fastutil:8.5.6")
+    implementation("org.ow2.asm:asm-commons:9.1")
+    implementation("net.fabricmc:mapping-io:0.2.1")
+    implementation("net.fabricmc:access-widener-javaparser:3.0.0") {
+        exclude("javaparser-symbol-solver-core")
+    }
+    implementation("io.github.coolmineman:trieharder:0.1.2")
+    implementation("net.devtech:zip-io:3.2.1")
+    implementation("com.google.jimfs:jimfs:1.2")
+    //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
+    //implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
+    compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
+}
+
+gradlePlugin {
+    plugins {
+        create("base") {
+            id = "amalgamation-base"
+            implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin"
         }
-        maven {
-            name = "FabricMC"
-            url = uri("https://maven.fabricmc.net/")
+
+        create("minecraft") {
+            id = "amalgamation-minecraft"
+            implementationClass = "io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin"
         }
-        maven {
-            name = "HalfOf2"
-            url = uri("https://storage.googleapis.com/devan-maven/")
-        }
-        maven {
-            name = "MinecraftForge"
-            url = uri("https://files.minecraftforge.net/maven")
-        }
-        maven {
-            url = uri("https://maven.hydos.cf/releases")
-        }
-        /*maven {
-            url = uri("https://jitpack.io")
-        }*/
     }
 }
 
-// Projects to configure standard publishing
-subprojects {
-    apply(plugin = "java")
-    apply(plugin = "maven-publish")
-    apply(plugin = "signing")
-    apply(plugin = "eclipse")
+tasks.withType<AbstractArchiveTask> {
+    from(rootProject.file("LICENSE"))
+}
 
-    tasks.withType<AbstractArchiveTask> {
-        from(rootProject.file("LICENSE"))
+tasks.withType<Javadoc> {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
     }
+}
 
-    tasks.withType<Javadoc> {
-        if (JavaVersion.current().isJava9Compatible) {
-            (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-        }
-    }
-
-    extensions.getByType<PublishingExtension>().apply {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                from(components["java"])
-                extensions.getByType<SigningExtension>().apply {
-                    if (signatory != null) {
-                        sign(this@create)
-                    }
+extensions.getByType<PublishingExtension>().apply {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            extensions.getByType<SigningExtension>().apply {
+                if (signatory != null) {
+                    sign(this@create)
                 }
             }
         }
+    }
 
-        repositories {
-            /*maven {
-                val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
-                val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
-                name = "Project"
-                url = if (version.toString()
-                        .endsWith("SNAPSHOT")
-                ) snapshotsRepoUrl else releasesRepoUrl
-            }*/
-            maven {
-                val mavenUrl = if(project.hasProperty("maven_url")) project.property("maven_url") else ""
-                url = java.net.URI(mavenUrl as String)
-                if (mavenUrl.startsWith("http")) {
-                    credentials {
-                        username = if(project.hasProperty ("maven_username")) project.property("maven_username") as String else ""
-                        password = if(project.hasProperty ("maven_password")) project.property("maven_password") as String else ""
-                    }
+    repositories {
+        /*maven {
+            val releasesRepoUrl = uri("${rootProject.buildDir}/repos/releases")
+            val snapshotsRepoUrl = uri("${rootProject.buildDir}/repos/snapshots")
+            name = "Project"
+            url = if (version.toString()
+                    .endsWith("SNAPSHOT")
+            ) snapshotsRepoUrl else releasesRepoUrl
+        }*/
+        maven {
+            val mavenUrl = if(project.hasProperty("maven_url")) project.property("maven_url") else ""
+            url = URI(mavenUrl as String)
+            if (mavenUrl.startsWith("http")) {
+                credentials {
+                    username = if(project.hasProperty ("maven_username")) project.property("maven_username") as String else ""
+                    password = if(project.hasProperty ("maven_password")) project.property("maven_password") as String else ""
                 }
             }
         }

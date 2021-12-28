@@ -18,6 +18,3 @@
  */
 
 rootProject.name = "amalgamation"
-
-include("api")
-include("gradle-plugin")
