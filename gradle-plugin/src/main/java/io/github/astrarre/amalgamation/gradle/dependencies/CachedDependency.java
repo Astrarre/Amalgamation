@@ -32,11 +32,19 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		super(project);
 	}
 
-	public void hashDep(Hasher hasher, Object notation) throws IOException {
+	public void hashDep(Hasher hasher, Object notation) {
 		if(notation instanceof CachedDependency c) {
-			c.hashInputs(hasher);
+			try {
+				c.hashInputs(hasher);
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
 		} else if(notation instanceof Dependency d) {
 			AmalgIO.hashDep(hasher, this.project, d);
+		} else if(notation instanceof AmalgamationDependency a) {
+			for(Artifact artifact : a.getArtifacts()) {
+				hasher.putBytes(artifact.hash);
+			}
 		} else {
 			var resolved = this.project.getDependencies().create(notation);
 			AmalgIO.hashDep(hasher, this.project, resolved);

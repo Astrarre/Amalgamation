@@ -1,4 +1,4 @@
-package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
+package io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import net.devtech.zipio.impl.util.U;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;

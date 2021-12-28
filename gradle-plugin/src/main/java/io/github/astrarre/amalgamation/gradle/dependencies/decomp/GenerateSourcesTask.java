@@ -26,6 +26,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -47,14 +48,17 @@ import javax.inject.Inject;
 import io.github.astrarre.amalgamation.gradle.utils.Clock;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
+import net.devtech.zipio.impl.util.U;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.workers.WorkAction;
@@ -67,25 +71,63 @@ import org.jetbrains.annotations.Nullable;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
 
 public abstract class GenerateSourcesTask extends DefaultTask {
-	public final LoomDecompiler decompiler;
+	public static final class DecompileEntry {
+		public File inputFile;
+		public File linemappedFile;
+		public File outputFile;
 
-	@InputFile
-	public abstract RegularFileProperty getInputJar();
+		@OutputFile
+		public File getLineMapped() {
+			return this.linemappedFile;
+		}
+
+		@InputFile
+		public File getFrom() {
+			return this.inputFile;
+		}
+
+		@OutputFile
+		public File getTo() {
+			return this.outputFile;
+		}
+	}
+
+	public static final class JavadocEntry implements Serializable {
+		public String to;
+		public File mappings;
+
+		public JavadocEntry() {
+		}
+
+		public JavadocEntry(File mappings, String to) {
+			this.to = to;
+			this.mappings = mappings;
+		}
+
+		@Input
+		public String getTo() {
+			return this.to;
+		}
+
+		@InputFile
+		public File getMappings() {
+			return this.mappings;
+		}
+	}
+
+	public final LoomDecompiler.Type<?> decompiler;
+
+	@Nested
+	public abstract ListProperty<DecompileEntry> getTasks();
 
 	@InputFiles
 	public abstract ConfigurableFileCollection getClasspath();
 
-	@OutputFile
-	public abstract RegularFileProperty getOutputDestination();
+	@InputFiles
+	public abstract ConfigurableFileCollection getDecompilerClasspath();
 
-	@OutputFile
-	public abstract RegularFileProperty getLineMappedDestination();
-
-	@InputFile
-	public abstract RegularFileProperty getMappingsFile();
-
-	@Input
-	public abstract Property<String> getJavadocNamespace();
+	@Nested
+	public abstract ListProperty<JavadocEntry> getJavadocs();
 
 	/**
 	 * Max memory for forked JVM in megabytes.
@@ -103,11 +145,8 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 	public abstract WorkerDaemonClientsManager getWorkerDaemonClientsManager();
 
 	@Inject
-	public GenerateSourcesTask(LoomDecompiler decompiler) {
+	public GenerateSourcesTask(LoomDecompiler.Type<?> decompiler) {
 		this.decompiler = decompiler;
-
-		Objects.requireNonNull(getDecompilerConstructor(this.decompiler.getClass().getCanonicalName()),
-				"%s must have a no args constructor".formatted(this.decompiler.getClass().getCanonicalName()));
 
 		getOutputs().upToDateWhen((o) -> false);
 		getMaxMemory().convention(4096L).finalizeValueOnRead();
@@ -116,7 +155,6 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 
 	@TaskAction
 	public void run() throws IOException {
-
 		if (!OS.isUnixDomainSocketsSupported()) {
 			getProject().getLogger().warn("Decompile worker logging disabled as Unix Domain Sockets is not supported on your operating system.");
 
@@ -128,7 +166,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		final Path ipcPath = Files.createTempFile("loom", "ipc");
 		Files.deleteIfExists(ipcPath);
 
-		try (ThreadedProgressLoggerConsumer loggerConsumer = new ThreadedProgressLoggerConsumer(getProject(), decompiler.name(), "Decompiling minecraft sources");
+		try (ThreadedProgressLoggerConsumer loggerConsumer = new ThreadedProgressLoggerConsumer(getProject(), decompiler.name, "Decompiling minecraft sources");
 				IPCServer logReceiver = new IPCServer(ipcPath, loggerConsumer)) {
 			doWork(ipcPath);
 		} catch (InterruptedException e) {
@@ -143,20 +181,11 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		final WorkQueue workQueue = createWorkQueue(jvmMarkerValue);
 
 		workQueue.submit(DecompileAction.class, params -> {
-			params.getDecompilerClass().set(decompiler.getClass().getCanonicalName());
+			params.getDecompilerClass().set(decompiler.type.getCanonicalName());
 
 			params.getOptions().set(getOptions());
-
-			params.getInputJar().set(getInputJar());
-			params.getSourcesDestinationJar().set(getOutputDestination());
-			try {
-				params.getLinemap().set(File.createTempFile("amalg_linemap", ".lmap"));
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
-			params.getLinemapJar().set(getLineMappedDestination());
-			params.getMappings().set(getMappingsFile());
-			params.getJavadocNamespace().set(getJavadocNamespace());
+			params.getTasks().set(getTasks().get().stream().map(DecompileInput::new).toList());
+			params.getJavadocs().set(getJavadocs());
 
 			if (ipcPath != null) {
 				params.getIPCPath().set(ipcPath.toFile());
@@ -170,7 +199,6 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		} finally {
 			if (useProcessIsolation()) {
 				boolean stopped = WorkerDaemonClientsManagerHelper.stopIdleJVM(getWorkerDaemonClientsManager(), jvmMarkerValue);
-
 				if (!stopped) {
 					throw new RuntimeException("Failed to stop decompile worker JVM");
 				}
@@ -180,10 +208,13 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 
 	private WorkQueue createWorkQueue(String jvmMarkerValue) {
 		if (!useProcessIsolation()) {
-			return getWorkerExecutor().noIsolation();
+			return getWorkerExecutor().classLoaderIsolation(spec -> {
+				spec.getClasspath().from(this.getDecompilerClasspath());
+			});
 		}
 
 		return getWorkerExecutor().processIsolation(spec -> {
+			spec.getClasspath().from(this.getDecompilerClasspath());
 			spec.forkOptions(forkOptions -> {
 				forkOptions.setMaxHeapSize("%dm".formatted(getMaxMemory().get()));
 				forkOptions.systemProperty(WorkerDaemonClientsManagerHelper.MARKER_PROP, jvmMarkerValue);
@@ -196,18 +227,30 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		return !Boolean.getBoolean("fabric.loom.genSources.debug");
 	}
 
+	record DecompileInput(File input, File output, File lineNumbered, File temporary) implements Serializable {
+		public DecompileInput(DecompileEntry entry) {
+			this(entry.inputFile, entry.outputFile, entry.linemappedFile, temp());
+		}
+
+		static File temp() {
+			try {
+				return File.createTempFile("aglp", ".lmap");
+			} catch(IOException e) {
+				throw U.rethrow(e);
+			}
+		}
+	}
+
 	public interface DecompileParams extends WorkParameters {
 		Property<String> getDecompilerClass();
 
 		MapProperty<String, String> getOptions();
 
-		RegularFileProperty getInputJar();
-		RegularFileProperty getSourcesDestinationJar();
-		RegularFileProperty getLinemap();
-		RegularFileProperty getLinemapJar();
-		RegularFileProperty getMappings();
+		@Nested
+		ListProperty<DecompileInput> getTasks();
 
-		Property<String> getJavadocNamespace();
+		@Nested
+		ListProperty<JavadocEntry> getJavadocs();
 
 		RegularFileProperty getIPCPath();
 
@@ -237,11 +280,6 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		}
 
 		private void doDecompile(IOStringConsumer logger) throws IOException {
-			final Path inputJar = getParameters().getInputJar().get().getAsFile().toPath();
-			final Path sourcesDestinationJar = getParameters().getSourcesDestinationJar().get().getAsFile().toPath();
-			final Path linemap = getParameters().getLinemap().get().getAsFile().toPath();
-			final Path linemapJar = getParameters().getLinemapJar().get().getAsFile().toPath();
-
 			final LoomDecompiler decompiler;
 
 			try {
@@ -250,18 +288,30 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 				throw new RuntimeException("Failed to create decompiler", e);
 			}
 
-
-			MemoryMappingTree read = Mappings.read(getParameters().getMappings().get().getAsFile().toPath());
+			List<Mappings.Namespaced> mappings = new ArrayList<>();
+			for(JavadocEntry entry : getParameters().getJavadocs().get()) {
+				MemoryMappingTree read = Mappings.read(entry.mappings.toPath());
+				mappings.add(new Mappings.Namespaced(read, read.getSrcNamespace(), entry.to));
+			}
 			DecompilationMetadata metadata = new DecompilationMetadata(
 					Runtime.getRuntime().availableProcessors(),
-					new Mappings.Namespaced(read, read.getSrcNamespace(), getParameters().getJavadocNamespace().get()),
+					mappings,
 					getLibraries(),
 					logger,
 					getParameters().getOptions().get()
 			);
 
 			long start = System.currentTimeMillis();
-			List<LoomDecompiler.Entry> list = List.of(new LoomDecompiler.Entry(inputJar, sourcesDestinationJar, linemap));
+			List<LoomDecompiler.Entry> list = new ArrayList<>();
+			List<Path> linemapOutputs = new ArrayList<>();
+			for(DecompileInput entry : getParameters().getTasks().get()) {
+				list.add(new LoomDecompiler.Entry(
+						entry.input.toPath(),
+						entry.output.toPath(),
+						entry.temporary.toPath()
+				));
+				linemapOutputs.add(entry.lineNumbered.toPath());
+			}
 
 			decompiler.decompile(
 					list,
@@ -277,16 +327,22 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 				throw new UncheckedIOException("Failed to close loggers", e);
 			}
 
-			if (Files.exists(linemap)) {
-				try {
-					// Line map the actually jar used to run the game, not the one used to decompile
-					start = System.currentTimeMillis();
-					remapLineNumbers(metadata.logger(), inputJar, linemap, linemapJar);
-					end = System.currentTimeMillis();
-					System.out.println("Remapped line numbers in " + (end - start) + "ms");
-					Files.delete(linemap);
-				} catch (IOException e) {
-					throw new UncheckedIOException("Failed to remap line numbers", e);
+			for(int i = 0; i < list.size(); i++) {
+				LoomDecompiler.Entry entry = list.get(i);
+				if(Files.exists(entry.lineMapOutput())) {
+					try {
+						// Line map the actually jar used to run the game, not the one used to decompile
+						start = System.currentTimeMillis();
+						Path linemapped = linemapOutputs.get(i);
+						this.remapLineNumbers(metadata.logger(), entry.input(), entry.lineMapOutput(), linemapped);
+						end = System.currentTimeMillis();
+						System.out.println("Remapped line numbers in " + (end - start) + "ms");
+						Files.delete(entry.lineMapOutput());
+					} catch(IOException e) {
+						throw new UncheckedIOException("Failed to remap line numbers", e);
+					}
+				} else {
+					Files.copy(entry.input(), linemapOutputs.get(i));
 				}
 			}
 		}
@@ -294,9 +350,8 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 		private void remapLineNumbers(IOStringConsumer logger, Path oldCompiledJar, Path linemap, Path linemappedJarDestination) throws IOException {
 			LineNumberRemapper remapper = new LineNumberRemapper();
 			remapper.readMappings(linemap.toFile());
-
-			try (FileSystemUtil.Delegate inFs = FileSystemUtil.getJarFileSystem(oldCompiledJar.toFile(), true);
-					FileSystemUtil.Delegate outFs = FileSystemUtil.getJarFileSystem(linemappedJarDestination.toFile(), true)) {
+			try (FileSystemUtil.Delegate inFs = FileSystemUtil.getJarFileSystem(oldCompiledJar, true);
+					FileSystemUtil.Delegate outFs = FileSystemUtil.getJarFileSystem(linemappedJarDestination, true)) {
 				remapper.process(logger, inFs.get().getPath("/"), outFs.get().getPath("/"));
 			}
 		}

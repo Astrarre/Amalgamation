@@ -26,9 +26,10 @@ package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 
-public record DecompilationMetadata(int numberOfThreads, Mappings.Namespaced javaDocs, Collection<Path> libraries, IOStringConsumer logger, Map<String, String> options) {
+public record DecompilationMetadata(int numberOfThreads, List<Mappings.Namespaced> javaDocs, Collection<Path> libraries, IOStringConsumer logger, Map<String, String> options) {
 }

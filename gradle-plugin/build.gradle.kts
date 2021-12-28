@@ -54,7 +54,7 @@ dependencies {
     implementation("com.google.jimfs:jimfs:1.2")
     //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
     //implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
-    implementation("net.fabricmc:fabric-fernflower:1.4.1")
+    compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
 }
 
 gradlePlugin {

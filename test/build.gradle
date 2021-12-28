@@ -84,10 +84,15 @@ dependencies {
         //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
-    aaaaa ag.fernflower(mc) {
+    def libs = ag.libraries(mc_vers)
+    aaaaa ag.decompile {
+        fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
-        setJavadocs('net.fabricmc:yarn:1.17.1+build.61:v2', 'named')
+        inputLocal(mc)
+        classpath libs
+        javadocs('net.fabricmc:yarn:1.17.1+build.61:v2', 'named')
     }
+    aaaaa libs
     //aaaaa reiImpl
     //aaaaa reiApi
 

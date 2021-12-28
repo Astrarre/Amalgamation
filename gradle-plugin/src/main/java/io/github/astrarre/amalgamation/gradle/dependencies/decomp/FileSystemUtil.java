@@ -62,7 +62,18 @@ public final class FileSystemUtil {
 	}
 
 	public static Delegate getJarFileSystem(Path path, boolean create) throws IOException {
-		return getJarFileSystem(path.toUri(), create);
+		try {
+			return new Delegate(FileSystems.newFileSystem(path, create ? jfsArgsCreate : jfsArgsEmpty), true);
+		} catch (FileSystemAlreadyExistsException e) {
+			URI jarUri;
+			URI uri = path.toUri();
+			try {
+				jarUri = new URI("jar:" + uri.getScheme(), uri.getHost(), uri.getPath(), uri.getFragment());
+			} catch (URISyntaxException e_) {
+				throw new IOException(e);
+			}
+			return new Delegate(FileSystems.getFileSystem(jarUri), false);
+		}
 	}
 
 	public static Delegate getJarFileSystem(URI uri, boolean create) throws IOException {

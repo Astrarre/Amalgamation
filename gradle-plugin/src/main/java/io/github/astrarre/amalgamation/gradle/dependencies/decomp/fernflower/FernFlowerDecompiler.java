@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
+package io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -36,21 +36,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompilationMetadata;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.fabric.FabricFlowerJavadoc;
 import net.devtech.zipio.impl.util.U;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.struct.StructContext;
 
-import net.fabricmc.fernflower.api.IFabricJavadocProvider;
-
-public final class FabricFernFlowerDecompiler implements LoomDecompiler {
-	@Override
-	public String name() {
-		return "FernFlower";
-	}
+public final class FernFlowerDecompiler implements LoomDecompiler {
 
 	@Override
 	public void decompile(List<Entry> entries, DecompilationMetadata metaData) throws IOException {
@@ -78,10 +73,15 @@ public final class FabricFernFlowerDecompiler implements LoomDecompiler {
 					IFernflowerPreferences.REMOVE_SYNTHETIC, "1",
 					IFernflowerPreferences.LOG_LEVEL, "trace",
 					IFernflowerPreferences.THREADS, String.valueOf(metaData.numberOfThreads()),
-					IFernflowerPreferences.INDENT_STRING, "\t",
-					IFabricJavadocProvider.PROPERTY_NAME, new TinyJavadocProvider(metaData.javaDocs())
+					IFernflowerPreferences.INDENT_STRING, "\t"
 				)
 		);
+		try {
+			Class.forName("net.fabricmc.fernflower.api.IFabricJavadocProvider");
+			System.out.println("[Info] Fabric Fernflower api detected");
+			FabricFlowerJavadoc.configure(options, metaData);
+		} catch(ClassNotFoundException e) {
+		}
 
 		options.putAll(metaData.options());
 

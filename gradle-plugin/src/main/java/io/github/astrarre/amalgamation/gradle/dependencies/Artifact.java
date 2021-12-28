@@ -85,10 +85,14 @@ public abstract class Artifact extends OutputTag {
 	}
 
 	public Artifact deriveMavenMixHash(Path directory, byte[] hash) {
+		return this.deriveMavenMixHash(directory, hash, this.type);
+	}
+
+	public Artifact deriveMavenMixHash(Path directory, byte[] hash, Type type) {
 		Hasher hasher = AmalgIO.SHA256.newHasher();
 		hasher.putBytes(hash);
 		hasher.putBytes(this.hash);
-		return this.deriveMaven(directory, hasher.hash().asBytes());
+		return this.deriveMaven(directory, hasher.hash().asBytes(), type);
 	}
 
 	public static class File extends Artifact {

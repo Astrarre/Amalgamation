@@ -20,13 +20,12 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.decomp.FabricFernFlowerDecompiler;
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.LoomDecompiler;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
@@ -79,9 +78,5 @@ public interface BaseAmalgamation {
      */
     EclipseExtension eclipse() throws IllegalStateException;
 
-    default Object fernflower(Object dependency, Action<DecompileDependency> configure) {
-        return this.decompile(dependency, new FabricFernFlowerDecompiler(), configure);
-    }
-
-    Object decompile(Object dependency, LoomDecompiler decompiler, Action<DecompileDependency> configure);
+    Object decompile(Action<DecompileDependency> configure);
 }

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
+package io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.fabric;
 
 import java.io.BufferedReader;
 import java.io.File;

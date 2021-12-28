@@ -28,8 +28,29 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
+import net.devtech.zipio.impl.util.U;
+
 public interface LoomDecompiler {
-	String name();
+	Type<FernFlowerDecompiler> FERNFLOWER = new Type<>("fernflower", FernFlowerDecompiler.class);
+
+	public static class Type<T extends LoomDecompiler> {
+		public final String name;
+		public final Class<T> type;
+
+		public Type(String name, Class<T> type) {
+			this.name = name;
+			this.type = type;
+		}
+
+		public T create() {
+			try {
+				return type.newInstance();
+			} catch(ReflectiveOperationException e) {
+				throw U.rethrow(e);
+			}
+		}
+	}
 
 	/**
 	 * @param metaData Additional information that may or may not be needed while decompiling

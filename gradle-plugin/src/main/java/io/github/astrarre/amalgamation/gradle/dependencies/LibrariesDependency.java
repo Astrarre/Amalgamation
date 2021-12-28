@@ -17,6 +17,9 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 
+/**
+ * todo make this a single dependency with all the others as transitive dependencies
+ */
 public class LibrariesDependency extends AmalgamationDependency {
 	public final String version;
 	/**

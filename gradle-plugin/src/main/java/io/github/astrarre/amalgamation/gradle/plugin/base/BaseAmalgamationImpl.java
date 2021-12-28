@@ -109,8 +109,8 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 	}
 
 	@Override
-	public Object decompile(Object dependency, LoomDecompiler decompiler, Action<DecompileDependency> configure) {
-		DecompileDependency dependency1 = new DecompileDependency(this.project, dependency, decompiler);
+	public Object decompile(Action<DecompileDependency> configure) {
+		DecompileDependency dependency1 = new DecompileDependency(this.project);
 		configure.execute(dependency1);
 		return dependency1;
 	}

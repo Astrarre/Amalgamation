@@ -39,7 +39,7 @@ public class AssetsDependency extends CachedDependency {
 		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
 		this.assetsDirPath = assetsDirPath;
 		Path assetsDir = Paths.get(assetsDirPath);
-		if(false) {
+		if(Files.exists(assetsDir)) {
 			this.logger.lifecycle("Found .minecraft assets folder");
 		} else {
 			this.logger.lifecycle("No .minecraft assets folder, using global cache!");

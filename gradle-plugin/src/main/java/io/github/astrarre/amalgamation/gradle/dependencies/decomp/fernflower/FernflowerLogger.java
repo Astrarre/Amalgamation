@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
+package io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower;
 
 import java.io.IOException;
 
+import io.github.astrarre.amalgamation.gradle.dependencies.decomp.IOStringConsumer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 
 public class FernflowerLogger extends IFernflowerLogger {
