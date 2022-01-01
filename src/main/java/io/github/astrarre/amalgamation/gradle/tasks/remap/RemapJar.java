@@ -110,7 +110,6 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		} finally {
 			remapper.finish();
 		}
-		System.out.println();
 	}
 
 	/**
