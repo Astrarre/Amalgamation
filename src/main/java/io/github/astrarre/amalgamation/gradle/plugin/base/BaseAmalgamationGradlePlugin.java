@@ -31,6 +31,7 @@ import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginContainer;
 import org.jetbrains.annotations.NotNull;
@@ -43,15 +44,15 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 	@Override
 	public void apply(@NotNull Project target) {
 		gradle = target.getGradle();
-		target.getRepositories().flatDir(f -> {
-			List<Path> paths = new ArrayList<>();
-			for(AmalgDirs value : AmalgDirs.values()) {
-				paths.add(value.aws(target));
-				paths.add(value.remaps(target));
-				paths.add(value.decomps(target));
+		for(AmalgDirs dirs : List.of(AmalgDirs.ROOT_PROJECT, AmalgDirs.GLOBAL)) {
+			for(Path aw : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target))) {
+				target.getRepositories().ivy(repo -> {
+					repo.patternLayout(layout -> layout.artifact("[artifact]-[revision](-[classifier])(.[ext])"));
+					repo.metadataSources(IvyArtifactRepository.MetadataSources::artifact);
+					repo.setUrl(aw.toUri());
+				});
 			}
-			f.setDirs(paths.stream().map(Path::toAbsolutePath).map(Path::toFile).collect(Collectors.toSet()));
-		});
+		}
 
 		this.registerProvider(target);
 		if(target == target.getRootProject()) {

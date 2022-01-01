@@ -21,12 +21,16 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
+import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.file.FileCollection;
@@ -34,12 +38,13 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 
 import net.fabricmc.tinyremapper.IMappingProvider;
+import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
-import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
 public abstract class RemapJar extends Jar implements RemapTask {
 	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
+	String refmapName = null;
 
 	public RemapJar() {
 	}
@@ -54,6 +59,58 @@ public abstract class RemapJar extends Jar implements RemapTask {
 
 	public void remapAw(String destNamespace) {
 		this.remappers.add(new AwResourceRemapper(() -> destNamespace));
+	}
+
+	public void enableExperimentalMixinRemapper(String refmapName) {
+		this.refmapName = refmapName;
+	}
+
+	public void remap() throws IOException {
+		FileCollection classpath = this.getClasspath().get();
+		IMappingProvider from = Mappings.from(this.readMappings());
+		MixinExtensionReborn extension;
+		TinyRemapper.Builder builder = TinyRemapper.newRemapper().withMappings(from);
+		if(this.refmapName != null) {
+			extension = new MixinExtensionReborn(this.getLogger());
+			builder.extension(extension);
+		} else {
+			extension = null;
+		}
+
+		TinyRemapper remapper = builder
+				.build();
+
+		Path current = this.getCurrent();
+
+		List<CompletableFuture<?>> futures = new ArrayList<>();
+		InputTag tag;
+		if(extension != null) {
+			tag = remapper.createInputTag();
+			futures.add(remapper.readInputsAsync(tag, current));
+		} else {
+			tag = null;
+			futures.add(remapper.readInputsAsync(current));
+		}
+
+		for(File file : classpath) {
+			futures.add(remapper.readClassPathAsync(file.toPath()));
+		}
+
+		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+
+		try(OutputConsumerPath ocp = new OutputConsumerPath.Builder(current).build()) {
+			ocp.addNonClassFiles(current, remapper, this.remappers);
+			if(refmapName != null) {
+				FileSystem system = Jimfs.newFileSystem();
+				Path path = system.getPath(this.refmapName);
+				Files.writeString(path, extension.generateRefmap(tag));
+				ocp.addNonClassFiles(path);
+			}
+			remapper.apply(ocp);
+		} finally {
+			remapper.finish();
+		}
+		System.out.println();
 	}
 
 	/**
@@ -72,29 +129,5 @@ public abstract class RemapJar extends Jar implements RemapTask {
 	@Internal
 	protected Path getCurrent() {
 		return this.getArchiveFile().get().getAsFile().toPath();
-	}
-
-	public void remap() throws IOException {
-		FileCollection classpath = this.getClasspath().get();
-		IMappingProvider from = Mappings.from(this.readMappings());
-		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(from).build();
-
-		Path current = this.getCurrent();
-
-		List<CompletableFuture<?>> futures = new ArrayList<>();
-		futures.add(remapper.readInputsAsync(current));
-
-		for(File file : classpath) {
-			futures.add(remapper.readClassPathAsync(file.toPath()));
-		}
-
-		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-
-		try(OutputConsumerPath ocp = new OutputConsumerPath.Builder(current).build()) {
-			ocp.addNonClassFiles(current, remapper, this.remappers);
-			remapper.apply(ocp);
-		} finally {
-			remapper.finish();
-		}
 	}
 }

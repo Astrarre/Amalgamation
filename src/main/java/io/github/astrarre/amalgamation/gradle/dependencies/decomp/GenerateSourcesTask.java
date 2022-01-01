@@ -178,7 +178,8 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 			params.getDecompilerClass().set(decompiler.type.getCanonicalName());
 
 			params.getOptions().set(getOptions());
-			params.getTasks().set(getTasks().get().stream().map(DecompileInput::new).toList());
+			List<DecompileInput> inputs = getTasks().get().stream().map(DecompileInput::new).toList();
+			params.getTasks().set(inputs);
 			params.getJavadocs().set(getJavadocs());
 
 			if (ipcPath != null) {

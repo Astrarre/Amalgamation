@@ -26,28 +26,20 @@ plugins {
     id 'amalgamation-minecraft'
 }
 
-allprojects {
-    apply plugin: 'java'
-    apply plugin: 'java-library'
-    apply plugin: 'amalgamation-minecraft'
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        gradlePluginPortal()
-        maven { url 'https://maven.fabricmc.net/' }
-        maven { url 'https://files.minecraftforge.net/maven/' }
-        maven {
-            name = "HalfOf2"
-            url = uri("https://storage.googleapis.com/devan-maven/")
-        }
-        maven {
-            url "https://maven.shedaniel.me"
-        }
+repositories {
+    mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { url 'https://files.minecraftforge.net/maven/' }
+    maven {
+        name = "HalfOf2"
+        url = uri("https://storage.googleapis.com/devan-maven/")
+    }
+    maven {
+        url "https://maven.shedaniel.me"
     }
 }
-
-idea.module.downloadSources = true
 
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
@@ -85,14 +77,15 @@ dependencies {
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
     def libs = ag.libraries(mc_vers)
-    aaaaa ag.decompile {
+    aaaaa mc
+    /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
         inputLocal(mc)
         classpath libs
         javadocs('net.fabricmc:yarn:1.17.1+build.61:v2', 'named')
     }
-    aaaaa libs
+    aaaaa libs*/
     //aaaaa reiImpl
     //aaaaa reiApi
 
@@ -111,8 +104,8 @@ dependencies {
 
     //implementation("net.fabricmc.fabric-api:fabric-api:0.41.0+1.17")
 
-    //aaaaa ag.fabricLoader("0.11.7")
-    //aaaaa ag.libraries(mc_vers)
+    aaaaa ag.fabricLoader("0.11.7")
+    aaaaa ag.libraries(mc_vers)
 }
 
 task aaaaa(type: JavaExec) {
@@ -149,6 +142,7 @@ task productionJar(type: RemapJar) {
     archivesBaseName = 'fabric'
     classpath = configurations.compileClasspath
     remapAw()
+    enableExperimentalMixinRemapper("output.refmap.json")
     mappings(mergedMappings, 'named', 'intermediary')
 }
 

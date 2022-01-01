@@ -7,6 +7,9 @@ import io.github.astrarre.amalgamation.gradle.utils.LazyFunction;
 import org.gradle.api.Project;
 
 public enum AmalgDirs {
+	/**
+	 * should not be used for artifacts
+	 */
 	PROJECT(new LazyFunction<>(p -> p.getBuildDir().toPath().resolve("amalgamation"))),
 	ROOT_PROJECT(p -> PROJECT.root(p.getRootProject())),
 	GLOBAL(new LazyFunction<>(p -> p.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation")));
@@ -19,10 +22,6 @@ public enum AmalgDirs {
 
 	public Path root(Project project) {
 		return this.rootDirectory.apply(project);
-	}
-
-	public Path transforms(Project project) {
-		return this.root(project).resolve("transforms");
 	}
 
 	public Path aws(Project project) {

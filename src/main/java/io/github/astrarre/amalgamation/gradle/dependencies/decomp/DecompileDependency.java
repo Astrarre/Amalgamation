@@ -147,8 +147,8 @@ public class DecompileDependency extends CachedDependency {
 				for(Artifact input : dependency.inputs) {
 					this.artifactMap.computeIfAbsent(input,
 							a -> new DecompileOutput(
-									a.deriveMavenMixHash(dirs.remaps(this.project), this.getInputHash(), Artifact.Type.SOURCES),
-									a.deriveMavenMixHash(dirs.remaps(this.project), this.getInputHash())
+									a.deriveMavenMixHash(dirs.decomps(this.project), this.getInputHash(), Artifact.Type.SOURCES),
+									a.deriveMavenMixHash(dirs.decomps(this.project), this.getInputHash())
 							));
 				}
 			}
@@ -179,7 +179,6 @@ public class DecompileDependency extends CachedDependency {
 					entries.add(entry);
 				}
 			});
-
 			task.getTasks().set(entries);
 			for(Object o : this.classpath) {
 				task.getClasspath().from(this.artifacts(o, true)

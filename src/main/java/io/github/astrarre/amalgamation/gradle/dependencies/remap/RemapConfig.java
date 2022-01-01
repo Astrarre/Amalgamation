@@ -24,18 +24,16 @@ import org.gradle.api.artifacts.ModuleDependency;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
 public class RemapConfig {
-	static final List<AmalgRemapper> DEFAULT = List.of(
-			new TinyRemapperImpl(t -> {}),
-			new TrieHarderRemapperImpl(),
-			new AccessWidenerRemapperImpl(),
-			new MetaInfFixerImpl());
-
 	protected final Project project;
 	final List<MappingTarget> mappings = new ArrayList<>();
 	final List<Object> classpath = new ArrayList<>();
 	byte[] mappingsHash;
 
-	final List<AmalgRemapper> remappers = new ArrayList<>(DEFAULT);
+	final List<AmalgRemapper> remappers = new ArrayList<>(List.of(
+			new TinyRemapperImpl(t -> {}),
+			new TrieHarderRemapperImpl(),
+			new AccessWidenerRemapperImpl(),
+			new MetaInfFixerImpl()));
 	final AmalgRemapper combined = new AmalgRemapper.Combined(this.remappers);
 
 	public RemapConfig(Project project) {this.project = project;}

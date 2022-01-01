@@ -1,0 +1,72 @@
+{
+  "mappings": {
+    "net/devtech/stacc/mixin/ClearCommandBugFixin$InventoriesFixin": {
+      "inject0": "Lnet/minecraft/class_1262;method_29235(Lnet/minecraft/class_1799;Ljava/util/function/Predicate;IZ)I"
+    },
+    "net/devtech/stacc/mixin/SerializationFixin": {
+      "inject0": "Lnet/minecraft/class_1799;null(Lnet/minecraft/class_2487;)V",
+      "inject1": "Lnet/minecraft/class_1799;method_7953(Lnet/minecraft/class_2487;)Lnet/minecraft/class_2487;",
+      "inject2": "Lnet/minecraft/class_1799;method_7950(Lnet/minecraft/class_1657;Lnet/minecraft/class_1836;)Ljava/util/List;"
+    },
+    "net/devtech/stacc/mixin/RenderItemCountFixin": {
+      "inject0": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V",
+      "inject1": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V",
+      "inject2": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
+    },
+    "net/devtech/stacc/mixin/CreativeDesyncFixin": {
+      "inject0": "Lnet/minecraft/class_3244;method_12070(Lnet/minecraft/class_2873;)V"
+    },
+    "net/devtech/stacc/mixin/DesyncFixin": {
+      "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/item/ItemConvertible;I)V": "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/class_1935;I)V",
+      "inject0": "Lnet/minecraft/class_2540;method_10793(Lnet/minecraft/class_1799;)Lnet/minecraft/class_2540;",
+      "Lnet/minecraft/network/PacketByteBuf;writeNbt(Lnet/minecraft/nbt/NbtCompound;)Lnet/minecraft/network/PacketByteBuf;": "Lnet/minecraft/network/PacketByteBuf;writeNbt(Lnet/minecraft/class_2487;)Lnet/minecraft/class_2540;",
+      "inject1": "Lnet/minecraft/class_2540;method_10819()Lnet/minecraft/class_1799;"
+    },
+    "net/devtech/stacc/mixin/DesktopHandSplayedDuplicationFixin": {
+      "inject0": "Lnet/minecraft/class_1703;method_7617(Ljava/util/Set;ILnet/minecraft/class_1799;I)V"
+    },
+    "net/devtech/stacc/mixin/OOMFixin": {
+      "inject0": "Lnet/minecraft/class_1264;method_5449(Lnet/minecraft/class_1937;DDDLnet/minecraft/class_1799;)V",
+      "Lnet/minecraft/item/ItemStack;split(I)Lnet/minecraft/item/ItemStack;": "Lnet/minecraft/item/ItemStack;split(I)Lnet/minecraft/class_1799;"
+    },
+    "net/devtech/stacc/mixin/InventoryMixin": {},
+    "net/devtech/stacc/mixin/TestMixin": {},
+    "net/devtech/stacc/mixin/CraftingInventoryMixin_LimitStackSize": {}
+  },
+  "data": {
+    "named:intermediary": {
+      "net/devtech/stacc/mixin/RenderItemCountFixin": {
+        "inject0": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V",
+        "inject1": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V",
+        "inject2": "Lnet/minecraft/class_918;method_4022(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
+      },
+      "net/devtech/stacc/mixin/CreativeDesyncFixin": {
+        "inject0": "Lnet/minecraft/class_3244;method_12070(Lnet/minecraft/class_2873;)V"
+      },
+      "net/devtech/stacc/mixin/InventoryMixin": {},
+      "net/devtech/stacc/mixin/TestMixin": {},
+      "net/devtech/stacc/mixin/ClearCommandBugFixin$InventoriesFixin": {
+        "inject0": "Lnet/minecraft/class_1262;method_29235(Lnet/minecraft/class_1799;Ljava/util/function/Predicate;IZ)I"
+      },
+      "net/devtech/stacc/mixin/SerializationFixin": {
+        "inject0": "Lnet/minecraft/class_1799;null(Lnet/minecraft/class_2487;)V",
+        "inject1": "Lnet/minecraft/class_1799;method_7953(Lnet/minecraft/class_2487;)Lnet/minecraft/class_2487;",
+        "inject2": "Lnet/minecraft/class_1799;method_7950(Lnet/minecraft/class_1657;Lnet/minecraft/class_1836;)Ljava/util/List;"
+      },
+      "net/devtech/stacc/mixin/DesyncFixin": {
+        "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/item/ItemConvertible;I)V": "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/class_1935;I)V",
+        "inject0": "Lnet/minecraft/class_2540;method_10793(Lnet/minecraft/class_1799;)Lnet/minecraft/class_2540;",
+        "Lnet/minecraft/network/PacketByteBuf;writeNbt(Lnet/minecraft/nbt/NbtCompound;)Lnet/minecraft/network/PacketByteBuf;": "Lnet/minecraft/network/PacketByteBuf;writeNbt(Lnet/minecraft/class_2487;)Lnet/minecraft/class_2540;",
+        "inject1": "Lnet/minecraft/class_2540;method_10819()Lnet/minecraft/class_1799;"
+      },
+      "net/devtech/stacc/mixin/DesktopHandSplayedDuplicationFixin": {
+        "inject0": "Lnet/minecraft/class_1703;method_7617(Ljava/util/Set;ILnet/minecraft/class_1799;I)V"
+      },
+      "net/devtech/stacc/mixin/CraftingInventoryMixin_LimitStackSize": {},
+      "net/devtech/stacc/mixin/OOMFixin": {
+        "inject0": "Lnet/minecraft/class_1264;method_5449(Lnet/minecraft/class_1937;DDDLnet/minecraft/class_1799;)V",
+        "Lnet/minecraft/item/ItemStack;split(I)Lnet/minecraft/item/ItemStack;": "Lnet/minecraft/item/ItemStack;split(I)Lnet/minecraft/class_1799;"
+      }
+    }
+  }
+}

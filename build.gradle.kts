@@ -22,11 +22,11 @@ plugins {
     base
     `java-gradle-plugin`
     `maven-publish`
-    `signing`
+    signing
 }
 
 group = "io.github.astrarre.amalgamation"
-version = "3.0.0"
+version = "1.0.0.0"
 
 extensions.getByType<JavaPluginExtension>().apply {
     sourceCompatibility = JavaVersion.VERSION_16
@@ -75,14 +75,10 @@ dependencies {
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
-    implementation("net.fabricmc:access-widener-javaparser:3.0.0") {
-        exclude("javaparser-symbol-solver-core")
-    }
+    implementation("net.fabricmc:access-widener-javaparser:3.0.0")
     implementation("io.github.coolmineman:trieharder:0.1.2")
     implementation("net.devtech:zip-io:3.2.1")
     implementation("com.google.jimfs:jimfs:1.2")
-    //implementation("com.github.javaparser:javaparser-symbol-solver-core:3.23.1")
-    //implementation("net.minecraftforge:forge:1.17.1-37.0.75:installer")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
 }
 
