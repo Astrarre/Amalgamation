@@ -39,6 +39,8 @@ import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 
@@ -53,21 +55,29 @@ public abstract class RemapJar extends Jar implements RemapTask {
 	boolean experimentalMixinRemapper = false;
 
 	public RemapJar() {
+		getUniquefier().set(1);
 	}
+
+	@Input
+	public abstract Property<Integer> getUniquefier();
 
 	public void addResourceRemapper(OutputConsumerPath.ResourceRemapper remapper) {
 		this.remappers.add(remapper);
+		getUniquefier().set(getUniquefier().get() * 3);
 	}
 
 	public void remapAw() {
 		this.remappers.add(new AwResourceRemapper(() -> this.getMappings().get().get(0).to));
+		getUniquefier().set(getUniquefier().get() * 5);
 	}
 
 	public void remapAw(String destNamespace) {
 		this.remappers.add(new AwResourceRemapper(() -> destNamespace));
+		getUniquefier().set(getUniquefier().get() * 7);
 	}
 
 	public void enableExperimentalMixinRemapper() {
+		getUniquefier().set(getUniquefier().get() * 9);
 		experimentalMixinRemapper = true;
 		remappers.add(new OutputConsumerPath.ResourceRemapper() {
 			@Override
