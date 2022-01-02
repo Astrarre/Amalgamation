@@ -263,11 +263,32 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 						return new AtVisitor(super.visitAnnotation(name, descriptor));
 					}
 				};
+			} else if(name.equals("slice")) {
+				return new AnnotationVisitor(this.api, visitor) {
+					@Override
+					public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+						return new SliceVisitor(super.visitAnnotation(name, descriptor));
+					}
+				};
 			}
 			return visitor;
 		}
 	}
 
+	class SliceVisitor extends AnnotationVisitor {
+		public SliceVisitor(AnnotationVisitor annotationVisitor) {
+			super(SecondPassMixinVisitor.this.api, annotationVisitor);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+			AnnotationVisitor visitor = super.visitAnnotation(name, descriptor);
+			if(descriptor.equals("Lorg/spongepowered/asm/mixin/injection/At;")) {
+				return new AtVisitor(visitor);
+			}
+			return visitor;
+		}
+	}
 	class MethodTargetVisitor extends AnnotationVisitor {
 		final List<String> values = new ArrayList<>();
 		private final String name;
