@@ -5,16 +5,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.gradle.api.logging.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AnnotationNode;
 
 import net.fabricmc.tinyremapper.api.TrClass;
 import net.fabricmc.tinyremapper.api.TrEnvironment;
@@ -50,31 +53,6 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 			return new MixinAnnotationReplacer(visitor);
 		}
 		return visitor;
-	}
-
-	class MixinAnnotationReplacer extends AnnotationVisitor {
-		boolean visit = false;
-		public MixinAnnotationReplacer(AnnotationVisitor annotationVisitor) {
-			super(SecondPassMixinVisitor.this.api, annotationVisitor);
-		}
-
-		@Override
-		public AnnotationVisitor visitArray(String name) {
-			if(name.equals("value") || name.equals("targets")) {
-				return null;
-			}
-			return super.visitArray(name);
-		}
-
-		@Override
-		public void visitEnd() {
-			AnnotationVisitor array = super.visitArray("value");
-			for(String target : state.targets) {
-				array.visit(null, Type.getType("L" + target + ";"));
-			}
-			array.visitEnd();
-			super.visitEnd();
-		}
 	}
 
 	@Override
@@ -118,6 +96,30 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 
 	TrRemapper getRemapper() {
 		return getEnvironment().getRemapper();
+	}
+
+	class MixinAnnotationReplacer extends AnnotationVisitor {
+		public MixinAnnotationReplacer(AnnotationVisitor annotationVisitor) {
+			super(SecondPassMixinVisitor.this.api, annotationVisitor);
+		}
+
+		@Override
+		public AnnotationVisitor visitArray(String name) {
+			if(name.equals("value") || name.equals("targets")) {
+				return null;
+			}
+			return super.visitArray(name);
+		}
+
+		@Override
+		public void visitEnd() {
+			AnnotationVisitor array = super.visitArray("value");
+			for(String target : state.targets) {
+				array.visit(null, Type.getType("L" + target + ";"));
+			}
+			array.visitEnd();
+			super.visitEnd();
+		}
 	}
 
 	class AliasRemapMethod extends MethodVisitor {
@@ -178,7 +180,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 		@Override
 		public void visitEnd() {
 			if(aliases.size() > 1) {
-				logger.warn("multiple intermediaries for invoker/accessor " + aliases);
+				logger.warn("[Error] multiple valid targets for invoker/accessor " + aliases);
 			}
 			super.visit("value", Iterables.getFirst(this.aliases, null));
 			super.visitEnd();
@@ -212,7 +214,9 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 		}
 	}
 
+
 	class Method extends MethodVisitor {
+
 		public Method(MethodVisitor methodVisitor) {
 			super(SecondPassMixinVisitor.this.api, methodVisitor);
 		}
@@ -224,6 +228,11 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 				return new InjectorVisitor(visitor);
 			}
 			return visitor;
+		}
+
+		@Override
+		public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
+			return super.visitParameterAnnotation(parameter, descriptor, visible);
 		}
 	}
 
@@ -289,6 +298,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 			return visitor;
 		}
 	}
+
 	class MethodTargetVisitor extends AnnotationVisitor {
 		final List<String> values = new ArrayList<>();
 		private final String name;
@@ -361,15 +371,30 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 							desc = "";
 						}
 
+						boolean matchFirst;
+						if(name.endsWith("*")) {
+							matchFirst = false;
+							name = name.substring(0, name.length() - 1);
+						} else {
+							matchFirst = true;
+						}
 						if(owner.equals(target)) {
-							for(TrMethod method : type.getMethods()) {
-								if(method.getName().equals(name) && method.getDesc().startsWith(desc)) { // todo check if change
-									String mappedName = method.getNewName();
-									if(mappedName == null) {
-										mappedName = name;
-									}
-									destinationTargets.add("L" + mappedType + ";" + mappedName + quantity + getRemapper().mapDesc(method.getDesc()));
+							Iterable<TrMethod> methods;
+							if(matchFirst) {
+								methods = matchOne(type, selector, name, desc);
+							} else {
+								String finalName = name;
+								methods = type.getMethods()
+								              .stream()
+								              .filter(method -> method.getName().equals(finalName) && method.getDesc().startsWith(desc))
+								              .collect(Collectors.toList());
+							}
+							for(TrMethod method : methods) {
+								String mappedName = method.getNewName();
+								if(mappedName == null) {
+									mappedName = name;
 								}
+								destinationTargets.add("L" + mappedType + ";" + mappedName + quantity + getRemapper().mapDesc(method.getDesc()));
 							}
 						}
 					}
@@ -379,6 +404,28 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 				super.visit(name, target);
 			}
 			super.visitEnd();
+		}
+
+		@NotNull
+		private Iterable<TrMethod> matchOne(TrClass type, String selector, String name, String desc) {
+			Iterable<TrMethod> methods;
+			// filters descriptors by number of arguments, it's not perfect, but it's not like the annotation processor is any
+			// better so mald
+			// only one of them *can* be correct, since u can't match to methods with a different number of arguments
+			Int2ObjectMap<TrMethod> descriptorByArgumentCount = new Int2ObjectOpenHashMap<>();
+			for(TrMethod method : type.getMethods()) {
+				String methodDesc = method.getDesc();
+				if(method.getName().equals(name) && methodDesc.startsWith(desc)) {
+					Type methodType = Type.getMethodType(methodDesc);
+					TrMethod member = descriptorByArgumentCount.putIfAbsent(methodType.getArgumentTypes().length, method);
+					if(member != null) {
+						logger.error("[Error] Ambigious target " + selector + " with " + member.getName() + member.getDesc() + " &\n\t" +
+						             method.getName() + method.getDesc() + " in " + state.internalName + "\n\tplease use the full descriptor of the method u want to target, or \""+member.getName()+"*\" to target both if they have the same name");
+					}
+				}
+			}
+			methods = descriptorByArgumentCount.values();
+			return methods;
 		}
 	}
 
@@ -428,7 +475,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 						String mappedName = getRemapper().mapMethodName(type, name, desc);
 						String mappedDesc = getRemapper().mapMethodDesc(desc);
 						if(!type.equals(mappedType) || !name.equals(mappedName) || !desc.equals(mappedDesc)) {
-							target = mappedType + ";" + mappedName + mappedDesc;
+							target = "L" + mappedType + ";" + mappedName + mappedDesc;
 						}
 					}
 					case "NEW" -> {
@@ -436,7 +483,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 							logger.warn("NEW not paired with target!");
 						}
 						String type = target;
-						String mappedType = getRemapper().map(type);
+						String mappedType = getRemapper().mapDesc(type);
 						if(!type.equals(mappedType)) {
 							target = mappedType;
 						}
@@ -454,7 +501,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 						String mappedName = getRemapper().mapMethodName(type, name, desc);
 						String mappedDesc = getRemapper().mapMethodDesc(desc);
 						if(!type.equals(mappedType) || !name.equals(mappedName) || !desc.equals(mappedDesc)) {
-							target = mappedType + ";" + mappedName + ":" + mappedDesc;
+							target = "L" + mappedType + ";" + mappedName + ":" + mappedDesc;
 						}
 					}
 				}

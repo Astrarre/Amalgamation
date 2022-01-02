@@ -50,9 +50,6 @@ public class FirstPassMixinVisitor extends ClassVisitor {
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		FieldVisitor visitor = super.visitField(access, name, descriptor, signature, value);
 		if(this.state.isMixin && this.state.remap) {
-			if(Modifier.isPublic(access) && Modifier.isStatic(access)) {
-				this.logger.error("Cannot have public static aliases in mixin " + this.state.internalName);
-			}
 			return new Field(visitor, name, descriptor);
 		} else {
 			return visitor;
@@ -64,9 +61,6 @@ public class FirstPassMixinVisitor extends ClassVisitor {
 		MethodVisitor visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
 		boolean isPrefixed = this.isPrefixed(name, descriptor);
 		if(this.state.isMixin && this.state.remap && !isPrefixed) {
-			if(Modifier.isPublic(access) && Modifier.isStatic(access)) {
-				this.logger.error("Cannot have public static aliases in mixin " + this.state.internalName);
-			}
 			return new Method(visitor, name, descriptor);
 		} else {
 			return visitor;
@@ -106,11 +100,13 @@ public class FirstPassMixinVisitor extends ClassVisitor {
 		boolean propagate = true;
 		for(String target : state.targets) {
 			for(String alias : aliases) {
-				TrMember method = currentClass.getMethod(methodName, methodDesc);
+				TrMember method;
 				String name;
 				if(isMethod) {
+					method = currentClass.getMethod(methodName, methodDesc);
 					name = env.getRemapper().mapMethodName(target, alias, targetDesc);
 				} else {
+					method = currentClass.getField(methodName, methodDesc);
 					name = env.getRemapper().mapFieldName(target, alias, targetDesc);
 				}
 				if(!name.equals(alias)) {
@@ -138,11 +134,11 @@ public class FirstPassMixinVisitor extends ClassVisitor {
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 			AnnotationVisitor visitor = super.visitAnnotation(descriptor, visible);
-			switch(descriptor) {
+			return switch(descriptor) {
 				case "Lorg/spongepowered/asm/mixin/Shadow;" -> new ShadowVisitor(visitor, false, name, desc);
 				case "Lorg/spongepowered/asm/mixin/gen/Accessor;" -> new InvokerAccessorVisitor(visitor, this.name, this.desc, false);
-			}
-			return super.visitAnnotation(descriptor, visible);
+				default -> visitor;
+			};
 		}
 	}
 
