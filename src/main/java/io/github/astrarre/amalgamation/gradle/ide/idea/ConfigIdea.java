@@ -39,7 +39,7 @@ public class ConfigIdea {
 		if(Boolean.getBoolean("idea.sync.active")) {
 			project.getRootProject().afterEvaluate(project1 -> {
 				IDEA_EXTENSION.configureQueue(false);
-			});
+			}); // todo fix
 		}
 	}
 

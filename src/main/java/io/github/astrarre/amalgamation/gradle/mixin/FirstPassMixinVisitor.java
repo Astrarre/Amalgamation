@@ -116,11 +116,11 @@ public class FirstPassMixinVisitor extends ClassVisitor {
 				if(!name.equals(alias)) {
 					if(propagate) {
 						env.propagate(method, deriveName.apply(name));
-						propagate = false;
 					}
-					if(!propagate || forceAlias){
+					if(!propagate || forceAlias) {
 						state.aliases.put(new MixinClass.Member(methodName, methodDesc), name);
 					}
+					propagate = false;
 				}
 			}
 		}

@@ -21,13 +21,18 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.common.collect.Iterables;
+import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
@@ -41,10 +46,11 @@ import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
+import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
 public abstract class RemapJar extends Jar implements RemapTask {
 	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
-	String refmapName = null;
+	boolean experimentalMixinRemapper = false;
 
 	public RemapJar() {
 	}
@@ -61,20 +67,28 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		this.remappers.add(new AwResourceRemapper(() -> destNamespace));
 	}
 
-	public void enableExperimentalMixinRemapper(String refmapName) {
-		this.refmapName = refmapName;
+	public void enableExperimentalMixinRemapper() {
+		experimentalMixinRemapper = true;
+		remappers.add(new OutputConsumerPath.ResourceRemapper() {
+			@Override
+			public boolean canTransform(TinyRemapper remapper, Path relativePath) {
+				return relativePath.toString().endsWith(".mixins.json");
+			}
+
+			@Override
+			public void transform(Path destinationDirectory, Path relativePath, InputStream input, TinyRemapper remapper) throws IOException {
+				String content = Files.readString(relativePath);
+				Files.writeString(destinationDirectory.resolve(relativePath), content.replaceFirst("\\{", "{\"refmap\": \"work/empty.refmap.json\","));
+			}
+		});
 	}
 
 	public void remap() throws IOException {
 		FileCollection classpath = this.getClasspath().get();
 		IMappingProvider from = Mappings.from(this.readMappings());
-		MixinExtensionReborn extension;
 		TinyRemapper.Builder builder = TinyRemapper.newRemapper().withMappings(from);
-		if(this.refmapName != null) {
-			extension = new MixinExtensionReborn(this.getLogger());
-			builder.extension(extension);
-		} else {
-			extension = null;
+		if(experimentalMixinRemapper) {
+			builder.extension(new MixinExtensionReborn(this.getLogger()));
 		}
 
 		TinyRemapper remapper = builder
@@ -83,14 +97,7 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		Path current = this.getCurrent();
 
 		List<CompletableFuture<?>> futures = new ArrayList<>();
-		InputTag tag;
-		if(extension != null) {
-			tag = remapper.createInputTag();
-			futures.add(remapper.readInputsAsync(tag, current));
-		} else {
-			tag = null;
-			futures.add(remapper.readInputsAsync(current));
-		}
+		futures.add(remapper.readInputsAsync(current));
 
 		for(File file : classpath) {
 			futures.add(remapper.readClassPathAsync(file.toPath()));
@@ -99,13 +106,14 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
 		try(OutputConsumerPath ocp = new OutputConsumerPath.Builder(current).build()) {
-			ocp.addNonClassFiles(current, remapper, this.remappers);
-			if(refmapName != null) {
-				FileSystem system = Jimfs.newFileSystem();
-				Path path = system.getPath(this.refmapName);
-				Files.writeString(path, extension.generateRefmap(tag));
-				ocp.addNonClassFiles(path);
+			if(experimentalMixinRemapper) {
+				try(FileSystem system = Jimfs.newFileSystem()) {
+					Path path = system.getPath("empty.refmap.json");
+					Files.writeString(path, "{\"mappings\": {},\"data\":{\"named:intermediary\":{}}}");
+					ocp.addNonClassFiles(Iterables.getFirst(system.getRootDirectories(), null));
+				}
 			}
+			ocp.addNonClassFiles(current, remapper, this.remappers);
 			remapper.apply(ocp);
 		} finally {
 			remapper.finish();

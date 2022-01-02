@@ -16,7 +16,6 @@ import net.fabricmc.tinyremapper.api.TrEnvironment;
 
 public class MixinClass {
 	public final List<String> targets = new ArrayList<>();
-	public final Map<String, String> mappings = new HashMap<>();
 	public final List<Implements> prefixes = new ArrayList<>();
 	public final List<Consumer<TrEnvironment>> remapper;
 	public final Multimap<Member, String> aliases = ArrayListMultimap.create();

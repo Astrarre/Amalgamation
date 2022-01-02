@@ -94,7 +94,7 @@ public class MvnMetaReader {
 	public static void visitDependencies(XmlProvider xml, DependencyVisitor visitor) {
 		Node dependencies = Iterables.getOnlyElement((List<Node>) xml.asNode().get("dependencies"));
 		Set<Dependent> dependents = new HashSet<>();
-		for(Node node : (List<Node>) dependencies.get("node")) {
+		for(Node node : (List<Node>) dependencies.get("dependency")) {
 			NodeList list = (NodeList) node.get("groupId");
 			Node element = (Node) Iterables.getOnlyElement(list, null);
 			String group = element == null ? null : element.text();

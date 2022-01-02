@@ -65,19 +65,20 @@ dependencies {
 
     def mc
     //def fapi
-    //def reiImpl
-    //def reiApi
+    def reiImpl
+    def reiApi
     ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
         mc = inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
         })
-        //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
-        //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
+        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
+        reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
-    def libs = ag.libraries(mc_vers)
-    aaaaa mc
+    aaaaa ag.accessWidener(mc) {
+        accessWidener(files("$rootDir/src/main/resources/cope1.aw"))
+    }
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
@@ -86,8 +87,8 @@ dependencies {
         javadocs('net.fabricmc:yarn:1.17.1+build.61:v2', 'named')
     }
     aaaaa libs*/
-    //aaaaa reiImpl
-    //aaaaa reiApi
+    aaaaa reiImpl
+    aaaaa reiApi
 
 
     //aaaaa "com.google.code.gson:gson:1.1"*/
@@ -142,7 +143,7 @@ task productionJar(type: RemapJar) {
     archivesBaseName = 'fabric'
     classpath = configurations.compileClasspath
     remapAw()
-    enableExperimentalMixinRemapper("output.refmap.json")
+    enableExperimentalMixinRemapper()
     mappings(mergedMappings, 'named', 'intermediary')
 }
 

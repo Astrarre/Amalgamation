@@ -66,9 +66,13 @@ public final class Lazy<T> implements Supplier<T>, Callable<T> {
 		T instance = this.instance;
 		Supplier<T> supplier = this.supplier;
 		if(supplier != null) {
-			instance = Objects.requireNonNull(supplier.get(), "Lazy supplier may not return null!");
-			this.instance = instance;
-			this.supplier = null;
+			synchronized(this.supplier) {
+				if(this.supplier != null) {
+					instance = Objects.requireNonNull(supplier.get(), "Lazy supplier may not return null!");
+					this.instance = instance;
+					this.supplier = null;
+				}
+			}
 		}
 		return instance;
 	}

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -46,7 +47,7 @@ public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 		}
 	}
 
-	private boolean initResolved(Path relativePath) {
+	private boolean initResolved(Path relativePath) { // todo use relative
 		if(!this.hasResolvedAwFromFMJ) {
 			Path root = relativePath.toAbsolutePath().getRoot();
 			Path fmj = root.resolve("fabric.mod.json");
@@ -85,5 +86,8 @@ public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 		reader.read(data);
 		Path output = destinationDirectory.resolve(relativePath);
 		Files.write(output, writer.write());
+	}
+
+	public static void main(String[] args) {
 	}
 }

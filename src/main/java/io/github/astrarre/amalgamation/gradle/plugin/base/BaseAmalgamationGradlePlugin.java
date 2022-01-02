@@ -79,15 +79,15 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 				Plugin<Project> plugin;
 			};
 
-			this.listenFor(target, "idea", idea -> {
+			listenFor(target, "idea", idea -> {
 				ConfigIdea.configure(target, idea);
 				temp.plugin = idea;
 			});
-			this.listenFor(target, "eclipse", eclipse -> ConfigureEclipse.configure(target));
+			listenFor(target, "eclipse", eclipse -> ConfigureEclipse.configure(target));
 		}
 	}
 
-	<T extends Plugin<?>> void listenFor(Project target, String id, Consumer<Plugin<Project>> onFound) {
+	public static void listenFor(Project target, String id, Consumer<Plugin<Project>> onFound) {
 		PluginContainer plugins = target.getPlugins();
 		plugins.withId(id, onFound::accept);
 	}

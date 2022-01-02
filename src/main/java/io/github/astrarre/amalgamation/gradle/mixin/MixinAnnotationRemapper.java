@@ -40,10 +40,6 @@ public class MixinAnnotationRemapper extends AnnotationVisitor {
 			String str = (String) value;
 			String replace = str.replace('.', '/');
 			MixinAnnotationRemapper.this.refmap.targets.add(replace);
-			MixinAnnotationRemapper.this.refmap.applyEnvironment(env -> {
-				String map = env.getRemapper().map(replace);
-				MixinAnnotationRemapper.this.refmap.mappings.put(str, map);
-			});
 			super.visit(name, value);
 		}
 	}

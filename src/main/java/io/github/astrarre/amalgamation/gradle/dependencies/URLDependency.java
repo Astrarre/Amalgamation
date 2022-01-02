@@ -150,6 +150,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 			}
 
 			try(result) {
+				U.createDirs(resolvedPath);
 				Files.copy(result.stream, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
 			}
 		}

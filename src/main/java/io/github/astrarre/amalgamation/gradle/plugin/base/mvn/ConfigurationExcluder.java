@@ -11,8 +11,9 @@ import org.gradle.api.artifacts.ResolvedDependency;
 import org.jetbrains.annotations.Nullable;
 
 public class ConfigurationExcluder implements MvnMetaReader.DependencyVisitor {
-	final Lazy<Set<Dependent>> toRemove;
+	final Lazy<Set<FuzzyDependent>> toRemove;
 
+	record FuzzyDependent(String group, String name) {}
 	public ConfigurationExcluder(Configuration configuration) {
 		this.toRemove = Lazy.of(() -> {
 			if(!configuration.isCanBeResolved()) {
@@ -22,17 +23,20 @@ public class ConfigurationExcluder implements MvnMetaReader.DependencyVisitor {
 			Set<ResolvedDependency> dependencies = new HashSet<>();
 			config.getFirstLevelModuleDependencies().forEach(r -> this.findAll(r, dependencies));
 
-			Set<Dependent> toRemove = new HashSet<>();
+			Set<FuzzyDependent> toRemove = new HashSet<>();
 			for(ResolvedDependency dependency : dependencies) {
-				toRemove.add(new Dependent(dependency.getModuleGroup(), dependency.getModuleName(), dependency.getModuleVersion()));
+				var dep = new FuzzyDependent(dependency.getModuleGroup(), dependency.getModuleName());
+				toRemove.add(dep);
+				System.out.println(dep);
 			}
+
 			return toRemove;
 		});
 	}
 
 	@Override
 	public boolean apply(@Nullable String group, String name, @Nullable String version, MvnMetaReader.Mutator mutator) {
-		return this.toRemove.get().contains(new Dependent(group, name, version));
+		return this.toRemove.get().contains(new FuzzyDependent(group, name));
 	}
 
 	void findAll(ResolvedDependency dependency, Set<ResolvedDependency> dependencies) {

@@ -13,6 +13,8 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
 
 import net.fabricmc.tinyremapper.api.TrClass;
 import net.fabricmc.tinyremapper.api.TrEnvironment;
@@ -33,13 +35,46 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 	public final TrClass type;
 	public final MixinClass state;
 	public final Logger logger;
-	int injectorNameUniquifier = 0;
 
 	public SecondPassMixinVisitor(ClassVisitor classVisitor, TrClass type, MixinClass state, Logger logger) {
 		super(Opcodes.ASM9, classVisitor);
 		this.type = type;
 		this.state = state;
 		this.logger = logger;
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+		AnnotationVisitor visitor = super.visitAnnotation(descriptor, visible);
+		if(descriptor.equals("Lorg/spongepowered/asm/mixin/Mixin;")) {
+			return new MixinAnnotationReplacer(visitor);
+		}
+		return visitor;
+	}
+
+	class MixinAnnotationReplacer extends AnnotationVisitor {
+		boolean visit = false;
+		public MixinAnnotationReplacer(AnnotationVisitor annotationVisitor) {
+			super(SecondPassMixinVisitor.this.api, annotationVisitor);
+		}
+
+		@Override
+		public AnnotationVisitor visitArray(String name) {
+			if(name.equals("value") || name.equals("targets")) {
+				return null;
+			}
+			return super.visitArray(name);
+		}
+
+		@Override
+		public void visitEnd() {
+			AnnotationVisitor array = super.visitArray("value");
+			for(String target : state.targets) {
+				array.visit(null, Type.getType("L" + target + ";"));
+			}
+			array.visitEnd();
+			super.visitEnd();
+		}
 	}
 
 	@Override
@@ -320,9 +355,7 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 				}
 			}
 			for(String target : destinationTargets) {
-				String uniqueName = "inject" + injectorNameUniquifier++;
-				super.visit(name, uniqueName);
-				state.mappings.put(uniqueName, target);
+				super.visit(name, target);
 			}
 			super.visitEnd();
 		}
@@ -338,60 +371,78 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 
 		@Override
 		public void visit(String name, Object value) {
-			super.visit(name, value);
+			boolean visit = true;
 			if(name.equals("value")) {
 				this.injector = (String) value;
 			} else if(name.equals("target")) {
 				this.target = (String) value;
+				visit = false;
 			} else if(name.equals("desc")) {
 				throw new UnsupportedOperationException("@Desc annotations aren't supported at the moment");
 			} else if(name.equals("remap")) {
 				this.remap = (Boolean) value;
 			}
+			if(visit) {
+				super.visit(name, value);
+			}
 		}
 
 		@Override
 		public void visitEnd() {
-			super.visitEnd();
+			String target = this.target;
 			if(this.remap) {
 				switch(this.injector) {
 					case "INVOKE", "INVOKE_ASSIGN", "INVOKE_STRING" -> {
+						if(target == null) {
+							logger.warn("INVOKE/INVOKE_ASSIGN/INVOKE_STRING not paired with target!");
+						}
 						// fully qualified descriptor
-						int typeTerminator = this.target.indexOf(';');
-						int nameTerminator = this.target.indexOf('(', typeTerminator);
+						int typeTerminator = target.indexOf(';');
+						int nameTerminator = target.indexOf('(', typeTerminator);
 						// todo better errors
-						String type = this.target.substring(0, typeTerminator);
+						String type = this.target.substring(1, typeTerminator);
 						String name = this.target.substring(typeTerminator + 1, nameTerminator);
 						String desc = this.target.substring(nameTerminator);
 						String mappedType = getRemapper().map(type);
 						String mappedName = getRemapper().mapMethodName(type, name, desc);
 						String mappedDesc = getRemapper().mapMethodDesc(desc);
 						if(!type.equals(mappedType) || !name.equals(mappedName) || !desc.equals(mappedDesc)) {
-							state.mappings.put(this.target, mappedType + ";" + mappedName + mappedDesc);
+							target = mappedType + ";" + mappedName + mappedDesc;
 						}
 					}
 					case "NEW" -> {
-						String type = this.target;
+						if(target == null) {
+							logger.warn("NEW not paired with target!");
+						}
+						String type = target;
 						String mappedType = getRemapper().map(type);
 						if(!type.equals(mappedType)) {
-							state.mappings.put(this.target, mappedType);
+							target = mappedType;
 						}
 					}
 					case "FIELD" -> {
-						int typeTerminator = this.target.indexOf(';');
-						int nameTerminator = this.target.indexOf(':', typeTerminator + 1);
-						String type = this.target.substring(0, typeTerminator);
-						String name = this.target.substring(typeTerminator + 1, nameTerminator);
-						String desc = this.target.substring(nameTerminator + 1);
+						if(target == null) {
+							logger.warn("FIELD not paired with target!");
+						}
+						int typeTerminator = target.indexOf(';');
+						int nameTerminator = target.indexOf(':', typeTerminator + 1);
+						String type = target.substring(0, typeTerminator);
+						String name = target.substring(typeTerminator + 1, nameTerminator);
+						String desc = target.substring(nameTerminator + 1);
 						String mappedType = getRemapper().map(type);
 						String mappedName = getRemapper().mapMethodName(type, name, desc);
 						String mappedDesc = getRemapper().mapMethodDesc(desc);
 						if(!type.equals(mappedType) || !name.equals(mappedName) || !desc.equals(mappedDesc)) {
-							state.mappings.put(this.target, mappedType + ";" + mappedName + ":" + mappedDesc);
+							target = mappedType + ";" + mappedName + ":" + mappedDesc;
 						}
 					}
 				}
 			}
+
+			if(target != null) {
+				super.visit("target", target);
+			}
+			super.visitEnd();
 		}
 	}
 }
