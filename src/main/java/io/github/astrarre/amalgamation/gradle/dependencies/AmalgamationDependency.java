@@ -58,6 +58,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 		return this.getArtifacts()
 				       .stream()
 				       .filter(a -> a.type != Artifact.Type.SOURCES)
+				       .peek(Artifact::makeGradleFriendly)
 				       .map(Artifact::toDependencyNotation)
 				       .iterator();
 	}

@@ -40,7 +40,7 @@ public class TrieHarderRemapperImpl implements AmalgRemapper {
 				String remappedContents = this.sourceRemapper.remapString(contents);
 				String internalName = path.substring(0, path.length() - 5);
 				String remappedFilePath = this.sourceRemapper.remapString(internalName.replace('/', '.')).replace('.', '/');
-				entry.write(remappedFilePath, ByteBuffer.wrap(remappedContents.getBytes(StandardCharsets.UTF_8)));
+				entry.write(remappedFilePath + ".java", ByteBuffer.wrap(remappedContents.getBytes(StandardCharsets.UTF_8)));
 				return true;
 			}
 			return false;

@@ -19,6 +19,8 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
+import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +48,9 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		gradle = target.getGradle();
 		for(AmalgDirs dirs : List.of(AmalgDirs.ROOT_PROJECT, AmalgDirs.GLOBAL)) {
 			for(Path aw : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target))) {
-				target.getRepositories().ivy(repo -> {
-					repo.patternLayout(layout -> layout.artifact("[artifact]-[revision](-[classifier])(.[ext])"));
-					repo.metadataSources(IvyArtifactRepository.MetadataSources::artifact);
-					repo.setUrl(aw.toUri());
+				target.getRepositories().maven(repository -> {
+					repository.setName("Amalgamation " + dirs.name() + " cache");
+					repository.setUrl(aw.toUri());
 				});
 			}
 		}

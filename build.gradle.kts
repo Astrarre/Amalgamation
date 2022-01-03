@@ -66,7 +66,6 @@ repositories {
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
     implementation(gradleApi())
-
     implementation("com.google.guava", "guava", "30.1-jre")
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("org.ow2.asm", "asm-tree", "9.1")
