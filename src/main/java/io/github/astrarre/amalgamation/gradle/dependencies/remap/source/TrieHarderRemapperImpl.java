@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.google.common.collect.Iterables;
+import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.ZipRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
@@ -44,5 +45,10 @@ public class TrieHarderRemapperImpl implements AmalgRemapper {
 			}
 			return false;
 		};
+	}
+
+	@Override
+	public void hash(Hasher hasher) {
+		hasher.putString("trieharder", StandardCharsets.UTF_8);
 	}
 }

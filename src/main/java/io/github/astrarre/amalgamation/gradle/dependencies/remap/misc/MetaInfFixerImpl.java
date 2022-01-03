@@ -26,11 +26,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.ZipRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Lazy;
@@ -53,8 +55,13 @@ public class MetaInfFixerImpl implements AmalgRemapper {
 					return true;
 				}
 			}
-			return true;
+			return false;
 		};
+	}
+
+	@Override
+	public void hash(Hasher hasher) {
+		hasher.putString("META_INF fixer", StandardCharsets.UTF_8);
 	}
 
 	private boolean visitEntry(VirtualZipEntry entry, boolean isClasspath) throws IOException {

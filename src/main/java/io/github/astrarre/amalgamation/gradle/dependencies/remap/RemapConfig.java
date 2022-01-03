@@ -16,6 +16,7 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.binary.TinyRema
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.AccessWidenerRemapperImpl;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.MetaInfFixerImpl;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.source.TrieHarderRemapperImpl;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.unpick.UnpickExtension;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -50,11 +51,11 @@ public class RemapConfig {
 	}
 
 	public void classpath(Object object) {
-		this.classpath.add(this.project.getDependencies().create(object));
+		this.classpath.add(this.of(object));
 	}
 
 	public void classpath(Object object, Closure<ModuleDependency> config) {
-		this.classpath.add(this.project.getDependencies().create(object, config));
+		this.classpath.add(this.of(object, config));
 	}
 
 	public void mappings(MappingTarget dependency) {
@@ -77,12 +78,13 @@ public class RemapConfig {
 	 * sets the class remapper to fabricmc/tiny-remapper
 	 */
 	public void tinyRemapper() {
-		this.tinyRemapper(t -> {});
+		avoidSecond(TinyRemapperImpl.class);
+		this.remappers.add(new TinyRemapperImpl(null));
 	}
 
-	public void tinyRemapper(Consumer<TinyRemapper.Builder> configuration) {
-		avoidSecond(TinyRemapperImpl.class);
-		this.remappers.add(new TinyRemapperImpl(configuration));
+	public void tinyRemapperWithUnpick() {
+		avoidSecond(TinyRemapper.class);
+		this.remappers.add(new TinyRemapperImpl(t -> t.extension(new UnpickExtension(this.mappings))));
 	}
 
 	public void metaInfFixer() {
@@ -111,6 +113,7 @@ public class RemapConfig {
 		for(Object dependency : this.classpath) {
 			AmalgIO.hashDep(hasher, this.project, dependency);
 		}
+		this.combined.hash(hasher);
 	}
 
 	public byte[] getMappingsHash() {

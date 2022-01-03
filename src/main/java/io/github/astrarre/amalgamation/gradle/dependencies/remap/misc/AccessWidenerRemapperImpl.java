@@ -1,10 +1,12 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.remap.misc;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.ZipRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
@@ -122,6 +124,11 @@ public class AccessWidenerRemapperImpl implements AmalgRemapper {
 			}
 			return false;
 		};
+	}
+
+	@Override
+	public void hash(Hasher hasher) {
+		hasher.putString("AccessWidenerRemapper", StandardCharsets.UTF_8);
 	}
 
 }

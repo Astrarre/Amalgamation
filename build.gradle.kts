@@ -80,6 +80,7 @@ dependencies {
     implementation("net.devtech:zip-io:3.2.1")
     implementation("com.google.jimfs:jimfs:1.2")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
+    implementation("net.fabricmc.unpick:unpick:2.2.0")
 }
 
 gradlePlugin {
