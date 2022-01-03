@@ -65,9 +65,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 				if(resolved.isEmpty()) {
 					failedDirectDownload = true;
 				} else {
-					for(Artifact path : resolved) {
-						files.add(path);
-					}
+					files.addAll(resolved);
 				}
 			}
 

@@ -33,4 +33,14 @@ public class ResourceZipFilter implements ZipFilter {
 		return (file, system) -> filter.test(file, system) == ZipBehavior.COPY ? ZipBehavior.COPY : ZipBehavior.SKIP;
 	}
 
+	public ZipFilter andThen(ZipFilter filter) {
+		return (file, system) -> {
+			ZipBehavior test = this.test(file, system);
+			if(test == ZipBehavior.CONTINUE) {
+				return filter.test(file, system);
+			} else {
+				return test;
+			}
+		};
+	}
 }

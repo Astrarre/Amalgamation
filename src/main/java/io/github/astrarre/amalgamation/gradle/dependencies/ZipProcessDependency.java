@@ -23,16 +23,21 @@ public abstract class ZipProcessDependency extends CachedDependency {
 		super(project);
 	}
 
+	ZipProcess cached;
+
 	public ZipProcess process() throws IOException {
-		// todo ZipProcess piping whereby a single process can have multiple dependents
-		// todo cache TR classpaths at some point:tm:
-		ZipProcessBuilder builder = ZipProcess.builder();
-		builder.defaults().setZipFilter(p -> ResourceZipFilter.FILTER);
-		boolean isOutdated = this.isOutdated();
-		TaskInputResolver resolver = (dependencies, tag) -> this.apply(builder, dependencies, tag);
-		this.add(resolver, builder, this.getPath(), isOutdated);
-		builder.afterExecute(() -> this.after(isOutdated));
-		return builder;
+		if(this.cached == null) {
+			// todo ZipProcess piping whereby a single process can have multiple dependents
+			// todo cache TR classpaths at some point:tm:
+			ZipProcessBuilder builder = ZipProcess.builder();
+			builder.defaults().setZipFilter(p -> ResourceZipFilter.FILTER);
+			boolean isOutdated = this.isOutdated();
+			TaskInputResolver resolver = (dependencies, tag) -> this.apply(builder, dependencies, tag);
+			this.add(resolver, builder, this.getPath(), isOutdated);
+			builder.afterExecute(() -> this.after(isOutdated));
+			this.cached = builder;
+		}
+		return this.cached;
 	}
 
 	public void appendToProcess(ZipProcessBuilder builder, boolean isOutdated) throws IOException {

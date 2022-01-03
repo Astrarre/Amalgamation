@@ -23,6 +23,7 @@ import io.github.astrarre.amalgamation.gradle.utils.json.Json;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public class LauncherMeta {
 	public static final Gson GSON = new Gson();
@@ -52,6 +53,29 @@ public class LauncherMeta {
 			case LINUX -> System.getProperty("user.home") + "/.minecraft";
 			case MACOS -> System.getProperty("user.home") + "/Library/Application Support/minecraft";
 		};
+	}
+
+	public int compareVersions(String a, String b) {
+		if(a.equals(b)) {
+			return 0;
+		}
+		Version va = this.versions.get(a);
+		Version vb = this.versions.get(b);
+		if(va == null && vb != null) { // if version b was parsed and a was not, then version b must be more recent
+			return -1;
+		} else if(va != null && vb == null) {
+			return 1;
+		} else if(va == null) { // neither are parsed
+			va = this.getVersion(a);
+			vb = this.versions.get(b);
+			if(vb != null) { // if b was also parsed, then b must have been parsed first
+				return vb.index - va.index;
+			} else { // if a was parsed but b was not found in the json by that time, then a is first
+				return 1;
+			}
+		} else {
+			return vb.index - va.index;
+		}
 	}
 
 	public Version getVersion(String version) {
@@ -109,7 +133,7 @@ public class LauncherMeta {
 		return ver;
 	}
 
-	public final class Version {
+	public final class Version implements Comparable<Version> {
 		/**
 		 * 0 = latest version, 1 = next latest version, etc.
 		 */
@@ -156,6 +180,11 @@ public class LauncherMeta {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+		}
+
+		@Override
+		public int compareTo(@NotNull LauncherMeta.Version version) {
+			return Integer.compare(this.index, version.index);
 		}
 
 		private void init() {

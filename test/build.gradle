@@ -52,7 +52,6 @@ configurations {
     }
     implementation.extendsFrom(aaaaa)
 }
-
 dependencies {
 
     //aaaaa ag.mojmerged(mc_vers, mergedMappings)
@@ -65,7 +64,7 @@ dependencies {
 
     def mc
     //def fapi
-    def reiImpl
+    //def reiImpl
     def reiApi
     ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
@@ -102,8 +101,8 @@ dependencies {
 
     //implementation("net.fabricmc.fabric-api:fabric-api:0.41.0+1.17")
 
-    aaaaa ag.fabricLoader("0.11.7")
-    aaaaa ag.libraries(mc_vers)
+    //aaaaa ag.fabricLoader("0.11.7")
+    //aaaaa ag.libraries(mc_vers)
 }
 
 task aaaaa(type: JavaExec) {

@@ -22,6 +22,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.base;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
@@ -80,9 +81,9 @@ public interface BaseAmalgamation {
      */
     EclipseExtension eclipse() throws IllegalStateException;
 
-    Object decompile(Action<DecompileDependency> configure);
+    Set<Object> decompile(Action<DecompileDependency> configure);
 
-    Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
+    Set<Object> accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
 
     MappingTarget mappings(Object depNotation, String from, String to);
 
@@ -92,5 +93,5 @@ public interface BaseAmalgamation {
      * @param mappings configurate mappings
      * @return a list of the remapped dependencies
      */
-    Object map(Action<RemapDependencyConfig> mappings) throws IOException;
+    Set<Object> map(Action<RemapDependencyConfig> mappings) throws IOException;
 }

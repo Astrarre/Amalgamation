@@ -1,6 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.util;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.HashedURLDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.ShadowedLibraryStrippedDependency;
@@ -12,7 +13,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
 public class MinecraftFileHelper {
-	public static Object getDependency(Project project, String version, boolean isClient, boolean doStrip, boolean doSplit) {
+	public static Set<Object> getDependency(Project project, String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project);
 		LauncherMeta.Version vers = meta.getVersion(version);
 		LauncherMeta.HashedURL url;
@@ -46,7 +47,7 @@ public class MinecraftFileHelper {
 		}
 
 		dependency.output = unstripped;
-		Object f;
+		Set<Object> f;
 		if(doSplit) {
 			SplitDependency split = new SplitDependency(project, dependency);
 			split.outputDir = globalCache.resolve(version).resolve("split");

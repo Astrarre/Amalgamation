@@ -21,6 +21,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
@@ -55,16 +56,16 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param version the minecraft version string, should match up with launchermeta
 	 * @return a clientMappings for the obfuscated client jar
 	 */
-	Object client(String version, boolean split);
+	Set<Object> client(String version, boolean split);
 
-	default Object server(String version) {
+	default Set<Object> server(String version) {
 		return this.server(version, true);
 	}
 
 	/**
 	 * @param strip strip included dependencies
 	 */
-	default Object server(String version, boolean strip) {
+	default Set<Object> server(String version, boolean strip) {
 		return this.server(version, strip, true);
 	}
 
@@ -73,9 +74,9 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * @param split split jar into resources and classes jar for speed
 	 * @return a clientMappings for the obfuscated server jar (dependencies stripped)
 	 */
-	Object server(String version, boolean strip, boolean split);
+	Set<Object> server(String version, boolean strip, boolean split);
 
-	Object merged(String version, Action<CASMergedDependency> configurate);
+	Set<Object> merged(String version, Action<CASMergedDependency> configurate);
 
 	/**
 	 * "MojMerger" is short for "Mojang Mappings Merger", and it's functionality is similar to that of the CAS Merger.
@@ -86,25 +87,25 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	 * This is much faster than CASMerging, and should be used when preferable. MojMerge provided jars are also
 	 * automatically "split" in order to improve remapping performance.
 	 */
-	default Object mojmerged(String version, SideAnnotationHandler handler, MappingTarget clientMappings) {
+	default Set<Object> mojmerged(String version, SideAnnotationHandler handler, MappingTarget clientMappings) {
 		return this.mojmerged(version, handler, true, clientMappings);
 	}
 
-	Object mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget clientMappings);
+	Set<Object> mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget clientMappings);
 
-	default Object mojmerged(String version, boolean split, MappingTarget clientMappings) {
+	default Set<Object> mojmerged(String version, boolean split, MappingTarget clientMappings) {
 		return this.mojmerged(version, SideAnnotationHandler.FABRIC, split, clientMappings);
 	}
 
-	default Object mojmerged(String version, MappingTarget clientMappings) {
+	default Set<Object> mojmerged(String version, MappingTarget clientMappings) {
 		return this.mojmerged(version, true, clientMappings);
 	}
 
-	default Object mojmerged(String version, boolean split) {
+	default Set<Object> mojmerged(String version, boolean split) {
 		return this.mojmerged(version, SideAnnotationHandler.FABRIC, split, this.intermediary(version));
 	}
 
-	default Object mojmerged(String version) {
+	default Set<Object> mojmerged(String version) {
 		return this.mojmerged(version, true, this.intermediary(version));
 	}
 
@@ -114,11 +115,11 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	default Object libraries(String version) {
+	default Set<Object> libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
 
-	Object libraries(String version, Action<LibrariesDependency> configure);
+	Set<Object> libraries(String version, Action<LibrariesDependency> configure);
 
 	AssetsDependency assets(String version);
 

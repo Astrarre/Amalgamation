@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -42,28 +43,28 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Object client(String version, boolean split) {
+	public Set<Object> client(String version, boolean split) {
 		return this.mc(version, true, false, split);
 	}
 
 	@Override
-	public Object server(String version, boolean strip, boolean split) {
+	public Set<Object> server(String version, boolean strip, boolean split) {
 		return this.mc(version, false, strip, split);
 	}
 
-	Object mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
+	Set<Object> mc(String version, boolean isClient, boolean doStrip, boolean doSplit) {
 		return MinecraftFileHelper.getDependency(project, version, isClient, doStrip, doSplit);
 	}
 
 	@Override
-	public Object merged(String version, Action<CASMergedDependency> configurate) {
+	public Set<Object> merged(String version, Action<CASMergedDependency> configurate) {
 		CASMergedDependency dependency = new CASMergedDependency(this.project, version);
 		configurate.execute(dependency);
 		return dependency;
 	}
 
 	@Override
-	public Object mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget dependency) {
+	public Set<Object> mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget dependency) {
 		return new MojMergedDependency(this.project, version, handler, this.client(version, split), dependency);
 	}
 
@@ -88,7 +89,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Object libraries(String version, Action<LibrariesDependency> configure) {
+	public Set<Object> libraries(String version, Action<LibrariesDependency> configure) {
 		LibrariesDependency dependency = new LibrariesDependency(this.project, version);
 		configure.execute(dependency);
 		return dependency;
