@@ -32,6 +32,10 @@ public class RemapDependencyConfig extends RemapConfig {
 		return dep;
 	}
 
+	/**
+	 * add an input to be remapped
+	 * @param object the remapped version of the dependency, evaluation will trigger the whole remap to start
+	 */
 	public Object inputLocal(Object object) {
 		return this.remap(object, false);
 	}

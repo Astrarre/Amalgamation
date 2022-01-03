@@ -77,6 +77,15 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Object merged(String version, Action<CASMergedDependency> configurate);
 
+	/**
+	 * "MojMerger" is short for "Mojang Mappings Merger", and it's functionality is similar to that of the CAS Merger.
+	 * However, instead of requiring the server jar, it instead downloads the official deobfuscation mappings for the server
+	 * provided by mojang, and uses that to determine what members are present on the server.
+	 * It then uses a clientside mapping to determine what members are present on the client, this is to
+	 * avoid needing to read the entire jar first, since mappings have to be parsed later on anyways (remapping)
+	 * This is much faster than CASMerging, and should be used when preferable. MojMerge provided jars are also
+	 * automatically "split" in order to improve remapping performance.
+	 */
 	default Object mojmerged(String version, SideAnnotationHandler handler, MappingTarget clientMappings) {
 		return this.mojmerged(version, handler, true, clientMappings);
 	}
@@ -124,6 +133,4 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	void setLibrariesCache(String directory);
 
 	String librariesCache();
-
-
 }

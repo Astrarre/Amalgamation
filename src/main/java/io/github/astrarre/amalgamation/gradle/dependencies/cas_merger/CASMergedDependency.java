@@ -15,6 +15,9 @@ import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.stage.TaskTransform;
 import org.gradle.api.Project;
 
+/**
+ * client and server merge (combines client and server jars with @Environment annotations)
+ */
 public class CASMergedDependency extends ZipProcessDependency {
 	public final String version;
 	public boolean global = true, checkForServerOnly = false;
@@ -68,6 +71,7 @@ public class CASMergedDependency extends ZipProcessDependency {
 		Objects.requireNonNull(this.handler, "annotation handler was not set!");
 		this.hashDep(hasher, this.client);
 		this.hashDep(hasher, this.server);
+		this.handler.hashInputs(hasher);
 	}
 
 	@Override

@@ -27,6 +27,9 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.tasks.TaskContainer;
 
+/**
+ * Decompiles given dependencies with a configurable decompiler
+ */
 public class DecompileDependency extends CachedDependency {
 	private static int TASK_NAME_C = 0;
 	private final Map<Artifact, DecompileOutput> artifactMap = new HashMap<>();
@@ -43,6 +46,9 @@ public class DecompileDependency extends CachedDependency {
 		super(project);
 	}
 
+	/**
+	 * sets the fernflower decompiler as the decompiler to use
+	 */
 	public void fernflower(Object dependency) {
 		if(this.decompiler != null) {
 			throw new IllegalStateException("Cannot set multiple decompilers!");
@@ -59,6 +65,9 @@ public class DecompileDependency extends CachedDependency {
 		this.decompilerClasspath.add(this.of(dependency, dep));
 	}
 
+	/**
+	 * Additional bits to add to the decompiler's classpath
+	 */
 	public void decompilerClasspath(Object dependency) {
 		this.decompilerClasspath.add(dependency);
 	}
@@ -67,6 +76,9 @@ public class DecompileDependency extends CachedDependency {
 		this.decompilerClasspath.add(this.of(dependency, dep));
 	}
 
+	/**
+	 * If using fabric fernflower or any forks, you can specify the mappings to pull javadocs from here
+	 */
 	public void javadocs(Object dependency, String namespace) {
 		if(this.inputHash != null) {
 			throw new IllegalArgumentException("Cannot configure after evaluation!");
@@ -75,6 +87,9 @@ public class DecompileDependency extends CachedDependency {
 		this.javadocs.add(new GenerateSourcesTask.JavadocEntry(file, namespace));
 	}
 
+	/**
+	 * A library dependency of the inputs to the decompilation task. This is used by the compiler to enhance decompilation
+	 */
 	public void classpath(Object dep) {
 		this.classpath.add(dep);
 	}
@@ -83,10 +98,20 @@ public class DecompileDependency extends CachedDependency {
 		this.classpath.add(this.of(dep, configure));
 	}
 
+	/**
+	 * if this option is enabled, a task with the given name is created, if the task is not executed, then the dependency wont decompile anything
+	 *  but after the task has been run, the dependency will return the decompiled version.
+	 *  This, in effect, allows you to optionally decompile the inputs. If you don't want to decompile, don't run the task, if u do, then u do.
+	 */
 	public void optionalTask(String taskName) {
 		this.optionalTask = taskName;
 	}
 
+	/**
+	 * Adds a dependency to be decompiled and cached locally (root project build folder)
+	 * @return a dependency, that when evaluated triggers the decompilation of the whole task,
+	 *  this dependency however, will only represent the outputs that correspond to the given dependency
+	 */
 	public Object inputLocal(Object dep) {
 		SingleDecompileDependency dependency = new SingleDecompileDependency(dep);
 		this.inputLocal.add(dependency);
@@ -101,6 +126,11 @@ public class DecompileDependency extends CachedDependency {
 		return dependency;
 	}
 
+	/**
+	 * Adds a dependency to be decompiled and cached globally (gradle cache folder)
+	 * @return a dependency, that when evaluated triggers the decompilation of the whole task,
+	 *  this dependency however, will only represent the outputs that correspond to the given dependency
+	 */
 	public Object inputGlobal(Object dep) {
 		SingleDecompileDependency dependency = new SingleDecompileDependency(dep);
 		this.inputGlobal.add(dependency);

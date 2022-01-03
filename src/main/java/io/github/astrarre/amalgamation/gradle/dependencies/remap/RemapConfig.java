@@ -40,6 +40,7 @@ public class RemapConfig {
 	public RemapConfig(Project project) {this.project = project;}
 
 	/**
+	 * deobfuscation mappings
 	 * @param object the dependency
 	 * @param from the origin namespace
 	 * @param to the destination namespace
