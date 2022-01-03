@@ -27,7 +27,6 @@ public class ConfigurationExcluder implements MvnMetaReader.DependencyVisitor {
 			for(ResolvedDependency dependency : dependencies) {
 				var dep = new FuzzyDependent(dependency.getModuleGroup(), dependency.getModuleName());
 				toRemove.add(dep);
-				System.out.println(dep);
 			}
 
 			return toRemove;
