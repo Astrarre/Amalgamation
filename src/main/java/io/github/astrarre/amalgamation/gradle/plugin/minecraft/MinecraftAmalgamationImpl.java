@@ -88,24 +88,6 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
-	public Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException {
-		AccessWidenerDependency dependency = new AccessWidenerDependency(this.project, depNotation);
-		configure.execute(dependency);
-		return dependency;
-	}
-
-
-	@Override
-	public MappingTarget mappings(Object depNotation, String from, String to) {
-		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation), from, to);
-	}
-
-	@Override
-	public MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config) {
-		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation, config), from, to);
-	}
-
-	@Override
 	public Object libraries(String version, Action<LibrariesDependency> configure) {
 		LibrariesDependency dependency = new LibrariesDependency(this.project, version);
 		configure.execute(dependency);
@@ -120,13 +102,6 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	@Override
 	public String natives(String version) {
 		return new NativesDependency(this.project, version).getNativesDirectory();
-	}
-
-	@Override
-	public Object map(Action<RemapDependencyConfig> mappings) throws IOException {
-		RemapDependency dependency = new RemapDependency(this.project);
-		mappings.execute(dependency.config);
-		return dependency;
 	}
 
 	@Override

@@ -21,6 +21,7 @@ package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.MigrateSourcesTask;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapAllJars;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapJar;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.RemapSourcesJar;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -56,6 +57,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 		container.add(new TypeOf<>() {}, "RemapJar", RemapJar.class);
 		container.add(new TypeOf<>() {}, "RemapSourcesJar", RemapSourcesJar.class);
 		container.add(new TypeOf<>() {}, "MigrateSourcesTask", MigrateSourcesTask.class);
+		container.add(new TypeOf<>() {}, "RemapAllJars", RemapAllJars.class);
 	}
 
 	@Override

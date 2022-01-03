@@ -105,15 +105,9 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	List<Dependency> fabricLoader(String version);
 
-	Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
-
 	default Object libraries(String version) {
         return this.libraries(version, NOTHING);
 	}
-
-	MappingTarget mappings(Object depNotation, String from, String to);
-
-	MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
 
 	Object libraries(String version, Action<LibrariesDependency> configure);
 
@@ -125,15 +119,11 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	String natives(String version);
 
 	/**
-	 * @param mappings configurate mappings
-	 * @return a list of the remapped dependencies
-	 */
-	Object map(Action<RemapDependencyConfig> mappings) throws IOException;
-
-	/**
 	 * defaults to the minecraft libraries directory, if it fails, it uses global amalgamation cache/libraries
 	 */
 	void setLibrariesCache(String directory);
 
 	String librariesCache();
+
+
 }

@@ -26,13 +26,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Iterables;
-import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
@@ -45,60 +42,64 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 
 import net.fabricmc.tinyremapper.IMappingProvider;
-import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
-import net.fabricmc.tinyremapper.extension.mixin.MixinExtension;
 
 public abstract class RemapJar extends Jar implements RemapTask {
-	final List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
-	boolean experimentalMixinRemapper = false;
-
-	public RemapJar() {
-		getUniquefier().set(1);
-	}
+	final List<RemapAllJars> groups = new ArrayList<>();
+	boolean isOutdated;
 
 	@Input
-	public abstract Property<Integer> getUniquefier();
+	public abstract Property<Boolean> getUseExperimentalMixinRemapper();
 
-	public void addResourceRemapper(OutputConsumerPath.ResourceRemapper remapper) {
-		this.remappers.add(remapper);
-		getUniquefier().set(getUniquefier().get() * 3);
+	@Input
+	protected abstract Property<String> getAccessWidenerDestinationNamespace();
+
+	@Input
+	protected abstract Property<Boolean> getIsAccessWidenerRemappingEnabled();
+
+	public RemapJar() {
+		this.getUseExperimentalMixinRemapper().convention(false).finalizeValueOnRead();
+		this.getAccessWidenerDestinationNamespace().convention("autodetect").finalizeValueOnRead();
+		this.getIsAccessWidenerRemappingEnabled().convention(false).finalizeValueOnRead();
+	}
+
+	public void useExperimentalMixinRemapper() {
+		this.getUseExperimentalMixinRemapper().set(true);
 	}
 
 	public void remapAw() {
-		this.remappers.add(new AwResourceRemapper(() -> this.getMappings().get().get(0).to));
-		getUniquefier().set(getUniquefier().get() * 5);
+		this.getIsAccessWidenerRemappingEnabled().set(true);
 	}
 
 	public void remapAw(String destNamespace) {
-		this.remappers.add(new AwResourceRemapper(() -> destNamespace));
-		getUniquefier().set(getUniquefier().get() * 7);
-	}
-
-	public void enableExperimentalMixinRemapper() {
-		getUniquefier().set(getUniquefier().get() * 9);
-		experimentalMixinRemapper = true;
-		remappers.add(new OutputConsumerPath.ResourceRemapper() {
-			@Override
-			public boolean canTransform(TinyRemapper remapper, Path relativePath) {
-				return relativePath.toString().endsWith(".mixins.json");
-			}
-
-			@Override
-			public void transform(Path destinationDirectory, Path relativePath, InputStream input, TinyRemapper remapper) throws IOException {
-				String content = Files.readString(relativePath);
-				Files.writeString(destinationDirectory.resolve(relativePath), content.replaceFirst("\\{", "{\"refmap\": \"work/empty.refmap.json\","));
-			}
-		});
+		this.getIsAccessWidenerRemappingEnabled().set(true);
+		this.getAccessWidenerDestinationNamespace().set(destNamespace);
 	}
 
 	public void remap() throws IOException {
+		if(!this.groups.isEmpty()) {
+			isOutdated = true;
+			return;
+		}
+
 		FileCollection classpath = this.getClasspath().get();
 		IMappingProvider from = Mappings.from(this.readMappings());
 		TinyRemapper.Builder builder = TinyRemapper.newRemapper().withMappings(from);
-		if(experimentalMixinRemapper) {
+		List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
+
+		if(this.getIsAccessWidenerRemappingEnabled().get()) {
+			String namespace = this.getAccessWidenerDestinationNamespace().get();
+			if(namespace.equals("autodetect")) {
+				namespace = Iterables.getOnlyElement(this.getMappings().get().stream().map(MappingEntry::getTo).distinct().toList());
+			}
+			String finalNamespace = namespace;
+			remappers.add(new AwResourceRemapper(() -> finalNamespace));
+		}
+
+		if(this.getUseExperimentalMixinRemapper().get()) {
 			builder.extension(new MixinExtensionReborn(this.getLogger()));
+			remappers.add(new MixinConfigRefmapAppender());
 		}
 
 		TinyRemapper remapper = builder
@@ -116,17 +117,21 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
 		try(OutputConsumerPath ocp = new OutputConsumerPath.Builder(current).build()) {
-			if(experimentalMixinRemapper) {
-				try(FileSystem system = Jimfs.newFileSystem()) {
-					Path path = system.getPath("empty.refmap.json");
-					Files.writeString(path, "{\"mappings\": {},\"data\":{\"named:intermediary\":{}}}");
-					ocp.addNonClassFiles(Iterables.getFirst(system.getRootDirectories(), null));
-				}
+			if(this.getUseExperimentalMixinRemapper().get()) {
+				addEmptyRefmap(ocp);
 			}
-			ocp.addNonClassFiles(current, remapper, this.remappers);
+			ocp.addNonClassFiles(current, remapper, remappers);
 			remapper.apply(ocp);
 		} finally {
 			remapper.finish();
+		}
+	}
+
+	static void addEmptyRefmap(OutputConsumerPath ocp) throws IOException {
+		try(FileSystem system = Jimfs.newFileSystem()) {
+			Path path = system.getPath("empty.refmap.json");
+			Files.writeString(path, "{\"mappings\": {},\"data\":{\"named:intermediary\":{}}}");
+			ocp.addNonClassFiles(Iterables.getFirst(system.getRootDirectories(), null));
 		}
 	}
 
@@ -146,5 +151,18 @@ public abstract class RemapJar extends Jar implements RemapTask {
 	@Internal
 	protected Path getCurrent() {
 		return this.getArchiveFile().get().getAsFile().toPath();
+	}
+
+	public static class MixinConfigRefmapAppender implements OutputConsumerPath.ResourceRemapper {
+		@Override
+		public boolean canTransform(TinyRemapper remapper, Path relativePath) {
+			return relativePath.toString().endsWith(".mixins.json");
+		}
+
+		@Override
+		public void transform(Path destinationDirectory, Path relativePath, InputStream input, TinyRemapper remapper) throws IOException {
+			String content = Files.readString(relativePath);
+			Files.writeString(destinationDirectory.resolve(relativePath), content.replaceFirst("\\{", "{\"refmap\": \"work/empty.refmap.json\","));
+		}
 	}
 }

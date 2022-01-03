@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
@@ -30,6 +31,7 @@ public class ConfigIdea {
 		module.setInheritOutputDirs(false);
 
 		project.getPlugins().withId("java", $ -> {
+			// todo idk
 			for(Project allproject : project.getAllprojects()) {
 				configureOutput(allproject, "compileJava", module::setOutputDir);
 				configureOutput(allproject, "compileTestJava", module::setTestOutputDir);

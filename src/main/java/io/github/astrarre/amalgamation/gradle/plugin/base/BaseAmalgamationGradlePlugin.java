@@ -55,26 +55,39 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 		}
 
 		this.registerProvider(target);
-		if(target == target.getRootProject()) {
-			StartParameter parameter = target.getGradle().getStartParameter();
-			refreshDependencies = parameter.isRefreshDependencies();
-			if(refreshDependencies) {
-				refreshAmalgamationCaches = true;
-			} else {
-				refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
+
+		StartParameter parameter = target.getGradle().getStartParameter();
+		refreshDependencies = parameter.isRefreshDependencies();
+		if(refreshDependencies) {
+			refreshAmalgamationCaches = true;
+		} else {
+			refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
+		}
+
+		if(refreshAmalgamationCaches) {
+			target.getLogger().warn("Refresh Amalgamation Caches Enabled: Build times may suffer.");
+		}
+		offlineMode = parameter.isOffline();
+
+		// todo detect if amalg really is applied on root
+		Project gcd = target;
+		Project root = target.getRootProject();
+		if(this.containsAmalg(root)) {
+			gcd = root;
+		} else {
+			// check if parents contains amalg
+			Project project = target, last = null;
+			while((project = project.getParent()) != null) {
+				if(this.containsAmalg(project)) {
+					last = project;
+				}
 			}
-
-			if(refreshAmalgamationCaches) {
-				target.getLogger().warn("Refresh Amalgamation Caches Enabled: Build times may suffer.");
+			if(last != null) {
+				gcd = last;
 			}
-			offlineMode = parameter.isOffline();
+		}
 
-
-			// target.getGradle().buildFinished(result -> {});
-
-			// add idea extensions
-			//target.getPlugins().apply("org.jetbrains.gradle.plugin.idea-ext");
-
+		if(gcd == target) {
 			var temp = new Object() {
 				Plugin<Project> plugin;
 			};
@@ -85,6 +98,17 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 			});
 			listenFor(target, "eclipse", eclipse -> ConfigureEclipse.configure(target));
 		}
+	}
+
+	private boolean containsAmalg(Project root) {
+		boolean contains = false;
+		for(Plugin plugin : root.getPlugins()) {
+			if(plugin instanceof BaseAmalgamationGradlePlugin) {
+				contains = true;
+				break;
+			}
+		}
+		return contains;
 	}
 
 	public static void listenFor(Project target, String id, Consumer<Plugin<Project>> onFound) {

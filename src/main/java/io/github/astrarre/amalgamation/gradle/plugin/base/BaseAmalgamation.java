@@ -20,11 +20,15 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.IdeaExtension;
 import org.gradle.api.Action;
@@ -77,4 +81,16 @@ public interface BaseAmalgamation {
     EclipseExtension eclipse() throws IllegalStateException;
 
     Object decompile(Action<DecompileDependency> configure);
+
+    Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException;
+
+    MappingTarget mappings(Object depNotation, String from, String to);
+
+    MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config);
+
+    /**
+     * @param mappings configurate mappings
+     * @return a list of the remapped dependencies
+     */
+    Object map(Action<RemapDependencyConfig> mappings) throws IOException;
 }

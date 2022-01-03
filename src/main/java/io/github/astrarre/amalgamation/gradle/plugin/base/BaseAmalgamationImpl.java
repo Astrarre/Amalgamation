@@ -1,13 +1,18 @@
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Supplier;
 
 import groovy.lang.Closure;
+import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompileDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.EclipseExtension;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
@@ -112,6 +117,30 @@ public class BaseAmalgamationImpl implements BaseAmalgamation {
 		DecompileDependency dependency1 = new DecompileDependency(this.project);
 		configure.execute(dependency1);
 		return dependency1;
+	}
+
+	@Override
+	public Object accessWidener(Object depNotation, Action<AccessWidenerDependency> configure) throws IOException {
+		AccessWidenerDependency dependency = new AccessWidenerDependency(this.project, depNotation);
+		configure.execute(dependency);
+		return dependency;
+	}
+
+	@Override
+	public MappingTarget mappings(Object depNotation, String from, String to) {
+		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation), from, to);
+	}
+
+	@Override
+	public MappingTarget mappings(Object depNotation, String from, String to, Closure<ModuleDependency> config) {
+		return new MappingTarget(this.project, this.project.getDependencies().create(depNotation, config), from, to);
+	}
+
+	@Override
+	public Object map(Action<RemapDependencyConfig> mappings) throws IOException {
+		RemapDependency dependency = new RemapDependency(this.project);
+		mappings.execute(dependency.config);
+		return dependency;
 	}
 
 	private Provider<FileCollection> sources0(Dependency dependency) {

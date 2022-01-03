@@ -138,13 +138,27 @@ task stripFabric_1_16(type: StripJar) {
 }
 */
 
+abstract class Test extends DefaultTask {
+    @Input
+    abstract Property<Task> getTask()
+
+    @TaskAction
+    void run() {
+        System.out.println(getTask().get())
+    }
+}
+
 task productionJar(type: RemapJar) {
     with jar
-    archivesBaseName = 'fabric'
+    classifier = 'fabric'
     classpath = configurations.compileClasspath
     remapAw()
-    enableExperimentalMixinRemapper()
+    useExperimentalMixinRemapper()
     mappings(mergedMappings, 'named', 'intermediary')
+}
+
+task remapAll(type: RemapAllJars) {
+    addTask(productionJar)
 }
 
 task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {

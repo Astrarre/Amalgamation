@@ -23,8 +23,8 @@ import org.gradle.api.tasks.Nested;
 
 public interface RemapTask extends Task {
 	class MappingEntry {
-		public String from, to;
-		public File mappings;
+		String from, to;
+		File mappings;
 
 		@Input
 		public String getFrom() {
@@ -40,6 +40,7 @@ public interface RemapTask extends Task {
 		public File getMappings() {
 			return this.mappings;
 		}
+
 	}
 
 	@InputFiles

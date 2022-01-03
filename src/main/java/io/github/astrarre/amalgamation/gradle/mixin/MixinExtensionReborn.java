@@ -57,6 +57,10 @@ public class MixinExtensionReborn implements TinyRemapper.Extension {
 			} finally {
 				lock.unlock();
 			}
+			if(state == null) {
+				System.out.println(cls.getName());
+				return next;
+			}
 			MixinClass type = state.map.get(cls.getName());
 			if(type.isMixin) {
 				return new SecondPassMixinVisitor(next, cls, type, this.logger);
