@@ -168,6 +168,10 @@ task sourcesJar(type: RemapSourcesJar, dependsOn: classes) {
     mappings(mergedMappings, 'named', 'intermediary')
 }
 
+task remapAllSources(type: RemapAllSourcesJars) {
+    addTask(sourcesJar)
+}
+
 task migrateMappings(type: MigrateSourcesTask) {
     inputDir = "${project.projectDir}/src/main/java"
     outputDir = "${project.projectDir}/src/main/remapped"

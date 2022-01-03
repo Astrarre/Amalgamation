@@ -2,90 +2,28 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.zipio.impl.util.U;
-import org.gradle.api.DefaultTask;
-import org.gradle.api.Task;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.tasks.properties.PropertyVisitor;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.TaskAction;
 
 import net.fabricmc.tinyremapper.InputTag;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
-public class RemapAllJars extends DefaultTask {
-	final List<RemapJar> remapJars = new ArrayList<>();
-
-	public RemapAllJars() {
-		// this should be false for reasons
-		this.getOutputs().cacheIf(t -> false);
-	}
-
-	public void addTask(RemapJar jar) {
-		jar.finalizedBy(this);
-		this.dependsOn(jar);
-		this.remapJars.add(jar);
-		jar.groups.add(this);
-	}
-
-	@TaskAction
-	public void doRemapAll() {
-		try {
-			this.remapAll();
-		} catch(Throwable t) {
-			this.getLogger().error("Detected error in RemapAll task, deleting all outputs to ensure cache validity");
-			List<IOException> exceptions = new ArrayList<>();
-			for(RemapJar jar : this.remapJars) {
-				if(jar.isOutdated) {
-					for(File file : jar.getOutputs().getFiles()) {
-						try {
-							Files.delete(file.toPath());
-						} catch(IOException e) {
-							exceptions.add(e);
-						}
-					}
-				}
-			}
-			for(IOException exception : exceptions) {
-				exception.printStackTrace();
-			}
-			throw U.rethrow(t);
-		}
-	}
-
-
+public class RemapAllJars extends AbstractRemapAllTask<RemapJar> {
+	@Override
 	public void remapAll() throws IOException {
-		boolean hasJob = false;
-		for(RemapJar jar : remapJars) {
-			if(jar.isOutdated) {
-				hasJob = true;
-			}
-		}
-		if(!hasJob) {
-			return;
-		}
-
 		// validate common state
 		boolean isAccessWidenerEnabled = this.only(
 				RemapJar::getIsAccessWidenerRemappingEnabled,
@@ -104,21 +42,7 @@ public class RemapAllJars extends DefaultTask {
 		TinyRemapper.Builder builder = TinyRemapper.newRemapper();
 
 		// read mappings
-		record MappingEntry(File file, String from, String to) {}
-		Set<MappingEntry> entries = new LinkedHashSet<>();
-		for(RemapJar jar : remapJars) {
-			for(RemapTask.MappingEntry entry : jar.getMappings().get()) {
-				entries.add(new MappingEntry(
-						entry.mappings,
-						entry.from,
-						entry.to
-				));
-			}
-		}
-		List<Mappings.Namespaced> mappings = new ArrayList<>();
-		for(MappingEntry entry : entries) {
-			mappings.add(Mappings.from(entry.file.toPath(), entry.from, entry.to));
-		}
+		List<Mappings.Namespaced> mappings = this.readAllMappings();
 		builder.withMappings(Mappings.from(mappings));
 
 		List<OutputConsumerPath.ResourceRemapper> remappers = new ArrayList<>();
@@ -133,15 +57,9 @@ public class RemapAllJars extends DefaultTask {
 		record RemapJarPair(RemapJar jar, InputTag tag) {}
 		List<RemapJarPair> pairs = new ArrayList<>();
 		List<CompletableFuture<?>> futures = new ArrayList<>();
+		Set<Path> classpath = new LinkedHashSet<>();
 		for(RemapJar jar : this.remapJars) {
-			FileCollection inputs = jar.getInputs().getFiles();
-			FileCollection outputs = jar.getOutputs().getFiles();
-			for(File file : outputs) {
-				if(inputs.contains(file)) {
-					throw new UnsupportedOperationException(jar + " output overwrites input file! " + file);
-				}
-			}
-
+			this.ensureCleanInput(jar);
 			if(jar.isOutdated) { // use as classpath
 				InputTag input = remapper.createInputTag();
 				pairs.add(new RemapJarPair(jar, input));
@@ -151,14 +69,16 @@ public class RemapAllJars extends DefaultTask {
 				}
 			} else {
 				for(File file : jar.getInputs().getFiles()) {
-					futures.add(remapper.readClassPathAsync(file.toPath()));
+					classpath.add(file.toPath().toRealPath());
 				}
 			}
 
 			for(File file : jar.getClasspath().get()) {
-				futures.add(remapper.readClassPathAsync(file.toPath()));
+				classpath.add(file.toPath().toRealPath());
 			}
 		}
+
+		futures.add(remapper.readClassPathAsync(classpath.toArray(Path[]::new)));
 
 		CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 

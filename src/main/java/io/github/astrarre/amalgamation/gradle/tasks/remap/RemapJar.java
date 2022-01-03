@@ -45,10 +45,7 @@ import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
-public abstract class RemapJar extends Jar implements RemapTask {
-	final List<RemapAllJars> groups = new ArrayList<>();
-	boolean isOutdated;
-
+public abstract class RemapJar extends AbstractRemapJarTask<RemapAllJars> {
 	@Input
 	public abstract Property<Boolean> getUseExperimentalMixinRemapper();
 
@@ -77,12 +74,8 @@ public abstract class RemapJar extends Jar implements RemapTask {
 		this.getAccessWidenerDestinationNamespace().set(destNamespace);
 	}
 
+	@Override
 	public void remap() throws IOException {
-		if(!this.groups.isEmpty()) {
-			isOutdated = true;
-			return;
-		}
-
 		FileCollection classpath = this.getClasspath().get();
 		IMappingProvider from = Mappings.from(this.readMappings());
 		TinyRemapper.Builder builder = TinyRemapper.newRemapper().withMappings(from);
@@ -133,24 +126,6 @@ public abstract class RemapJar extends Jar implements RemapTask {
 			Files.writeString(path, "{\"mappings\": {},\"data\":{\"named:intermediary\":{}}}");
 			ocp.addNonClassFiles(Iterables.getFirst(system.getRootDirectories(), null));
 		}
-	}
-
-	/**
-	 * megamind moment
-	 */
-	@Override
-	protected void copy() {
-		super.copy();
-		try {
-			this.remap();
-		} catch(IOException e) {
-			throw U.rethrow(e);
-		}
-	}
-
-	@Internal
-	protected Path getCurrent() {
-		return this.getArchiveFile().get().getAsFile().toPath();
 	}
 
 	public static class MixinConfigRefmapAppender implements OutputConsumerPath.ResourceRemapper {
