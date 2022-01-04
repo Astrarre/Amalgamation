@@ -29,9 +29,7 @@ plugins {
 repositories {
     mavenLocal()
     mavenCentral()
-    gradlePluginPortal()
     maven { url 'https://maven.fabricmc.net/' }
-    maven { url 'https://files.minecraftforge.net/maven/' }
     maven {
         name = "HalfOf2"
         url = uri("https://storage.googleapis.com/devan-maven/")
@@ -45,25 +43,13 @@ sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
 
 def mc_vers = "1.17.1"
-def mergedMappings = dependencies.create('net.fabricmc:yarn:1.17.1+build.61:mergedv2')
-
 configurations {
     aaaaa {
     }
     implementation.extendsFrom(aaaaa)
 }
 dependencies {
-
-    //aaaaa ag.mojmerged(mc_vers, mergedMappings)
-
-    //aaaaa intermediaryMinecraft
-
-    /*aaaaa ag.accessWidener("com.google.code.gson:gson:1.1") {
-        accessWidener(files("$projectDir/src/main/resources/cope.aw"))
-    }*/
-
-    def mc
-    //def fapi
+    /*def mc
     //def reiImpl
     def reiApi
     ag.map {
@@ -76,7 +62,10 @@ dependencies {
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
     aaaaa mc
-    aaaaa reiApi
+    aaaaa reiApi*/
+    implementation(ag.gradleFriendlyLibraries("1.17.1")) {
+        exclude group: 'your_mom'
+    }
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
@@ -86,25 +75,11 @@ dependencies {
     }
     aaaaa libs*/
 
-
-    //aaaaa "com.google.code.gson:gson:1.1"*/
-    //aaaaa ag.libraries(mc_vers)
-
-    //aaaaa "com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
-    //aaaaa "com.google.code.gson:gson:2.8.6_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA="
-   // aaaaa 'com.google.code.gson:gson:1.1_l55CbtZK7l1UxJqVkggiVx0o1iFcXZEp0vsdXZGkDdA='
-
-    //aaaaa 'io.github.astrarre.amalgamation:transformed-notation:0.0.0'
-    //aaaaa 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3'
-
-    //implementation('com.google.code.gson:gson:1.1')
-
-    //implementation("net.fabricmc.fabric-api:fabric-api:0.41.0+1.17")
-
     //aaaaa ag.fabricLoader("0.11.7")
     //aaaaa ag.libraries(mc_vers)
 }
 
+def mergedMappings = dependencies.create('net.fabricmc:yarn:1.17.1+build.61:mergedv2')
 task aaaaa(type: JavaExec) {
     group = null
     description = "Test Diff:tm:"

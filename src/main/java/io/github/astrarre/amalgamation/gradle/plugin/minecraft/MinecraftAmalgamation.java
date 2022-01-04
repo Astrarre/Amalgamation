@@ -19,22 +19,17 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.minecraft;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import groovy.lang.Closure;
-import io.github.astrarre.amalgamation.gradle.dependencies.AccessWidenerDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.AssetsDependency;
-import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.LibrariesDependency;
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.CASMergedDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.RemapDependencyConfig;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamation;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ModuleDependency;
 
 // todo support looms caches
 
@@ -48,7 +43,7 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 		return NOTHING;
 	}
 
-	default Object client(String version) {
+	default Set<Object> client(String version) {
 		return this.client(version, true);
 	}
 
@@ -120,6 +115,8 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 	}
 
 	Set<Object> libraries(String version, Action<LibrariesDependency> configure);
+
+	Object gradleFriendlyLibraries(String version);
 
 	AssetsDependency assets(String version);
 

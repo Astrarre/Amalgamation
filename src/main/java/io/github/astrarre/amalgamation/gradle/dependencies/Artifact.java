@@ -1,5 +1,6 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -207,6 +208,7 @@ public abstract class Artifact extends OutputTag {
 		}
 
 		boolean isFriendly;
+
 		@Override
 		public void makeGradleFriendly() {
 			if(isFriendly) {

@@ -206,4 +206,14 @@ public class AmalgIO {
 
 		B runUnsafe(A a) throws Throwable;
 	}
+
+	public static Path changeExtension(Path path, String ext) {
+		String name = path.getFileName().toString();
+		int index = name.lastIndexOf('.');
+		if(index == -1) {
+			return path.getParent().resolve(name + "." + ext);
+		} else {
+			return path.getParent().resolve(name.substring(0, index+1) + ext);
+		}
+	}
 }
