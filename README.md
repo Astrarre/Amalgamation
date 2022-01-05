@@ -198,6 +198,11 @@ implementation ag.url("https://myjar.com/jar_jar_binks.jar")
 ```groovy
 // gets all of minecraft's dependencies for that version
 implementation ag.libraries("1.17.1")
+
+implementation(ag.gradleFriendlyLibraries("1.17.1")) { // useful for dependency replacement, though sources may not attach
+    exclude group: "com.mojang"
+}
+
 task runClient(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
     main = "net.fabricmc.loader.launch.knot.KnotClient"
