@@ -1,5 +1,5 @@
 # Amalgamation
-A single jar that you can compile against that contains the code of Forge, CraftBukkit and Vanilla
+A single jar that you can compile against that contains the code of Forge, CraftBukkit and Vanilla (one day)
 
 ## Remapping / Deobfuscation
 This allows for the deobfuscation of artifacts using mappings files. It uses a fork of fabric's
