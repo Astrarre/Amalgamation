@@ -1,6 +1,10 @@
 # Amalgamation
 A single jar that you can compile against that contains the code of Forge, CraftBukkit and Vanilla (one day)
 
+# [For Fabric Mod Developers](https://github.com/Astrarre/Amalgamation-Fabric-Example-Mod)
+# [For Forge Toolchain Enthusiasts (Discord)](https://discord.gg/2SmAwnuZuf)
+# For everyone else, keep reading I guess
+
 ## Remapping / Deobfuscation
 This allows for the deobfuscation of artifacts using mappings files. It uses a fork of fabric's
 tiny-remapper to remap class files, the trieHarder remapper to map sources
