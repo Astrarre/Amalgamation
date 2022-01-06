@@ -134,25 +134,6 @@ implementation decompiledDependencyA
 compileOnly decompiledDependencyB
 ```
 
-## MojMerger
-"MojMerger" is short for "Mojang Mappings Merger", and it's functionality is similar to that of the CAS Merger.
-However, instead of requiring the server jar, it instead downloads the official deobfuscation mappings for the server
-provided by mojang, and uses that to determine what members are present on the server.
-It then uses a clientside mapping to determine what members are present on the client, this is to
-avoid needing to read the entire jar first, since mappings have to be parsed later on anyways (remapping)
-This is much faster than CASMerging, and should be used when preferable. MojMerge provided jars are also
-automatically "split" in order to improve remapping performance.
-
-```groovy
-import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler
-implementation ag.mojmerged("1.17.1") // uses fabricmc annotations and fabricmc intermediary mappings
-implementation ag.mojmerged(
-        "1.7.10",
-        new SideAnnotationHandler() {/*...*/},
-        mappings("org.example:customIntermediary:xyz", "notch", "intermediate")
-)
-```
-
 ## IDE configuration
 intellij's idea-ext plugin is excruciatingly slow and doesn't seem to work, so amalgamation provides
 run configurations generation. At the moment only intellij run configurations are implemented, since
@@ -190,12 +171,6 @@ then u can just add it to your  fabric.mod.json and fabric-loader will apply the
 implementation(shade(ag.accessWidener("org.example:myDependency:xyz") {
     accessWidener("myAccessWidener.aw")
 }))
-```
-
-## URL
-for some reason gradle doesn't allow you to have a dependency on a url, but amalgamation does
-```groovy
-implementation ag.url("https://myjar.com/jar_jar_binks.jar")
 ```
 
 ## Other Minecraft Misc
@@ -240,4 +215,30 @@ implementation ag.merged("1.17.1") { // the version becomes the maven artifact's
 ```
 It should be noted that this will also merge any dependencies into the same jar,
 so if u wish to only merge the direct dependencies, you should disable transitiveness
+
+## URL
+for some reason gradle doesn't allow you to have a dependency on a url, but amalgamation does
+```groovy
+implementation ag.url("https://myjar.com/jar_jar_binks.jar")
+```
+
+
+## MojMerger
+"MojMerger" is short for "Mojang Mappings Merger", and it's functionality is similar to that of the CAS Merger.
+However, instead of requiring the server jar, it instead downloads the official deobfuscation mappings for the server
+provided by mojang, and uses that to determine what members are present on the server.
+It then uses a clientside mapping to determine what members are present on the client, this is to
+avoid needing to read the entire jar first, since mappings have to be parsed later on anyways (remapping)
+This is much faster than CASMerging, and should be used when preferable. MojMerge provided jars are also
+automatically "split" in order to improve remapping performance.
+
+```groovy
+import io.github.astrarre.amalgamation.gradle.dependencies.cas_merger.SideAnnotationHandler
+implementation ag.mojmerged("1.17.1") // uses fabricmc annotations and fabricmc intermediary mappings
+implementation ag.mojmerged(
+        "1.7.10",
+        new SideAnnotationHandler() {/*...*/},
+        mappings("org.example:customIntermediary:xyz", "notch", "intermediate")
+)
+```
 
