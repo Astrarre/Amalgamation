@@ -13,16 +13,22 @@ import org.gradle.api.tasks.JavaExec;
 public class IdeaExtension {
 	List<TaskConverter<?>> converters = new ArrayList<>();
 
-	public void java(JavaExec exec, Action<JavaExecIdea> config) {
+	public void java(JavaExec exec, Action<JavaExecIdea> config) throws IOException {
 		JavaExecIdea idea = new JavaExecIdea(exec);
 		this.converters.add(idea);
 		config.execute(idea);
+		if(Boolean.getBoolean("idea.sync.active")) {
+			idea.emit(true);
+		}
 	}
 
-	public void exec(Task exec, Action<TaskIdea> config) {
+	public void exec(Task exec, Action<TaskIdea> config) throws IOException {
 		TaskIdea idea = new TaskIdea(exec);
 		this.converters.add(idea);
 		config.execute(idea);
+		if(Boolean.getBoolean("idea.sync.active")) {
+			idea.emit(true);
+		}
 	}
 
 	void configureQueue(boolean isImmediate) {

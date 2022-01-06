@@ -88,6 +88,8 @@ public interface MinecraftAmalgamation extends BaseAmalgamation {
 
 	Set<Object> mojmerged(String version, SideAnnotationHandler handler, boolean split, MappingTarget clientMappings);
 
+	MappingTarget mojmap(String version, boolean isClient);
+
 	default Set<Object> mojmerged(String version, boolean split, MappingTarget clientMappings) {
 		return this.mojmerged(version, SideAnnotationHandler.FABRIC, split, clientMappings);
 	}

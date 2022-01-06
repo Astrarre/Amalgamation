@@ -77,6 +77,11 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 	}
 
 	@Override
+	public MappingTarget mojmap(String version, boolean isClient) {
+		return MojMergedDependency.mojmap(this.project, version, isClient);
+	}
+
+	@Override
 	public List<Dependency> fabricLoader(String version) {
 		List<Dependency> dependencies = new ArrayList<>();
 		DependencyHandler handler = this.project.getDependencies();
