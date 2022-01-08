@@ -49,22 +49,22 @@ configurations {
     implementation.extendsFrom(aaaaa)
 }
 dependencies {
-    /*def mc
+    def mc
     //def reiImpl
-    def reiApi
+    //def reiApi
     ag.map {
         mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
         mc = inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
         })
-        reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
+        //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
     aaaaa mc
-    aaaaa reiApi*/
-    aaaaa ag.mojmerged(mc_vers)
-    //implementation ag.libraries("1.17.1")
+    //aaaaa reiApi
+
+    implementation ag.libraries("1.17.1")
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
