@@ -10,7 +10,7 @@ public enum AmalgDirs {
 	/**
 	 * should not be used for artifacts
 	 */
-	PROJECT(new LazyFunction<>(p -> p.getBuildDir().toPath().resolve("amalgamation"))),
+	PROJECT(p -> p.getBuildDir().toPath().resolve("amalgamation")),
 	ROOT_PROJECT(p -> PROJECT.root(p.getRootProject())),
 	GLOBAL(new LazyFunction<>(p -> p.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation")));
 
@@ -34,5 +34,13 @@ public enum AmalgDirs {
 
 	public Path decomps(Project project) {
 		return this.root(project).resolve("decompiles");
+	}
+
+	public Path unpack(Project project) {
+		return this.root(project).resolve("unpack");
+	}
+
+	public static AmalgDirs of(boolean global) {
+		return global ? GLOBAL : ROOT_PROJECT;
 	}
 }

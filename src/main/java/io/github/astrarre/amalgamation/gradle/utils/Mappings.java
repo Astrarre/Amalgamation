@@ -74,6 +74,9 @@ public class Mappings {
 						if(deobfM != null) {
 							IMappingProvider.Member m = new IMappingProvider.Member(name, method.getName(from), method.getDesc(from));
 							out.acceptMethod(m, deobfM);
+							for(MappingTree.MethodArgMapping arg : method.getArgs()) {
+								out.acceptMethodArg(m, arg.getLvIndex(), arg.getDstName(to));
+							}
 						}
 					}
 

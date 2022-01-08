@@ -63,9 +63,7 @@ dependencies {
     }
     aaaaa mc
     aaaaa reiApi*/
-    implementation(ag.gradleFriendlyLibraries("1.17.1")) {
-        exclude group: 'your_mom'
-    }
+    implementation ag.libraries("1.17.1")
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
