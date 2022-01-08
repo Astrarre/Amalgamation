@@ -76,16 +76,14 @@ public class MetaInfFixerImpl implements AmalgRemapper {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			manifest.write(baos);
 			entry.writeToOutput(ByteBuffer.wrap(baos.toByteArray()));
-			return true;
 		} else if(names.length == 3 && names[1].equals("services")) {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			try(BufferedReader reader = new BufferedReader(new InputStreamReader(bis.get())); BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(baos))) {
 				fixServiceDecl(reader, writer, remapper);
 			}
 			entry.writeToOutput(ByteBuffer.wrap(baos.toByteArray()));
-			return true;
 		}
-		return false;
+		return true;
 	}
 
 	private static String mapFullyQualifiedClassName(String name, Remapper tr) {
@@ -98,8 +96,8 @@ public class MetaInfFixerImpl implements AmalgRemapper {
 		String[] names;
 		return relativePath.startsWith("META-INF")
 				&& (shouldStripForFixMeta(relativePath)
-				    || relativePath.equals("MANIFEST.MF")
-				    || (names = names(relativePath)).length == 3 && names[1].equals("services"));
+				    || (names = names(relativePath)).length == 2 && names[1].equals("MANIFEST.MF")
+				    || names.length == 3 && names[1].equals("services"));
 	}
 
 	private static boolean shouldStripForFixMeta(String file) {
