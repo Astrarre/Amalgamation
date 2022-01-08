@@ -104,7 +104,7 @@ public class MojMergedDependency extends ZipProcessDependency {
 		var url = forVers(project, version, isClient);
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
 		dependency.output = path;
-		return new MappingTarget(project, dependency, "source", "target");
+		return new MappingTarget(project, dependency, "target", "source");
 	}
 
 	public static LauncherMeta.HashedURL forVers(Project project, String version, boolean isClient) {

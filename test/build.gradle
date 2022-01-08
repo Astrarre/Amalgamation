@@ -63,7 +63,8 @@ dependencies {
     }
     aaaaa mc
     aaaaa reiApi*/
-    implementation ag.libraries("1.17.1")
+    aaaaa ag.mojmerged(mc_vers)
+    //implementation ag.libraries("1.17.1")
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")
