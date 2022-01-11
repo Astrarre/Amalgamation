@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -19,6 +20,13 @@ public interface UnsafeIterable<T> extends Iterable<T> {
 			return Collections::emptyIterator;
 		}
 		return () -> Files.walk(path).filter(Files::isRegularFile).iterator();
+	}
+
+	static UnsafeIterable<Path> walkAll(Path path) {
+		if(!Files.exists(path)) {
+			return Collections::emptyIterator;
+		}
+		return () -> Files.walk(path).sorted(Comparator.reverseOrder()).iterator();
 	}
 
 	static UnsafeIterable<Path> walkFiles(Iterable<Path> paths) {

@@ -215,6 +215,11 @@ public abstract class Artifact extends OutputTag {
 				return;
 			}
 			isFriendly = true;
+			if(!Files.exists(this.path)) {
+				this.project.getLogger().warn("[Amalgamation] artifact's " + this.group + ":" + this.name + ":" + this.version + "'s file does not exist! " +
+				                              "This is likely because a file was deleted without deleting it's cache file, " +
+				                              "please delete the build/amalgamation cache in the root project! " + this.path);
+			}
 			String name = this.path.getFileName().toString();
 			int ext = name.lastIndexOf('.');
 			Path resolved = this.path.getParent().resolve(name.substring(0, ext) + ".pom");

@@ -39,7 +39,7 @@ public class RemapAllSourcesJars extends AbstractRemapAllTask<RemapSourcesJar> {
 
 			if(jar.isOutdated) {
 				// add outputs (since RemapSourcesJar is in-place)
-				Path directory = temp.resolve("jar" + index);
+				Path directory = temp.resolve("jar" + index++);
 				File file = jar.getOutputs().getFiles().getSingleFile();
 				Path zip = file.toPath();
 				RemapSourcesJar.dumpZip(zip, directory);

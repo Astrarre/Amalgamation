@@ -57,10 +57,9 @@ public abstract class RemapSourcesJar extends AbstractRemapJarTask<RemapAllSourc
 
 	public static void clearDirectory(Path temp) throws IOException {
 		if(Files.exists(temp)) {
-			Files.walk(temp)
-					.sorted(Comparator.reverseOrder())
-					.map(Path::toFile)
-					.forEach(File::delete);
+			for(Path path : UnsafeIterable.walkAll(temp)) {
+				Files.delete(path);
+			}
 		}
 	}
 }
