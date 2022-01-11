@@ -42,7 +42,7 @@ repositories {
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
 
-def mc_vers = "1.17.1"
+def mc_vers = "1.18.1"
 configurations {
     aaaaa {
     }
@@ -53,7 +53,7 @@ dependencies {
     //def reiImpl
     //def reiApi
     ag.map {
-        mappings('net.fabricmc:yarn:1.17.1+build.61:v2', 'intermediary', 'named')
+        mappings('net.fabricmc:yarn:1.18.1+build.17:v2', 'intermediary', 'named')
         mc = inputLocal(ag.map {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
@@ -61,10 +61,17 @@ dependencies {
         //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
-    aaaaa mc
+    def libs = ag.libraries("1.18.1")
+    aaaaa ag.decompile {
+        optionalTask("decompileMinecraft")
+        fernflower "net.fabricmc:fabric-fernflower:1.4.1"
+        classpath libs
+        inputLocal mc
+        javadocs('net.fabricmc:yarn:1.18.1+build.17:v2', 'named')
+    }
     //aaaaa reiApi
 
-    implementation ag.libraries("1.17.1")
+    implementation libs
     /*aaaaa ag.decompile {
         fernflower("net.fabricmc:fabric-fernflower:1.4.1")
         optionalTask("decompileMinecraft")

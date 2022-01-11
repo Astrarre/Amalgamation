@@ -38,11 +38,11 @@ public class ConfigIdea {
 			}
 		});
 
-		if(Boolean.getBoolean("idea.sync.active")) {
+		/*if(Boolean.getBoolean("idea.sync.active")) {
 			project.getRootProject().afterEvaluate(project1 -> {
 				IDEA_EXTENSION.configureQueue(false);
 			}); // todo fix
-		}
+		}*/
 	}
 
 	public static void configureOutput(Project project, String taskName, Consumer<File> listen) {

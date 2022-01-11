@@ -11,7 +11,7 @@ import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import org.gradle.api.artifacts.ModuleDependency;
 
 public class RemapDependencyConfig extends RemapConfig {
-	final List<SingleRemapDependency> inputsLocal = new ArrayList<>(), inputsGlobal = new ArrayList<>();
+	final List<RemapDependency.Single> inputsLocal = new ArrayList<>(), inputsGlobal = new ArrayList<>();
 	final RemapDependency dependency;
 
 	public RemapDependencyConfig(RemapDependency dependency) {
@@ -20,14 +20,14 @@ public class RemapDependencyConfig extends RemapConfig {
 	}
 
 	public Object remap(Object object, boolean useGlobalCache) {
-		SingleRemapDependency dep = this.dependency.createDep(this.of(object), useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT, false);
+		RemapDependency.Single dep = this.dependency.createDep(this.of(object), useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT);
 		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(dep);
 		return dep;
 	}
 
 	public Object remap(Object object, Closure<ModuleDependency> config, boolean useGlobalCache) {
 		Object dependency = this.of(object, config);
-		SingleRemapDependency dep = this.dependency.createDep(dependency, useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT, false);
+		RemapDependency.Single dep = this.dependency.createDep(dependency, useGlobalCache ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT);
 		(useGlobalCache ? this.inputsGlobal : this.inputsLocal).add(dep);
 		return dep;
 	}

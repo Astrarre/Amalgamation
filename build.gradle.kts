@@ -26,7 +26,7 @@ plugins {
 }
 
 group = "io.github.astrarre.amalgamation"
-version = "1.0.0.2"
+version = "1.0.0.5"
 
 extensions.getByType<JavaPluginExtension>().apply {
     sourceCompatibility = JavaVersion.VERSION_16

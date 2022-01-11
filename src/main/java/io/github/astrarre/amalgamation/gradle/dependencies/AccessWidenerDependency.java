@@ -76,6 +76,7 @@ public class AccessWidenerDependency extends CachedDependency {
 			}
 			if(isOutdated) { // todo sources not appearing?
 				Files.deleteIfExists(out.path);
+				U.createDirs(out.path);
 				Files.copy(artifact.path, out.path);
 				systems.add(new FsPair(U.openZip(artifact.path), U.openZip(out.path)));
 			}
