@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.UnaryOperator;
 
 import com.google.common.collect.Iterables;
@@ -25,6 +27,7 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.zipio.OutputTag;
+import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcessBuilder;
 import net.devtech.zipio.processors.entry.ProcessResult;
 import net.devtech.zipio.processors.zip.ZipFilter;
@@ -56,6 +59,24 @@ public class RemapDependency extends ZipProcessDependency {
 		return this.config.inputsLocal.isEmpty() ? AmalgDirs.GLOBAL : AmalgDirs.ROOT_PROJECT;
 	}
 
+	// todo undo zip-io, it's not worth the speed I think
+	// well, maybe, I think there is a way around this
+	// in the "add" stage, we need a different kind of processable
+	// one that can define visitor tasks like there is now
+	// but also have a "post-process" which runs after everything
+	// and holds up any child visitors
+
+	// make a wrapper around Path that stores the uncompressed version of the data and emulates all the apis
+	// maybe an actual Path should be optionally provided so you can use the Path api but idk
+	// make it easier to define "no output, just pipe to next"
+	// and stuff like that
+	// remove the "post visit entry" and whatever stages
+	// they're useless anyways, you just need to store the "post visit" things yourself
+	// and iterate through them yourself in a post/finisher stage
+
+	// wrapper should be able to store custom data (like ClassNode)
+	// and visitor system should be able to pass custom visitors (like ClassVisitor)
+
 	@Override
 	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
 		Map<Artifact, Artifact> map = new ConcurrentHashMap<>();
@@ -77,6 +98,14 @@ public class RemapDependency extends ZipProcessDependency {
 					local.artifacts.add(artifact);
 					return artifact;
 				};
+
+				Set<Path> producedArtifacts = new HashSet<>();
+				for(Artifact artifact : this.artifacts(local.dependency, false)) {
+					if(Files.exists(mapped.apply(artifact).path)) {
+						producedArtifacts.add(real(artifact.path));
+					}
+				}
+
 				for(TaskTransform task : this.apply(process, local.dependency, mapped::apply)) {
 					if(!amalgRemapper.requiresClasspath()) { // skip reading partial remap if classpath is not needed
 						ZipFilter filter = FinishedZipFilter.createDefault(mapped);
@@ -84,15 +113,15 @@ public class RemapDependency extends ZipProcessDependency {
 					}
 
 					task.setPreEntryProcessor(tag -> {
-						Artifact outputArtifact = map.computeIfAbsent((Artifact) tag, mapped);
 						// if classpath is needed, but output already exists, then we can just input the input as classpath
-						if(amalgRemapper.requiresClasspath() && Files.exists(outputArtifact.path)) {
+						boolean exists = producedArtifacts.contains(real(tag.path));
+						if(amalgRemapper.requiresClasspath() && exists) {
 							ZipRemapper remapper = amalgRemapper.createNew();
 							return buffer -> {
 								remapper.visitEntry(buffer, true);
 								return ProcessResult.HANDLED;
 							};
-						} else if(!amalgRemapper.requiresClasspath()) { // actual input
+						} else if(!exists) { // actual input
 							ZipRemapper remapper;
 							if(amalgRemapper.hasPostStage()) {
 								remapper = inputRemapperCache.computeIfAbsent(tag, o -> amalgRemapper.createNew());
@@ -165,4 +194,11 @@ public class RemapDependency extends ZipProcessDependency {
 		}
 	}
 
+	static Path real(Path path) {
+		try {
+			return path.toRealPath();
+		} catch(IOException e) {
+			throw U.rethrow(e);
+		}
+	}
 }

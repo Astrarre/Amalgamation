@@ -24,10 +24,6 @@
 
 package io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.fabric;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +35,7 @@ import org.jetbrains.java.decompiler.struct.StructRecordComponent;
 import org.objectweb.asm.Opcodes;
 
 import net.fabricmc.fernflower.api.IFabricJavadocProvider;
-import net.fabricmc.mappingio.MappingReader;
-import net.fabricmc.mappingio.adapter.MappingSourceNsSwitch;
 import net.fabricmc.mappingio.tree.MappingTree;
-import net.fabricmc.mappingio.tree.MemoryMappingTree;
 
 public class TinyJavadocProvider implements IFabricJavadocProvider {
 	private final Mappings.Namespaced mappings;
