@@ -498,8 +498,8 @@ public class SecondPassMixinVisitor extends ClassVisitor {
 						String name = target.substring(typeTerminator + 1, nameTerminator);
 						String desc = target.substring(nameTerminator + 1);
 						String mappedType = getRemapper().map(type);
-						String mappedName = getRemapper().mapMethodName(type, name, desc);
-						String mappedDesc = getRemapper().mapMethodDesc(desc);
+						String mappedName = getRemapper().mapFieldName(type, name, desc);
+						String mappedDesc = getRemapper().mapDesc(desc);
 						if(!type.equals(mappedType) || !name.equals(mappedName) || !desc.equals(mappedDesc)) {
 							target = "L" + mappedType + ";" + mappedName + ":" + mappedDesc;
 						}

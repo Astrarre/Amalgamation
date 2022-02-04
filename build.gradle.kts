@@ -26,7 +26,7 @@ plugins {
 }
 
 group = "io.github.astrarre.amalgamation"
-version = "1.0.0.5"
+version = "1.0.1.1"
 
 extensions.getByType<JavaPluginExtension>().apply {
     sourceCompatibility = JavaVersion.VERSION_16
@@ -115,6 +115,10 @@ extensions.getByType<PublishingExtension>().apply {
                     sign(this@create)
                 }
             }
+        }
+        create<MavenPublication>("mavenTrolling") {
+
+
         }
     }
 

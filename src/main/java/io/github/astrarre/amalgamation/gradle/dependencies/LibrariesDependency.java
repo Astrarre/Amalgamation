@@ -40,7 +40,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 	}
 
 	@Override
-	protected Set<Artifact> resolveArtifacts() throws IOException { // todo this will not do ir
+	protected Set<Artifact> resolveArtifacts() throws IOException {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
 		final Path dir = Paths.get(this.librariesDirectory);
 		List<LauncherMeta.Library> libraries = meta.getVersion(this.version).getLibraries();
