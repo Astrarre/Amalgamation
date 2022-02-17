@@ -5,6 +5,8 @@ A single jar that you can compile against that contains the code of Forge, Craft
 # [For Forge Toolchain Enthusiasts (Discord)](https://discord.gg/2SmAwnuZuf)
 # For everyone else, keep reading I guess
 
+[Loom vs Amalgamation speed test](https://youtu.be/9bGOiGZoBQk)
+
 ## Remapping / Deobfuscation
 This allows for the deobfuscation of artifacts using mappings files. It uses a fork of fabric's
 tiny-remapper to remap class files, the trieHarder remapper to map sources
