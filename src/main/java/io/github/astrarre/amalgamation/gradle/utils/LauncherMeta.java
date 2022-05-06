@@ -20,7 +20,7 @@ import com.google.gson.Gson;
 import io.github.astrarre.amalgamation.gradle.dependencies.URLDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.json.Json;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -102,11 +102,11 @@ public class LauncherMeta {
 
 		if (vers == null) { // if we don't or the version isn't in the existing one, download it
 			URLDependency cache = new URLDependency(this.project, "https://launchermeta.mojang.com/mc/game/version_manifest.json");
-			cache.output = path;
+			cache.output = AmalgIO.getFile(path);
 			try (Clock ignore = new Clock("Reading launchermeta %sms", this.logger)) {
 				this.launcherMeta = new Json.Obj(Files.readString(cache.resolve().iterator().next().toPath()), 0);
 			} catch (IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 	}
@@ -172,7 +172,7 @@ public class LauncherMeta {
 
 		public Json.Obj read(String output, String url) {
 			URLDependency dependency = new URLDependency(LauncherMeta.this.project, url);
-			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project).resolve(this.version).resolve(output);
+			dependency.output = AmalgIO.globalCache(LauncherMeta.this.project).getDir(this.version).getFile(output);
 			dependency.isUnique = true;
 			try (BufferedReader reader = dependency.getOutdatedReader()) {
 				String collect = reader.lines().collect(Collectors.joining("\n"));

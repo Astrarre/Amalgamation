@@ -131,7 +131,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 		if(!this.getPath().exists()) {
 			this.getArtifacts();
 		}
-		return Files.newBufferedReader(this.getPath());
+		return this.getPath().asFile().newReader(StandardCharsets.UTF_8);
 	}
 
 	@Override

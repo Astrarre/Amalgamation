@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
+import net.devtech.filepipeline.api.VirtualDirectory;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -47,10 +48,10 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 	public void apply(@NotNull Project target) {
 		gradle = target.getGradle();
 		for(AmalgDirs dirs : List.of(AmalgDirs.ROOT_PROJECT, AmalgDirs.GLOBAL)) {
-			for(Path aw : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target), dirs.unpack(target))) {
+			for(VirtualDirectory dir : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target), dirs.unpack(target))) {
 				target.getRepositories().maven(repository -> {
 					repository.setName("Amalgamation " + dirs.name() + " cache");
-					repository.setUrl(aw.toUri());
+					repository.setUrl(Path.of("/"+dir.relativePath()).toUri());
 				});
 			}
 		}

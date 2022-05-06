@@ -3,9 +3,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,13 +21,14 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
 import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
 import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 
 public class AssetsDependency extends CachedDependency {
 	public final HashedURLDependency assetIndexDependency; // todo getOutdated because there is no hash for the download from minecraft
-	private final Path assetsDir;
+	private final VirtualDirectory assetsDir;
 	public final String assetsDirPath;
 	private final String assetIndex;
 	private final String version;
@@ -40,25 +39,25 @@ public class AssetsDependency extends CachedDependency {
 		this.version = version;
 		String assetsDirPath = LauncherMeta.minecraftDirectory(OS.ACTIVE) + "/assets";
 		this.assetsDirPath = assetsDirPath;
-		Path assetsDir = Paths.get(assetsDirPath);
-		if(Files.exists(assetsDir)) {
+		VirtualDirectory assetsDir = AmalgIO.getDir(Path.of(assetsDirPath)).asDir();
+		if(assetsDir.exists()) {
 			this.logger.lifecycle("Found .minecraft assets folder");
 		} else {
 			this.logger.lifecycle("No .minecraft assets folder, using global cache!");
-			assetsDir = AmalgIO.globalCache(project).resolve("assetsDir");
+			assetsDir = AmalgIO.globalCache(project).getDir("assetsDir");
 		}
-		this.assetsDir = assetsDir.toAbsolutePath();
+		this.assetsDir = assetsDir.asDir();
 
 		LauncherMeta.Version vers = MinecraftAmalgamationGradlePlugin.getLauncherMeta(project).getVersion(version);
 		this.assetIndex = vers.getAssetIndexVersion();
 		this.assetIndexDependency = new HashedURLDependency(project, vers.getAssetIndexUrl());
-		Path assetIndexFile = assetsDir.resolve("indexes").resolve(this.assetIndex + ".json");
+		VirtualFile assetIndexFile = assetsDir.getDir("indexes").getFile(this.assetIndex + ".json");
 		this.assetIndexDependency.output = assetIndexFile;
-		if(Files.exists(assetIndexFile)) {
+		if(assetIndexFile.exists()) {
 			try {
 				this.assetIndexDependency.writeHash();
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 	}
@@ -86,7 +85,7 @@ public class AssetsDependency extends CachedDependency {
 	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) {
 		this.logger.lifecycle("downloading assets . . .");
 		// if an index file exists, then we know we've downloaded the assets for that version
-		VirtualDirectory directory = resolvedPath.asDirectory();
+		VirtualDirectory directory = resolvedPath.asDir();
 		Artifact.File file = new Artifact.File(this.project,
 				"net.minecraft",
 				"assets",
@@ -116,8 +115,8 @@ public class AssetsDependency extends CachedDependency {
 						// todo maybe not compress for PNG?
 						HashedURLDependency dependency = new HashedURLDependency(this.project, url);
 						dependency.silent = true;
-						dependency.output = resolvedPath.resolve(minHash).resolve(hash);
-						if(!Files.exists(dependency.output)) {
+						dependency.output = directory.getDir(minHash).getFile(hash);
+						if(!dependency.output.exists()) {
 							dependency.resolve();
 						}
 					});

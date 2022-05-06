@@ -2,17 +2,14 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterators;
@@ -20,11 +17,7 @@ import com.google.common.collect.Streams;
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.filepipeline.api.source.VirtualSink;
-import net.devtech.filepipeline.api.source.VirtualSource;
 import net.devtech.filepipeline.impl.util.FPInternal;
-import net.devtech.zipio.OutputTag;
-import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ModuleDependency;
@@ -32,8 +25,6 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.logging.Logger;
-import org.gradle.internal.impldep.it.unimi.dsi.fastutil.Hash;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class AmalgamationDependency extends AbstractSet<Object> {
 	public final Project project;
@@ -127,7 +118,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 						dependency.getGroup(),
 						dependency.getName(),
 						dependency.getVersion(),
-						file.toPath(),
+						AmalgIO.resolve(file.toPath()),
 						hasher.hash().asBytes(),
 						Artifact.Type.MIXED);
 				artifacts.add(fact);

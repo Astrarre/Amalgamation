@@ -24,7 +24,9 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
+import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
 import net.devtech.filepipeline.api.VirtualPath;
 import net.devtech.filepipeline.api.source.VirtualSink;
 import net.devtech.filepipeline.api.source.VirtualSource;
@@ -38,7 +40,6 @@ import org.gradle.api.artifacts.SelfResolvingDependency;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 
@@ -85,31 +86,26 @@ public class AmalgIO {
 		return DISK_OUT.outputDir(path(path));
 	}
 
-	public static VirtualPath from(Path path) {
+	public static VirtualPath resolve(Path path) {
 		return DISK_SOURCE.resolve(path(path));
 	}
+	
+	public static VirtualDirectory getDir(Path path) {
+		return DISK_SOURCE.getDir(path(path));
+	}
 
-	// todo deprecate in favor of AmalgDirs
-	public static Path cache(Project project, boolean global) {
+	public static VirtualDirectory cache(Project project, boolean global) {
 		if(global) {
 			return globalCache(project);
 		} else {
-			return projectCache(project.getRootProject());
+			return AmalgDirs.ROOT_PROJECT.root(project.getRootProject());
 		}
 	}
 
-	public static Path globalCache(Project project) {
-		return globalCache(project.getGradle());
+	public static VirtualDirectory globalCache(Project project) {
+		return AmalgDirs.GLOBAL.root(project);
 	}
-
-	public static Path globalCache(Gradle gradle) {
-		return gradle.getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation");
-	}
-
-	public static Path projectCache(Project project) {
-		return project.getBuildDir().toPath().resolve("amalgamation-caches");
-	}
-
+	
 	public static List<Path> resolveSources(Project project, Iterable<Dependency> dependencies) {
 		List<ComponentIdentifier> ids = project.getConfigurations()
 				.detachedConfiguration(toArray(dependencies, Dependency[]::new))
@@ -210,7 +206,11 @@ public class AmalgIO {
 			Files.createFile(resolve);
 		}
 	}
-
+	
+	public static VirtualFile getFile(Path path) {
+		return DISK_SOURCE.getFile(path(path));
+	}
+	
 	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {
 		return function;
 	}

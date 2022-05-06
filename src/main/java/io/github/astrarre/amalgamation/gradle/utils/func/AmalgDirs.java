@@ -19,7 +19,7 @@ public enum AmalgDirs {
 	final Function<Project, VirtualDirectory> rootDirectory;
 
 	AmalgDirs(Function<Project, Path> directory, boolean cache) {
-		Function<Project, VirtualDirectory> function = p -> AmalgIO.createDir(directory.apply(p)).asDirectory();
+		Function<Project, VirtualDirectory> function = p -> AmalgIO.createDir(directory.apply(p)).asDir();
 		if(cache) {
 			function = new LazyFunction<>(function);
 		}

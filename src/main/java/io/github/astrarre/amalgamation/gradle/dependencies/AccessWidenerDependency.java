@@ -1,6 +1,8 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,10 +81,8 @@ public class AccessWidenerDependency extends CachedDependency {
 			}
 			if(isOutdated) { // todo sources not appearing?
 				AmalgIO.DISK_OUT.delete(out.file);
-				Files.deleteIfExists(out.path);
-				U.createDirs(out.path);
+				AmalgIO.DISK_OUT.createIfAbsent(out.file.getParent());
 				AmalgIO.DISK_OUT.copy(artifact.file, out.file);
-
 				systems.add(new FsPair(artifact.file.openOrThrow(), AmalgIO.DISK_OUT.subsink(out.file)));
 			}
 		}
@@ -92,7 +92,7 @@ public class AccessWidenerDependency extends CachedDependency {
 			AccessWidenerReader aw = new AccessWidenerReader(widener);
 			for(Object accessWidener : this.accessWideners) {
 				for(Artifact artifact : this.artifacts(accessWidener, true)) {
-					try(var reader = Files.newBufferedReader(artifact.path)) {
+					try(var reader = artifact.file.asFile().newReader(StandardCharsets.UTF_8)) {
 						aw.read(reader);
 					} catch(IOException e) {
 						e.printStackTrace();
@@ -117,16 +117,16 @@ public class AccessWidenerDependency extends CachedDependency {
 					VirtualPath cls = pair.input.find(path + ".class");
 					VirtualPath java = pair.input.find(path + ".java");
 					if(cls != null) {
-						byte[] buf = cls.allBytes();
+						byte[] buf = cls.asFile().allBytes();
 						ClassReader reader = new ClassReader(buf);
 						ClassWriter writer = new ClassWriter(0);
 						ClassVisitor visitor = AccessWidenerClassVisitor.createClassVisitor(Opcodes.ASM9, writer, widener);
 						reader.accept(visitor, 0);
 						VirtualFile outCls = pair.output.outputFile(path + ".class");
-						Files.write(outCls, writer.toByteArray());
+						AmalgIO.DISK_OUT.write(outCls, ByteBuffer.wrap(writer.toByteArray()));
 					}
 					if(java != null) {
-						ParseResult<CompilationUnit> parse = parser.parse(Files.readString(java));
+						ParseResult<CompilationUnit> parse = parser.parse(java.asFile().asString(StandardCharsets.UTF_8));
 						if(!parse.isSuccessful()) {
 							for(Problem problem : parse.getProblems()) {
 								System.err.println(problem.getVerboseMessage());
@@ -136,7 +136,7 @@ public class AccessWidenerDependency extends CachedDependency {
 							CompilationUnit lpp = LexicalPreservingPrinter.setup(unit);
 							transformer.transform(lpp);
 							VirtualFile outJav = pair.output.outputFile(path + ".java");
-							Files.writeString(outJav, LexicalPreservingPrinter.print(lpp));
+							AmalgIO.DISK_OUT.writeString(outJav, LexicalPreservingPrinter.print(lpp), StandardCharsets.UTF_8);
 						}
 					}
 				}
