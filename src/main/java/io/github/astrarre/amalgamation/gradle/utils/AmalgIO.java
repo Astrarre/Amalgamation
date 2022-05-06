@@ -24,7 +24,11 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.api.source.VirtualSink;
+import net.devtech.filepipeline.api.source.VirtualSource;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -39,6 +43,9 @@ import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 
 public class AmalgIO {
+	public static final VirtualSink DISK_OUT = VirtualSink.primaryDrive();
+	public static final VirtualSource DISK_SOURCE = DISK_OUT.getSource();
+
 	public static final HashFunction SHA256 = com.google.common.hash.Hashing.sha256();
 	public static final ExecutorService SERVICE = ForkJoinPool.commonPool();
 
@@ -47,7 +54,7 @@ public class AmalgIO {
 			try {
 				c.hashInputs(hasher);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		} else if(dependency instanceof AmalgamationDependency a) {
 			for(Artifact artifact : a.getArtifacts()) {
@@ -69,6 +76,20 @@ public class AmalgIO {
 		}
 	}
 
+	public static String path(Path path) {
+		Path other = path.toAbsolutePath();
+		return other.getRoot().relativize(other).toString().replace(path.getFileSystem().getSeparator(), "/");
+	}
+
+	public static VirtualDirectory createDir(Path path) {
+		return DISK_OUT.outputDir(path(path));
+	}
+
+	public static VirtualPath from(Path path) {
+		return DISK_SOURCE.resolve(path(path));
+	}
+
+	// todo deprecate in favor of AmalgDirs
 	public static Path cache(Project project, boolean global) {
 		if(global) {
 			return globalCache(project);
@@ -200,12 +221,13 @@ public class AmalgIO {
 			try {
 				return this.runUnsafe(a);
 			} catch(Throwable e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 
 		B runUnsafe(A a) throws Throwable;
 	}
+
 
 	public static Path changeExtension(Path path, String ext) {
 		String name = path.getFileName().toString();

@@ -10,8 +10,10 @@ import java.util.function.Function;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.OutputTag;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
@@ -19,14 +21,15 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.internal.component.external.model.ModuleComponentArtifactIdentifier;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Artifact extends OutputTag {
+public abstract class Artifact {
 	public final Project project;
 	public final String group, name, version;
 	public final byte[] hash;
 	public final Type type;
+	public final VirtualPath file;
 
-	public Artifact(Project project, String group, String name, String version, Path file, byte[] hash, Type sources) {
-		super(file);
+	public Artifact(Project project, String group, String name, String version, VirtualPath file, byte[] hash, Type sources) {
+		this.file = file;
 		this.project = project;
 		this.group = group;
 		this.name = name;
@@ -35,8 +38,8 @@ public abstract class Artifact extends OutputTag {
 		this.type = sources;
 	}
 
-	public Artifact(Project project, Dependency dependency, Path file, byte[] hash, Type sources) {
-		super(file);
+	public Artifact(Project project, Dependency dependency, VirtualPath file, byte[] hash, Type sources) {
+		this.file = file;
 		this.project = project;
 		this.group = dependency.getGroup();
 		this.name = dependency.getName();
@@ -45,7 +48,7 @@ public abstract class Artifact extends OutputTag {
 		this.type = sources;
 	}
 
-	public Artifact(Artifact artifact, Path path, byte[] hash) {
+	public Artifact(Artifact artifact, VirtualPath path, byte[] hash) {
 		this(artifact.project, artifact.group, artifact.name, artifact.version, path, hash == null ? artifact.hash : hash, artifact.type);
 	}
 
@@ -53,13 +56,13 @@ public abstract class Artifact extends OutputTag {
 
 	public abstract Object toDependencyNotation();
 
-	public abstract Artifact derive(Path newPath, @Nullable byte[] hash);
+	public abstract Artifact derive(VirtualPath newPath, @Nullable byte[] hash);
 
-	public Artifact deriveMaven(Path directory, byte[] hash) {
+	public Artifact deriveMaven(VirtualDirectory directory, byte[] hash) {
 		return this.deriveMaven(directory, hash, this.type);
 	}
 
-	public Artifact deriveMaven(Path directory, byte[] hash, Type type) {
+	public Artifact deriveMaven(VirtualDirectory directory, byte[] hash, Type type) {
 		if(this.type == Type.RESOURCES) {
 			return this;
 		}
@@ -73,11 +76,11 @@ public abstract class Artifact extends OutputTag {
 		);
 	}
 
-	public Artifact deriveMavenMixHash(Path directory, byte[] hash) {
+	public Artifact deriveMavenMixHash(VirtualDirectory directory, byte[] hash) {
 		return this.deriveMavenMixHash(directory, hash, this.type);
 	}
 
-	public Artifact deriveMavenMixHash(Path directory, byte[] hash, Type type) {
+	public Artifact deriveMavenMixHash(VirtualDirectory directory, byte[] hash, Type type) {
 		Hasher hasher = AmalgIO.SHA256.newHasher();
 		hasher.putBytes(hash);
 		hasher.putBytes(this.hash);
@@ -121,17 +124,17 @@ public abstract class Artifact extends OutputTag {
 
 	@Override
 	public String toString() {
-		return group + ":" + name + ":" + version + " " + this.path;
+		return group + ":" + name + ":" + version + " " + this.file;
 	}
 
-	static Path resolve(Path directory, String group, String name, String version, Type type, byte[] hash) {
+	static VirtualFile resolve(VirtualDirectory directory, String group, String name, String version, Type type, byte[] hash) {
 		String trueName = name + "_" + version;
 		String trueVersion = AmalgIO.b64(hash) + "_" + name.length();
 		String file = trueName + "-" + trueVersion;
 		if(type == Type.SOURCES) {
 			file += "-sources";
 		}
-		return directory.resolve(group.replace('.', '/')).resolve(trueName).resolve(trueVersion).resolve(file + ".jar");
+		return directory.resolveDirectory(group.replace('.', '/')).resolveDirectory(trueName).resolveDirectory(trueVersion).resolveFile(file + ".jar");
 	}
 
 	public enum Type {
@@ -155,25 +158,25 @@ public abstract class Artifact extends OutputTag {
 	}
 
 	public static class File extends Artifact {
-		public File(Project project, String group, String name, String version, Path file, byte[] hash, Type sources) {
+		public File(Project project, String group, String name, String version, VirtualPath file, byte[] hash, Type sources) {
 			super(project, group, name, version, file, hash, sources);
 		}
 
-		public File(Project project, Dependency dependency, Path file, byte[] hash, Type sources) {
+		public File(Project project, Dependency dependency, VirtualPath file, byte[] hash, Type sources) {
 			super(project, dependency, file, hash, sources);
 		}
 
-		public File(Artifact artifact, Path path, byte[] hash) {
+		public File(Artifact artifact, VirtualPath path, byte[] hash) {
 			super(artifact, path, hash);
 		}
 
 		@Override
 		public Object toDependencyNotation() {
-			return this.project.files(this.path.toFile());
+			return this.project.files(this.file.relativePath());
 		}
 
 		@Override
-		public Artifact derive(Path newPath, @Nullable byte[] hash) {
+		public Artifact derive(VirtualPath newPath, @Nullable byte[] hash) {
 			if(this.type == Type.RESOURCES) {
 				return this;
 			}
@@ -189,21 +192,21 @@ public abstract class Artifact extends OutputTag {
 					get(id, ModuleComponentIdentifier::getGroup, "unknown"),
 					get(id, ModuleComponentIdentifier::getModule, id.toString()),
 					get(id, ModuleComponentIdentifier::getVersion, "NaN"),
-					art.toPath(),
+					AmalgIO.from(art.toPath()),
 					Objects.requireNonNull(hash, "no hash found for " + id.getComponentIdentifier()),
 					Objects.equals(classifier, "sources") ? Type.SOURCES : Type.MIXED
 			);
 		}
 
-		public Maven(Project project, String group, String name, String version, Path path, byte[] hash, Type sources) {
+		public Maven(Project project, String group, String name, String version, VirtualPath path, byte[] hash, Type sources) {
 			super(project, group, name, version, path, hash, sources);
 		}
 
-		public Maven(Project project, Dependency dependency, Path path, byte[] hash, Type sources) {
+		public Maven(Project project, Dependency dependency, VirtualPath path, byte[] hash, Type sources) {
 			super(project, dependency, path, hash, sources);
 		}
 
-		public Maven(Artifact artifact, Path path, byte[] hash) {
+		public Maven(Artifact artifact, VirtualPath path, byte[] hash) {
 			super(artifact, path, hash);
 		}
 
@@ -215,12 +218,12 @@ public abstract class Artifact extends OutputTag {
 				return;
 			}
 			isFriendly = true;
-			if(!Files.exists(this.path)) {
+			if(!this.file.exists()) {
 				this.project.getLogger().warn("[Amalgamation] artifact's " + this.group + ":" + this.name + ":" + this.version + "'s file does not exist! " +
 				                              "This is likely because a file was deleted without deleting it's cache file, " +
-				                              "please delete the build/amalgamation cache in the root project! " + this.path);
+				                              "please delete the build/amalgamation cache in the root project! " + this.file.relativePath());
 			}
-			String name = this.path.getFileName().toString();
+			String name = this.file.getFileName().toString();
 			int ext = name.lastIndexOf('.');
 			Path resolved = this.path.getParent().resolve(name.substring(0, ext) + ".pom");
 			if(!Files.exists(resolved)) {
@@ -239,7 +242,7 @@ public abstract class Artifact extends OutputTag {
 							</project>
 							""".stripIndent(), this.group, trueName, trueVersion));
 				} catch(IOException e) {
-					throw U.rethrow(e);
+					throw FPInternal.rethrow(e);
 				}
 			}
 		}
@@ -261,7 +264,7 @@ public abstract class Artifact extends OutputTag {
 		}
 
 		@Override
-		public Artifact derive(Path newPath, @Nullable byte[] hash) {
+		public Artifact derive(VirtualPath newPath, @Nullable byte[] hash) {
 			if(this.type == Type.RESOURCES) {
 				return this;
 			}

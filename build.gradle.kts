@@ -66,6 +66,9 @@ repositories {
     }*/
 }
 
+var dir = buildDir.toPath()
+println(dir.getRoot().relativize(dir))
+
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
     implementation(gradleApi())
@@ -78,12 +81,14 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
     implementation("net.fabricmc:access-widener-javaparser:3.0.0")
-    implementation("net.devtech:zip-io:3.2.6")
+    //implementation("net.devtech:zip-io:3.2.6")
+    implementation("net.devtech:file-pipeline:1.0.0")
     implementation("com.google.jimfs:jimfs:1.2")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
     implementation("net.fabricmc.unpick:unpick:2.2.0")
     //implementation("io.github.coolmineman:trieharder:0.1.2")
     implementation("brachyura:trieharder:0.2.0")
+
 }
 
 gradlePlugin {

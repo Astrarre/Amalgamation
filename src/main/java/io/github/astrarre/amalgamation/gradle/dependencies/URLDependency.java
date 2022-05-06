@@ -29,6 +29,10 @@ import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
+import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import net.devtech.zipio.ZipTag;
 import net.devtech.zipio.impl.util.U;
 import net.devtech.zipio.processes.ZipProcessBuilder;
@@ -48,7 +52,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	public boolean isOptional = false;
 	public boolean silent = false;
 	public boolean isUnique = false;
-	public Path output;
+	public VirtualFile output;
 	String etag;
 	long lastModifyDate = -1;
 	DownloadUtil.Result result;
@@ -67,12 +71,12 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 			this.name = strip(ur.getPath());
 			this.version = "NaN";
 		} catch(MalformedURLException e) {
-			throw U.rethrow(e);
+			throw FPInternal.rethrow(e);
 		}
 	}
 
 	@Override
-	public Path getPath() {
+	public VirtualPath getPath() {
 		return this.output != null ? this.output : super.getPath();
 	}
 
@@ -88,11 +92,11 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	}
 
 	@Override
-	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
+	protected VirtualPath evaluatePath(byte[] hash) throws MalformedURLException {
 		if(this.output == null) {
 			URL url = new URL(this.url);
 			String host = url.getHost();
-			return AmalgIO.cache(this.project, true).resolve("downloads").resolve(host).resolve(url.toString().replaceFirst(host, "$"));
+			return AmalgIO.DISK_OUT.outputDir(AmalgDirs.GLOBAL.downloads(this.project), host+"/"+url.toString().replaceFirst(host, "$"));
 		} else {
 			return this.output;
 		}
@@ -124,7 +128,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	}
 
 	public BufferedReader getOutdatedReader() throws IOException {
-		if(!Files.exists(this.getPath())) {
+		if(!this.getPath().exists()) {
 			this.getArtifacts();
 		}
 		return Files.newBufferedReader(this.getPath());

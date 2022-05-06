@@ -20,6 +20,9 @@ import com.google.common.collect.Streams;
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import net.devtech.filepipeline.api.source.VirtualSink;
+import net.devtech.filepipeline.api.source.VirtualSource;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import net.devtech.zipio.OutputTag;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
@@ -47,7 +50,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 			try {
 				this.artifacts = this.resolveArtifacts();
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 		return this.artifacts;
@@ -95,7 +98,7 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 						       .map(Artifact.class::cast)
 						       .collect(Collectors.toSet());
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		} else if(notation instanceof AmalgamationDependency a) {
 			return a.getArtifacts();

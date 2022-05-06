@@ -22,6 +22,8 @@ import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgama
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualPath;
 import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 
@@ -76,19 +78,20 @@ public class AssetsDependency extends CachedDependency {
 	}
 
 	@Override
-	protected Path evaluatePath(byte[] hash) {
+	protected VirtualPath evaluatePath(byte[] hash) {
 		return this.assetsDir.resolve("objects");
 	}
 
 	@Override
-	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) {
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) {
 		this.logger.lifecycle("downloading assets . . .");
 		// if an index file exists, then we know we've downloaded the assets for that version
+		VirtualDirectory directory = resolvedPath.asDirectory();
 		Artifact.File file = new Artifact.File(this.project,
 				"net.minecraft",
 				"assets",
 				this.version,
-				resolvedPath,
+				directory,
 				this.getCurrentHash(),
 				Artifact.Type.RESOURCES);
 

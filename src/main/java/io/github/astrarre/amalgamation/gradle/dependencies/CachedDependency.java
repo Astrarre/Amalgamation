@@ -12,7 +12,8 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	 * 0 == unevaluated 1 == false 2 == true
 	 */
 	protected byte isOutdated;
-	private Path cachePath, realPath;
+	private VirtualPath cachePath, realPath;
 	public CachedDependency(Project project) {
 		super(project);
 	}
@@ -37,7 +38,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			try {
 				c.hashInputs(hasher);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		} else if(notation instanceof Dependency d) {
 			AmalgIO.hashDep(hasher, this.project, d);
@@ -75,27 +76,26 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	/**
 	 * This path does not have to actually contain any files, filename.extension.data stores the information on this notation
 	 */
-	protected abstract Path evaluatePath(byte[] hash) throws IOException;
+	protected abstract VirtualPath evaluatePath(byte[] hash) throws IOException;
 
 	protected void readInputs(@Nullable InputStream stream) throws IOException {}
 
 	protected void writeOutputs(OutputStream stream) throws IOException {}
 
-	public Path getPath() {
+	public VirtualPath getPath() {
 		if(this.realPath == null) {
 			try {
-				Path record = this.realPath = this.evaluatePath(this.getCurrentHash());
-				Files.createDirectories(record.getParent());
+				this.realPath = this.evaluatePath(this.getCurrentHash());
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 		return this.realPath;
 	}
 
-	protected Path getCachePath() {
+	protected VirtualPath getCachePath() {
 		if(this.cachePath == null) {
-			Path record = this.getPath();
+			VirtualPath record = this.getPath();
 			this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
 		}
 		return this.cachePath;
@@ -107,10 +107,10 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		}
 		this.initOldHash = true;
 
-		Path realPath = this.getPath();
-		Path path = this.getCachePath();
+		VirtualPath realPath = this.getPath();
+		VirtualPath path = this.getCachePath();
 
-		if(Files.exists(path)) {
+		if(path.exists()) {
 			try(InputStream stream = Files.newInputStream(path)) {
 				byte[] hash = new byte[BYTES];
 				if(stream.read(hash) != BYTES) {
@@ -122,7 +122,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			} catch(IOException e) {
 				e.printStackTrace();
 				this.logger.lifecycle("Cache hash resolved with error, uncaching file!");
-				Files.delete(path);
+				AmalgIO.DISK_OUT.delete(path);
 			}
 		}
 		this.oldHash = null;
@@ -136,7 +136,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			try {
 				this.hashInputs(hasher);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 			byte[] hash = hasher.hash().asBytes();
 			if(hash.length != BYTES) {
@@ -148,7 +148,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		return current;
 	}
 
-	protected abstract Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException;
+	protected abstract Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception;
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
@@ -163,7 +163,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	@Override
 	protected Set<Artifact> resolveArtifacts() throws IOException {
 		boolean isOutdated = this.isOutdated();
-		Path path = this.getPath();
+		VirtualPath path = this.getPath();
 		Set<Artifact> paths;
 		try {
 			paths = this.resolve0(path, isOutdated);
