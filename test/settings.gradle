@@ -38,11 +38,11 @@ pluginManagement {
             name = "HalfOf2"
             url = uri("https://storage.googleapis.com/devan-maven/")
         }
-        maven {
+        /*maven {
             url = uri("https://jitpack.io")
-        }
+        }*/
         maven {
-            url = uri("https://maven.hydos.cf/releases")
+            url = file("../libs").toURI()
         }
     }
 }
