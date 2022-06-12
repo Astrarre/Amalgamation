@@ -233,13 +233,13 @@ public class AmalgIO {
 	}
 
 
-	public static Path changeExtension(Path path, String ext) {
-		String name = path.getFileName().toString();
+	public static VirtualFile changeExtension(VirtualFile path, String ext) {
+		String name = path.fileName();
 		int index = name.lastIndexOf('.');
 		if(index == -1) {
-			return path.getParent().resolve(name + "." + ext);
+			return path.getParent().getFile(name + "." + ext);
 		} else {
-			return path.getParent().resolve(name.substring(0, index+1) + ext);
+			return path.getParent().getFile(name.substring(0, index+1) + ext);
 		}
 	}
 }

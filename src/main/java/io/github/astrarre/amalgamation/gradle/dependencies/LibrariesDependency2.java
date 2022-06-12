@@ -1,6 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,54 +12,53 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualPath;
 import org.gradle.api.Project;
 
 public class LibrariesDependency2 extends CachedDependency {
 	/**
 	 * raw bytes of an empty jar file, cry about it
 	 */
-	private static final byte[] EMPTY_JAR;
+	private static final ByteBuffer EMPTY_JAR;
+	
 	static {
-		var s = "UEsDBBQAAAAAALCwI1QAAAAAAAAAAAAAAAAUA" +
-		        "AAATUVUQS1JTkYvTUFOSUZFU1QuTUZQSwECFA" +
-		        "AUAAAAAACwsCNUAAAAAAAAAAAAAAAAFAAAAAA" +
-		        "AAAAAACAAAAAAAAAATUVUQS1JTkYvTUFOSUZF" +
-		        "U1QuTUZQSwUGAAAAAAEAAQBCAAAAMgAAAAAA";
-		EMPTY_JAR = Base64.getDecoder().decode(s);
+		var s = "UEsDBBQAAAAAALCwI1QAAAAAAAAAAAAAAAAUA"
+		        + "AAATUVUQS1JTkYvTUFOSUZFU1QuTUZQSwECFA"
+		        + "AUAAAAAACwsCNUAAAAAAAAAAAAAAAAFAAAAAA"
+		        + "AAAAAACAAAAAAAAAATUVUQS1JTkYvTUFOSUZF"
+		        + "U1QuTUZQSwUGAAAAAAEAAQBCAAAAMgAAAAAA";
+		EMPTY_JAR = ByteBuffer.wrap(Base64.getDecoder().decode(s));
 	}
-
-	final Path librariesCache;
+	
+	final VirtualDirectory librariesCache;
 	final String version;
 	LauncherMeta.Version vers;
-
+	
 	public LibrariesDependency2(Project project, String version) {
 		super(project);
-		this.librariesCache = Path.of(MinecraftAmalgamationGradlePlugin.getLibrariesCache(project));
+		this.librariesCache = AmalgIO.getDir(Path.of(MinecraftAmalgamationGradlePlugin.getLibrariesCache(project)));
 		this.version = version;
 	}
-
+	
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
 		hasher.putString(version().manifestUrl, StandardCharsets.UTF_8); // the manifest url has a hashcode inside it, so this should be safe
 	}
-
+	
 	@Override
-	protected Path evaluatePath(byte[] hash) throws IOException {
+	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
 		return this.librariesCache
-				.resolve("io")
-				.resolve("github")
-				.resolve("amalgamation")
-				.resolve("minecraft-libraries")
-				.resolve(this.version)
-				.resolve("minecraft-libraries-" + this.version + ".pom");
+				.getDir("io")
+				.getDir("github")
+				.getDir("amalgamation")
+				.getDir("minecraft-libraries")
+				.getDir(this.version)
+				.getFile("minecraft-libraries-" + this.version + ".pom");
 	}
-
-	public Object getDependencyNotation() {
-		return "io.github.amalgamation:minecraft-libraries:" + this.version;
-	}
-
+	
 	@Override
-	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			StringBuilder template = new StringBuilder("""
 					<?xml version="1.0" encoding="UTF-8"?>
@@ -72,11 +72,8 @@ public class LibrariesDependency2 extends CachedDependency {
 					\t<modelVersion>4.0.0</modelVersion>
 					\t<groupId>io.github.amalgamation</groupId>
 					\t<artifactId>minecraft-libraries</artifactId>
-					\t<version>""".stripIndent())
-					.append(this.version)
-					.append("</version>\n")
-					.append("\t<dependencies>\n");
-			for(LauncherMeta.Library library : version().getLibraries()) {
+					\t<version>""".stripIndent()).append(this.version).append("</version>\n").append("\t<dependencies>\n");
+			for(LauncherMeta.Library library : this.version().getLibraries()) {
 				template.append("\t\t<dependency>\n");
 				String group = null, name = null, version = null;
 				String[] parsed = library.name.split(":");
@@ -102,12 +99,14 @@ public class LibrariesDependency2 extends CachedDependency {
 			}
 			template.append("\t</dependencies>\n");
 			template.append("</project>");
-			Files.write(AmalgIO.changeExtension(resolvedPath, "jar"), EMPTY_JAR);
-			Files.writeString(resolvedPath, template.toString());
-		}
-		return Set.of(); // this is just for caching's sake
+			AmalgIO.DISK_OUT.write(AmalgIO.changeExtension(resolvedPath.asFile(), "jar"), EMPTY_JAR);
+		} return Set.of(); // this is just for caching's sake
 	}
-
+	
+	public Object getDependencyNotation() {
+		return "io.github.amalgamation:minecraft-libraries:" + this.version;
+	}
+	
 	LauncherMeta.Version version() {
 		LauncherMeta.Version vers = this.vers;
 		if(vers == null) {

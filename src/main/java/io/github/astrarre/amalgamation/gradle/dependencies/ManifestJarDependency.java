@@ -2,9 +2,6 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -12,7 +9,10 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.api.source.VirtualSink;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.JavaExec;
 
@@ -37,18 +37,19 @@ public class ManifestJarDependency extends CachedDependency {
 	}
 
 	@Override
-	protected Path evaluatePath(byte[] hash) throws IOException {
-		return AmalgDirs.PROJECT.root(this.project).resolve("classpath_manifests").resolve(this.path + ".jar");
+	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
+		return AmalgDirs.PROJECT.root(this.project).getDir("classpath_manifests").getFile(this.path + ".jar");
 	}
 
 	@Override
-	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
-			try(FileSystem write = U.createZip(resolvedPath)) {
-				Path path = write.getPath("META-INF/MANIFEST.MF");
-				Files.createDirectories(write.getPath("META-INF"));
+			try(VirtualSink sink = AmalgIO.DISK_OUT.subsink(resolvedPath)) {
+				VirtualFile path = sink.outputFile("META-INF/MANIFEST.MF");
 				String cp = String.join(" ", this.files);
-				Files.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)));
+				sink.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)), StandardCharsets.UTF_8);
+			} catch(Exception e) {
+				throw FPInternal.rethrow(e);
 			}
 		}
 		return Set.of(new Artifact.File(
