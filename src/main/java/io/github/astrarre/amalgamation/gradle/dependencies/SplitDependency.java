@@ -2,22 +2,23 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Locale;
+import java.nio.ByteBuffer;
+import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.OutputTag;
-import net.devtech.zipio.ZipTag;
-import net.devtech.zipio.processes.ZipProcessBuilder;
-import net.devtech.zipio.processors.entry.ProcessResult;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
+import net.devtech.filepipeline.api.source.VirtualSink;
+import net.devtech.filepipeline.api.source.VirtualSource;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
-public class SplitDependency extends ZipProcessDependency {
+public class SplitDependency extends CachedDependency {
 	public final Dependency dependency;
-	public Path outputDir;
+	public VirtualPath outputDir;
+	
 	public SplitDependency(Project project, Dependency dependency) {
 		super(project);
 		this.dependency = dependency;
@@ -29,11 +30,11 @@ public class SplitDependency extends ZipProcessDependency {
 	}
 
 	@Override
-	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
+	protected VirtualPath evaluatePath(byte[] hash) throws MalformedURLException {
 		return this.outputDir;
 	}
 
-	Artifact.File artifact(Path dest, Artifact.Type type) {
+	Artifact.File artifact(VirtualPath dest, Artifact.Type type) {
 		return new Artifact.File(
 				this.project,
 				this.dependency.getGroup(),
@@ -44,33 +45,37 @@ public class SplitDependency extends ZipProcessDependency {
 				type
 		);
 	}
-
+	
+	private static final ByteBuffer EMPTY = ByteBuffer.allocate(0);
 	@Override
-	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
-		Files.createDirectories(resolvedPath);
-		AmalgIO.createFile(resolvedPath.resolve("resources.jar.rss_marker"));
-		Artifact cls = this.artifact(resolvedPath.resolve("classes.jar"), Artifact.Type.MIXED);
-		Artifact rss = this.artifact(resolvedPath.resolve("resources.jar"), Artifact.Type.RESOURCES);
-		Artifact sources = this.artifact(resolvedPath.resolve("sources.jar"), Artifact.Type.SOURCES);
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception {
+		AmalgIO.DISK_OUT.createIfAbsent(resolvedPath);
+		VirtualDirectory directory = resolvedPath.asDir();
+		AmalgIO.DISK_OUT.write(directory.getFile("resources.jar.rss_marker"), EMPTY);
+		
+		Artifact cls = this.artifact(directory.getFile("classes.jar"), Artifact.Type.MIXED);
+		Artifact rss = this.artifact(directory.getFile("resources.jar"), Artifact.Type.RESOURCES);
+		Artifact src = this.artifact(directory.getFile("sources.jar"), Artifact.Type.SOURCES);
+		
 		if(isOutdated) {
-			ZipTag clsTag = process.createZipTag(cls), rssTag = process.createZipTag(rss), sourcesTag = process.createZipTag(sources);
-			process.setEntryProcessor(buffer -> {
-				String path = buffer.path();
-				if(path.endsWith(".class") || path.contains("META-INF")) {
-					buffer.copyTo(path, clsTag);
-				} else if(path.endsWith(".java")) {
-					buffer.copyTo(path, sourcesTag);
-				} else {
-					buffer.copyTo(path, rssTag);
-				}
-				return ProcessResult.HANDLED;
-			});
-			resolver.apply(this.dependency, o -> OutputTag.INPUT);
-		} else {
-			process.addProcessed(cls);
-			process.addProcessed(rss);
-			process.addProcessed(sources);
+			VirtualSink classes = AmalgIO.DISK_OUT.subsink(cls.file);
+			VirtualSink resources = AmalgIO.DISK_OUT.subsink(rss.file);
+			VirtualSink sources = AmalgIO.DISK_OUT.subsink(src.file);
+			for(Artifact artifact : this.artifacts(this.dependency)) {
+				VirtualSource source = artifact.file.openOrThrow();
+				source.depthStream().filter(VirtualFile.class::isInstance).forEach(virtualPath -> {
+					String path = virtualPath.relativePath();
+					if(path.endsWith(".class") || path.contains("META-INF")) {
+						classes.copy(virtualPath, classes.outputFile(path));
+					} else if(path.endsWith(".java")) {
+						sources.copy(virtualPath, sources.outputFile(path));
+					} else {
+						resources.copy(virtualPath, resources.outputFile(path));
+					}
+				});
+			}
 		}
+		return Set.of(cls, rss, src);
 	}
-
+	
 }

@@ -17,14 +17,16 @@ import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgama
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
 import org.gradle.api.Project;
 
 public class NativesDependency extends CachedDependency {
+	public final VirtualDirectory nativesDir;
 	final String version;
 	final List<LauncherMeta.HashedURL> dependencies;
-	public final Path nativesDir;
-
+	
 	public NativesDependency(Project project, String version) {
 		super(project);
 		this.version = version;
@@ -34,33 +36,34 @@ public class NativesDependency extends CachedDependency {
 		for(LauncherMeta.Library library : vers.getLibraries()) {
 			this.dependencies.addAll(library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY));
 		}
-		this.nativesDir = AmalgIO.cache(project, true).resolve(version).resolve("natives").toAbsolutePath();
+		this.nativesDir = AmalgIO.cache(project, true).getDir(version).getDir("natives");
 	}
-
+	
 	public String getNativesDirectory() {
 		this.getArtifacts();
-		System.out.println("aaaaaaaa");
 		return this.nativesDir.toString();
 	}
-
+	
 	@Override
 	public void hashInputs(Hasher hasher) throws IOException {
 		for(LauncherMeta.HashedURL dependency : this.dependencies) {
 			hasher.putString(dependency.hash, StandardCharsets.UTF_8);
 		}
 	}
-
+	
 	@Override
-	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
+	protected VirtualPath evaluatePath(byte[] hash) throws MalformedURLException {
 		return this.nativesDir;
 	}
-
+	
 	@Override
-	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
-			for(Path path : UnsafeIterable.walkFiles(resolvedPath)) {
-				Files.delete(path);
+			VirtualDirectory directory = resolvedPath.asDir();
+			if(resolvedPath.exists()) {
+				AmalgIO.DISK_OUT.deleteContents(directory);
 			}
+			
 			// natives take very little time and rarely change, but it may be worth considering pulling natives from older versions?
 			for(LauncherMeta.HashedURL dependency : this.dependencies) {
 				DownloadUtil.Result result = DownloadUtil.read(dependency.getUrl(),
@@ -68,7 +71,8 @@ public class NativesDependency extends CachedDependency {
 						-1,
 						this.logger,
 						BaseAmalgamationGradlePlugin.offlineMode,
-						false);
+						false
+				);
 				if(result == null) {
 					throw new IllegalStateException("unable to download natives!");
 				}
@@ -78,29 +82,21 @@ public class NativesDependency extends CachedDependency {
 						if(entry.isDirectory()) {
 							continue;
 						}
-						Path toFile = resolvedPath.resolve(entry.getName()); // todo apparently this should be flattened linux?
-						if(Files.exists(toFile)) {
+						VirtualFile toFile = directory.getFile(entry.getName()); // todo apparently this should be flattened linux?
+						if(toFile.exists()) {
 							if(!toFile.toString().contains("META-INF")) {
 								this.logger.warn(toFile + " already exists!");
 							}
 							continue;
 						}
-						Path parent = toFile.getParent();
-						if(parent != null && !Files.exists(parent)) {
-							Files.createDirectories(parent);
-						}
-						Files.copy(input, toFile);
+						
+						AmalgIO.DISK_OUT.write(toFile, input);
 						input.closeEntry();
 					}
 				}
 			}
 		}
-		return Set.of(new Artifact.File(
-				this.project,
-				"net.minecraft", "natives", version,
-				resolvedPath,
-				this.getCurrentHash(),
-				Artifact.Type.MIXED
-		));
+		return Set.of(new Artifact.File(this.project, "net.minecraft", "natives", version, resolvedPath, this.getCurrentHash(),
+				Artifact.Type.MIXED));
 	}
 }

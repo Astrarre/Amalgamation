@@ -3,9 +3,6 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -73,7 +70,7 @@ public class AccessWidenerDependency extends CachedDependency {
 	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception {
 		Set<Artifact> artifacts = new HashSet<>();
 		List<FsPair> systems = new ArrayList<>();
-		for(Artifact artifact : this.artifacts(this.widen, true)) {
+		for(Artifact artifact : this.artifacts(this.widen)) {
 			Artifact out = artifact.deriveMaven(this.dirs.aws(this.project), this.getCurrentHash());
 			artifacts.add(out);
 			if(out.equals(artifact)) {
@@ -91,7 +88,7 @@ public class AccessWidenerDependency extends CachedDependency {
 			AccessWidener widener = new AccessWidener(true);
 			AccessWidenerReader aw = new AccessWidenerReader(widener);
 			for(Object accessWidener : this.accessWideners) {
-				for(Artifact artifact : this.artifacts(accessWidener, true)) {
+				for(Artifact artifact : this.artifacts(accessWidener)) {
 					try(var reader = artifact.file.asFile().newReader(StandardCharsets.UTF_8)) {
 						aw.read(reader);
 					} catch(IOException e) {

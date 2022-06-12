@@ -211,6 +211,10 @@ public class AmalgIO {
 		return DISK_SOURCE.getFile(path(path));
 	}
 	
+	public static File from(VirtualPath path) {
+		return new File("/" + path.relativePath());
+	}
+	
 	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {
 		return function;
 	}

@@ -12,6 +12,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import net.devtech.filepipeline.api.VirtualFile;
 import net.devtech.filepipeline.api.VirtualPath;
 import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.Project;
@@ -28,7 +29,8 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	 * 0 == unevaluated 1 == false 2 == true
 	 */
 	protected byte isOutdated;
-	private VirtualPath cachePath, realPath;
+	private VirtualPath realPath;
+	private VirtualFile cachePath;
 	public CachedDependency(Project project) {
 		super(project);
 	}
@@ -93,10 +95,10 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		return this.realPath;
 	}
 
-	protected VirtualPath getCachePath() {
+	protected VirtualFile getCachePath() {
 		if(this.cachePath == null) {
 			VirtualPath record = this.getPath();
-			this.cachePath = record.getParent().resolve(record.getFileName() + ".data");
+			this.cachePath = record.getParent().getFile(record.fileName()+ ".data");
 		}
 		return this.cachePath;
 	}
@@ -108,10 +110,10 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		this.initOldHash = true;
 
 		VirtualPath realPath = this.getPath();
-		VirtualPath path = this.getCachePath();
+		VirtualFile path = this.getCachePath();
 
 		if(path.exists()) {
-			try(InputStream stream = Files.newInputStream(path)) {
+			try(InputStream stream = path.getContents()) {
 				byte[] hash = new byte[BYTES];
 				if(stream.read(hash) != BYTES) {
 					throw new IOException("Unexpected EOF when reading hash from file!");
@@ -152,7 +154,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
-		try(OutputStream stream = Files.newOutputStream(this.getCachePath())) {
+		try(OutputStream stream = AmalgIO.DISK_OUT.newOutputStream(this.getCachePath())) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);
 		}
@@ -170,6 +172,8 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		} catch(Uncached u) {
 			paths = u.paths;
 			isOutdated = false;
+		} catch(Exception e) {
+			throw FPInternal.rethrow(e);
 		}
 		if(isOutdated) {
 			this.writeHash();

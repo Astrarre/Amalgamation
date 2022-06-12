@@ -78,20 +78,12 @@ public abstract class AmalgamationDependency extends AbstractSet<Object> {
 		return this.project.getDependencies().create(notation, config);
 	}
 
-	protected Set<Artifact> artifacts(Object notation, boolean resolve) {
-		return artifacts(notation, resolve, false);
+	protected Set<Artifact> artifacts(Object notation) {
+		return artifacts(notation, false);
 	}
 
-	protected Set<Artifact> artifacts(Object notation, boolean resolve, boolean isOutput) {
-		if(notation instanceof ZipProcessDependency d && !resolve) {
-			try {
-				return Streams.stream(d.process().getOutputs())
-						       .map(Artifact.class::cast)
-						       .collect(Collectors.toSet());
-			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
-			}
-		} else if(notation instanceof AmalgamationDependency a) {
+	protected Set<Artifact> artifacts(Object notation, boolean isOutput) {
+		if(notation instanceof AmalgamationDependency a) {
 			return a.getArtifacts();
 		}
 		Dependency dep;

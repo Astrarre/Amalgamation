@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 
 		for(LauncherMeta.Library library : libraries) {
 			if(!this.download) {
-				files.addAll(this.artifacts(library.name, true, true));
+				files.addAll(this.artifacts(library.name, true));
 				continue;
 			}
 
@@ -69,7 +68,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 			DependencyHandler deps = this.project.getDependencies();
 
 			if(failedDirectDownload) {
-				files.addAll(this.artifacts(library.name, true));
+				files.addAll(this.artifacts(library.name));
 			} else {
 				Dependency sources = deps.create(library.name + ":sources");
 				List<Path> resolvedSources;

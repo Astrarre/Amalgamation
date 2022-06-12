@@ -9,23 +9,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import com.google.common.hash.Hasher;
-import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
@@ -33,9 +22,6 @@ import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.filepipeline.api.VirtualFile;
 import net.devtech.filepipeline.api.VirtualPath;
 import net.devtech.filepipeline.impl.util.FPInternal;
-import net.devtech.zipio.ZipTag;
-import net.devtech.zipio.impl.util.U;
-import net.devtech.zipio.processes.ZipProcessBuilder;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -44,7 +30,7 @@ import org.gradle.api.tasks.TaskDependency;
 import org.jetbrains.annotations.Nullable;
 
 // todo this queries download url twice for some unknown reason...
-public class URLDependency extends ZipProcessDependency implements SelfResolvingDependencyInternal {
+public class URLDependency extends CachedDependency implements SelfResolvingDependencyInternal {
 	final String url;
 	final boolean compressed;
 	public String group, name, version;
@@ -135,14 +121,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	}
 
 	@Override
-	protected void after(boolean isOutdated) {
-		if(this.shouldOutput) {
-			super.after(isOutdated);
-		}
-	}
-
-	@Override
-	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			DownloadUtil.Result result = this.getResult();
 			if(result.error != null) {
@@ -154,8 +133,7 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 			}
 
 			try(result) {
-				U.createDirs(resolvedPath);
-				Files.copy(result.stream, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
+				AmalgIO.DISK_OUT.write(resolvedPath.asFile(), result.stream);
 			}
 		}
 
@@ -167,59 +145,13 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 		return end == -1 ? s.substring(start) : s.substring(start, end);
 	}
 
-	Artifact createArtifact(Path path) throws MalformedURLException {
+	Artifact createArtifact(VirtualPath path) throws MalformedURLException {
 		return new Artifact.File(
 				this.project, this,
 				path,
 				this.getCurrentHash(),
 				Artifact.Type.MIXED
 		);
-	}
-
-	@Override
-	protected void add(TaskInputResolver resolver, ZipProcessBuilder process, Path resolvedPath, boolean isOutdated) throws IOException {
-		Path path = this.shouldOutput ? resolvedPath : null;
-		if(isOutdated) {
-			var result = this.getResult();
-			if(result.error != null) {
-				if(this.isOptional) {
-					return;
-				} else {
-					throw result.error;
-				}
-			}
-
-			if(path == null) { // virtual output
-				FileSystem virtual = Jimfs.newFileSystem();
-				Path temp = virtual.getPath("temp.jar");
-				try {
-					Files.copy(result.stream, temp);
-				} finally {
-					result.close();
-				}
-				process.addProcessed(createArtifact(temp));
-				process.addCloseable(virtual);
-			} else { // real output
-				ZipTag tag = process.createZipTag(createArtifact(resolvedPath));
-				process.afterExecute(() -> {
-					try(ZipInputStream zis = new ZipInputStream(result.stream)) {
-						ReadableByteChannel channel = Channels.newChannel(zis);
-						ZipEntry entry;
-						while((entry = zis.getNextEntry()) != null) {
-							ByteBuffer buffer = U.read(channel);
-							tag.write(entry.getName(), buffer);
-						}
-					} catch(Exception e) {
-						throw U.rethrow(e);
-					}
-				});
-				return;
-			}
-		} else if(path == null || !Files.exists(path)) {
-			throw new IllegalStateException("shouldOutput is false, did not expect multi-use! " + this.url);
-		} else {
-			process.addProcessed(createArtifact(resolvedPath));
-		}
 	}
 
 	protected DownloadUtil.Result getResult() throws IOException {
@@ -259,8 +191,8 @@ public class URLDependency extends ZipProcessDependency implements SelfResolving
 	public Set<File> resolve() {
 		return this.getArtifacts()
 				       .stream()
-				       .map(a -> a.path)
-				       .map(Path::toFile)
+				       .map(a -> a.file)
+				       .map(a -> new File("/" + a.fileName()))
 				       .collect(Collectors.toSet());
 	}
 
