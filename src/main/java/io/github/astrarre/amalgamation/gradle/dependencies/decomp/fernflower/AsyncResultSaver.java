@@ -15,11 +15,10 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.AmalgDecompiler;
-import net.devtech.zipio.impl.util.U;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-
 
 // todo allow for vanilla fernflower
 public class AsyncResultSaver implements IResultSaver, AutoCloseable {
@@ -46,7 +45,7 @@ public class AsyncResultSaver implements IResultSaver, AutoCloseable {
 			if(entry == null) {
 				throw new IOException("Unknown input " + path + "/" + archiveName);
 			}
-			OutputEntry output = this.fileSystemCache.computeIfAbsent(archiveName, p -> new OutputEntry(U.createZip(entry.output()), entry.lineMapOutput(), new StringBuilder()));
+			OutputEntry output = this.fileSystemCache.computeIfAbsent(archiveName, p -> new OutputEntry(AmalgIO.createZip(entry.output()), entry.lineMapOutput(), new StringBuilder()));
 			if(manifest != null) {
 				FileSystem system = output.system;
 				Path manifestPath = system.getPath(JarFile.MANIFEST_NAME);
@@ -95,7 +94,7 @@ public class AsyncResultSaver implements IResultSaver, AutoCloseable {
 			OutputEntry entry = this.fileSystemCache.get(archiveName);
 			entry.system.close();
 			if(!entry.lineMap.isEmpty()) {
-				U.createDirs(entry.linemapPath);
+				Files.createDirectories(entry.linemapPath.getParent());
 				Files.writeString(entry.linemapPath, entry.lineMap);
 			}
 			return null;

@@ -1,7 +1,11 @@
 package io.github.astrarre.amalgamation.gradle.utils;
 
+import static net.devtech.filepipeline.impl.nio.NioVirtualFile.NIO_CREATE;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -240,6 +244,22 @@ public class AmalgIO {
 			return path.getParent().getFile(name + "." + ext);
 		} else {
 			return path.getParent().getFile(name.substring(0, index+1) + ext);
+		}
+	}
+	
+	public static FileSystem createZip(Path path) {
+		if(path == null) {
+			return null;
+		}
+		try {
+			Path parent = path.getParent();
+			if(parent != null) {
+				Files.createDirectories(parent);
+			}
+			Files.deleteIfExists(path);
+			return FileSystems.newFileSystem(path, NIO_CREATE);
+		} catch(IOException e) {
+			throw FPInternal.rethrow(e);
 		}
 	}
 }

@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.FernFlowerDecompiler;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 
 public interface AmalgDecompiler {
 	Type<FernFlowerDecompiler> FERNFLOWER = new Type<>("fernflower", FernFlowerDecompiler.class);
@@ -47,7 +47,7 @@ public interface AmalgDecompiler {
 			try {
 				return type.newInstance();
 			} catch(ReflectiveOperationException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 	}

@@ -22,7 +22,6 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import net.devtech.filepipeline.api.VirtualPath;
 import net.devtech.filepipeline.impl.util.FPInternal;
-import net.devtech.zipio.impl.util.U;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.tasks.TaskContainer;

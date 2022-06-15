@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import daomephsta.unpick.impl.representations.ReplacementInstructionGenerator;
 import daomephsta.unpick.impl.representations.TargetMethods;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -41,7 +42,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 			METHODS.setAccessible(true);
 			CLASS.setAccessible(true);
 		} catch(ReflectiveOperationException e) {
-			throw U.rethrow(e);
+			throw FPInternal.rethrow(e);
 		}
 	}
 
@@ -130,7 +131,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 							String name = file.getName();
 
 							if(name.endsWith(".jar")) {
-								FileSystem system = U.openZip(file.toPath());
+								FileSystem system = FileSystems.newFileSystem(file.toPath(), Map.of("create", "true"));
 								Path path = system.getPath("extras/definitions.unpick");
 								if(Files.exists(path)) {
 									unpickDefinitions.add(Files.newInputStream(path));
@@ -164,7 +165,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 							Object o1 = CLASS.get(o);
 							classMap.put(s, new Method(o, (String) o1));
 						} catch(IllegalAccessException e) {
-							throw U.rethrow(e);
+							throw FPInternal.rethrow(e);
 						}
 					});
 					this.constantGroups = mapper.generatorMap();
@@ -173,7 +174,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 			}
 			return methods;
 		} catch(IOException | IllegalAccessException e) {
-			throw U.rethrow(e);
+			throw FPInternal.rethrow(e);
 		}
 	}
 

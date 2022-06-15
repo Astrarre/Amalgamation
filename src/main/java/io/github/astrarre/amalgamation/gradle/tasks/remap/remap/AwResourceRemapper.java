@@ -5,16 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.devtech.zipio.impl.util.U;
-import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
+import net.devtech.filepipeline.impl.util.FPInternal;
 
 import net.fabricmc.accesswidener.AccessWidenerReader;
 import net.fabricmc.accesswidener.AccessWidenerRemapper;
@@ -39,7 +36,7 @@ public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 			try {
 				return relativePath.toRealPath().equals(this.awResolved);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		} else {
 			String path = relativePath.toString();

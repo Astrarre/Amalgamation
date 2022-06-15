@@ -21,6 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
 public abstract class CachedDependency extends AmalgamationDependency {
+	// todo flush zips
+	// todo make remapper copy unremapped files
+	// todo filter resource jars in all methods
+	
 	public static final HashFunction HASHING = AmalgIO.SHA256;
 	public static final int BYTES = 32; // should ideally remain this way and never change
 	@Nullable protected byte[] oldHash, currentHash;
@@ -113,7 +117,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		VirtualFile path = this.getCachePath();
 
 		if(path.exists()) {
-			try(InputStream stream = path.getContents()) {
+			try(InputStream stream = path.newInputStream()) {
 				byte[] hash = new byte[BYTES];
 				if(stream.read(hash) != BYTES) {
 					throw new IOException("Unexpected EOF when reading hash from file!");

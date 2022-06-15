@@ -42,7 +42,7 @@ import javax.inject.Inject;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.OS;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
@@ -231,7 +231,7 @@ public abstract class GenerateSourcesTask extends DefaultTask {
 			try {
 				return File.createTempFile("aglp", ".lmap");
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 	}

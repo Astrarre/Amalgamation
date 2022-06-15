@@ -37,7 +37,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	private static LauncherMeta instance;
 	public static LauncherMeta getLauncherMeta(Project project) {
 		if(instance == null) {
-			instance = new LauncherMeta(AmalgIO.globalCache(project), project);
+			instance = new LauncherMeta(AmalgIO.from(AmalgIO.globalCache(project)).toPath(), project);
 		}
 		return instance;
 	}
@@ -54,7 +54,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 			repository.setUrl("https://libraries.minecraft.net/");
 		});
 		ExtensionContainer container = target.getExtensions();
-		container.create(LauncherMeta.class, "launchermeta", LauncherMeta.class, AmalgIO.globalCache(target), target);
+		container.add(LauncherMeta.class, "launchermeta", getLauncherMeta(target));
 		container.add(new TypeOf<>() {}, "RemapJar", RemapJar.class);
 		container.add(new TypeOf<>() {}, "RemapSourcesJar", RemapSourcesJar.class);
 		container.add(new TypeOf<>() {}, "MigrateSourcesTask", MigrateSourcesTask.class);

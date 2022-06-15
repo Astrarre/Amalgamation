@@ -6,12 +6,9 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.jetbrains.annotations.NotNull;
 
 public interface UnsafeIterable<T> extends Iterable<T> {
@@ -34,7 +31,7 @@ public interface UnsafeIterable<T> extends Iterable<T> {
 			try {
 				return Files.walk(p);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}).filter(Files::isRegularFile).iterator();
 	}

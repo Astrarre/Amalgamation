@@ -90,7 +90,7 @@ public class NativesDependency extends CachedDependency {
 							continue;
 						}
 						
-						AmalgIO.DISK_OUT.write(toFile, input);
+						AmalgIO.DISK_OUT.copy(input, toFile);
 						input.closeEntry();
 					}
 				}

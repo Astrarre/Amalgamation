@@ -18,7 +18,7 @@ import groovy.util.Node;
 import groovy.util.NodeList;
 import io.github.astrarre.amalgamation.gradle.plugin.base.Dependent;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.XmlProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,14 +79,14 @@ public class MvnMetaReader {
 				}
 			}
 		} catch(IOException e) {
-			throw U.rethrow(e);
+			throw FPInternal.rethrow(e);
 		}
 
 		if(changed) {
 			try(BufferedWriter reader = Files.newBufferedWriter(json)) {
 				LauncherMeta.GSON.toJson(object, reader);
 			} catch(IOException e) {
-				throw U.rethrow(e);
+				throw FPInternal.rethrow(e);
 			}
 		}
 	}

@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.devtech.zipio.impl.util.U;
+import net.devtech.filepipeline.impl.util.FPInternal;
 import org.gradle.api.tasks.Internal;
 import org.gradle.jvm.tasks.Jar;
 
@@ -28,7 +28,7 @@ public abstract class AbstractRemapJarTask<T extends AbstractRemapAllTask<? exte
 			}
 			this.remap();
 		} catch(IOException e) {
-			throw U.rethrow(e);
+			throw FPInternal.rethrow(e);
 		}
 	}
 

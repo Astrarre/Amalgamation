@@ -3,12 +3,13 @@ package io.github.astrarre.amalgamation.gradle.tasks.remap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.zipio.impl.util.U;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.mercury.Mercury;
 import org.cadixdev.mercury.remapper.MercuryRemapper;
@@ -57,7 +58,7 @@ public class RemapAllSourcesJars extends AbstractRemapAllTask<RemapSourcesJar> {
 		}
 
 		for(MercuryPair pair : pairs) {
-			try(FileSystem system = U.createZip(pair.output)) {
+			try(FileSystem system = FileSystems.newFileSystem(pair.output, Map.of("create", "true"))) {
 				mercury.rewrite(pair.rewrite, system.getPath("/"));
 			} catch(Exception e) {
 				e.printStackTrace();

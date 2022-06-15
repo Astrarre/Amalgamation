@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import com.google.common.collect.Iterables;
 import io.github.astrarre.amalgamation.gradle.dependencies.ManifestJarDependency;
+import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.JavaExec;
@@ -35,7 +36,7 @@ public abstract class TaskConverter<T extends Task> {
 
 	protected static File getManifestJar(JavaExec task) {
 		String path = task.getPath();
-		return Iterables.getOnlyElement(new ManifestJarDependency(task.getProject(), path, task).getArtifacts()).path.toFile();
+		return AmalgIO.from(Iterables.getOnlyElement(new ManifestJarDependency(task.getProject(), path, task).getArtifacts()).file);
 	}
 
 	public static List<String> getClasspath(JavaExec task) {

@@ -133,7 +133,7 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 			}
 
 			try(result) {
-				AmalgIO.DISK_OUT.write(resolvedPath.asFile(), result.stream);
+				AmalgIO.DISK_OUT.copy(result.stream, resolvedPath.asFile());
 			}
 		}
 

@@ -31,15 +31,12 @@ import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Iterables;
 import com.google.common.jimfs.Jimfs;
-import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.mixin.MixinExtensionReborn;
+import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.zipio.impl.util.U;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
-import org.gradle.jvm.tasks.Jar;
 
 import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;

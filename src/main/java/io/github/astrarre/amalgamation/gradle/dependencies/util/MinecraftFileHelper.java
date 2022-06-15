@@ -9,6 +9,9 @@ import io.github.astrarre.amalgamation.gradle.dependencies.SplitDependency;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
+import net.devtech.filepipeline.api.VirtualDirectory;
+import net.devtech.filepipeline.api.VirtualFile;
+import net.devtech.filepipeline.api.VirtualPath;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 
@@ -34,9 +37,9 @@ public class MinecraftFileHelper {
 			}
 		}
 
-		Path globalCache = AmalgIO.globalCache(project);
-		Path jar = globalCache.resolve(version).resolve(area + ".jar");
-		Path unstripped = globalCache.resolve(version).resolve(area + ".jar");
+		VirtualDirectory globalCache = AmalgIO.globalCache(project);
+		VirtualFile jar = globalCache.getDir(version).getFile(area + ".jar");
+		VirtualFile unstripped = globalCache.getDir(version).getFile(area + ".jar");
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
 		dependency.group = "net.minecraft";
 		dependency.name = isClient ? "client" : "server";
@@ -50,7 +53,7 @@ public class MinecraftFileHelper {
 		Set<Object> f;
 		if(doSplit) {
 			SplitDependency split = new SplitDependency(project, dependency);
-			split.outputDir = globalCache.resolve(version).resolve("split");
+			split.outputDir = globalCache.getDir(version).getDir("split");
 			f = split;
 		} else {
 			f = dependency;

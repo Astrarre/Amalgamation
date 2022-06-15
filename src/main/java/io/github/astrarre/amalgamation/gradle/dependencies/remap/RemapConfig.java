@@ -10,7 +10,7 @@ import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
 
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgRemapper;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgamationRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.binary.TinyRemapperImpl;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.AccessWidenerRemapperImpl;
@@ -30,12 +30,12 @@ public class RemapConfig {
 	final List<Object> classpath = new ArrayList<>();
 	byte[] mappingsHash;
 
-	final List<AmalgRemapper> remappers = new ArrayList<>(List.of(
+	final List<AmalgamationRemapper> remappers = new ArrayList<>(List.of(
 			new TinyRemapperImpl(t -> {}),
 			new TrieHarderRemapperImpl(),
 			new AccessWidenerRemapperImpl(),
 			new MetaInfFixerImpl()));
-	final AmalgRemapper combined = new AmalgRemapper.Combined(this.remappers);
+	final AmalgamationRemapper combined = new AmalgamationRemapper.Combined(this.remappers);
 
 	public RemapConfig(Project project) {this.project = project;}
 
@@ -135,7 +135,7 @@ public class RemapConfig {
 		return Collections.unmodifiableList(this.classpath);
 	}
 
-	public AmalgRemapper getRemapper() {
+	public AmalgamationRemapper getRemapper() {
 		return combined;
 	}
 

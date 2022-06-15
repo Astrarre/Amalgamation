@@ -42,7 +42,7 @@ public class MinecraftAmalgamationImpl extends BaseAmalgamationImpl implements M
 		super(project);
 		File file = new File(this.librariesDirectory);
 		if(!(file.isDirectory() && file.exists())) {
-			this.librariesDirectory = AmalgIO.globalCache(project).resolve("libraries").toAbsolutePath().toString();
+			this.librariesDirectory = AmalgIO.globalCache(project).resolve("libraries").relativePath();
 		}
 		project.getRepositories().maven(repository -> {
 			this.repo = repository;
