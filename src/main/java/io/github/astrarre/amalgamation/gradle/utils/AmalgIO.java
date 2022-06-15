@@ -1,19 +1,23 @@
 package io.github.astrarre.amalgamation.gradle.utils;
 
-import static net.devtech.filepipeline.impl.nio.NioVirtualFile.NIO_CREATE;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -28,13 +32,9 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.filepipeline.api.VirtualDirectory;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.api.source.VirtualSink;
-import net.devtech.filepipeline.api.source.VirtualSource;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.func.UCons;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
@@ -48,18 +48,20 @@ import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
 
 public class AmalgIO {
-	public static final VirtualSink DISK_OUT = VirtualSink.primaryDrive();
-	public static final VirtualSource DISK_SOURCE = DISK_OUT.getSource();
-
+	
 	public static final HashFunction SHA256 = com.google.common.hash.Hashing.sha256();
 	public static final ExecutorService SERVICE = ForkJoinPool.commonPool();
-
+	private static final OpenOption[] OPTIONS = {
+			StandardOpenOption.WRITE,
+			StandardOpenOption.CREATE
+	};
+	
 	public static void hashDep(Hasher hasher, Project project, Object dependency) {
 		if(dependency instanceof CachedDependency c) {
 			try {
 				c.hashInputs(hasher);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		} else if(dependency instanceof AmalgamationDependency a) {
 			for(Artifact artifact : a.getArtifacts()) {
@@ -71,7 +73,7 @@ public class AmalgIO {
 			}
 		}
 	}
-
+	
 	public static void hash(Hasher hasher, File file) {
 		if(!file.exists()) {
 			hasher.putLong(System.currentTimeMillis());
@@ -80,38 +82,27 @@ public class AmalgIO {
 			hasher.putLong(file.lastModified());
 		}
 	}
-
+	
 	public static String path(Path path) {
 		Path other = path.toAbsolutePath();
 		return other.getRoot().relativize(other).toString().replace(path.getFileSystem().getSeparator(), "/");
 	}
-
-	public static VirtualDirectory createDir(Path path) {
-		return DISK_OUT.outputDir(path(path));
-	}
-
-	public static VirtualPath resolve(Path path) {
-		return DISK_SOURCE.resolve(path(path));
-	}
 	
-	public static VirtualDirectory getDir(Path path) {
-		return DISK_SOURCE.getDir(path(path));
-	}
-
-	public static VirtualDirectory cache(Project project, boolean global) {
+	public static Path cache(Project project, boolean global) {
 		if(global) {
 			return globalCache(project);
 		} else {
 			return AmalgDirs.ROOT_PROJECT.root(project.getRootProject());
 		}
 	}
-
-	public static VirtualDirectory globalCache(Project project) {
+	
+	public static Path globalCache(Project project) {
 		return AmalgDirs.GLOBAL.root(project);
 	}
 	
 	public static List<Path> resolveSources(Project project, Iterable<Dependency> dependencies) {
-		List<ComponentIdentifier> ids = project.getConfigurations()
+		List<ComponentIdentifier> ids = project
+				.getConfigurations()
 				.detachedConfiguration(toArray(dependencies, Dependency[]::new))
 				.getResolvedConfiguration()
 				.getResolvedArtifacts()
@@ -119,16 +110,13 @@ public class AmalgIO {
 				.map(ResolvedArtifact::getId)
 				.map(ComponentArtifactIdentifier::getComponentIdentifier)
 				.toList();
-
-		return getSources(project, ids)
-				.map(ResolvedArtifactResult::getFile)
-				.map(File::toPath)
-				.map(apply(Path::toRealPath))
-				.toList();
+		
+		return getSources(project, ids).map(ResolvedArtifactResult::getFile).map(File::toPath).map(apply(Path::toRealPath)).toList();
 	}
-
+	
 	public static Stream<ResolvedArtifactResult> getSources(Project project, Iterable<ComponentIdentifier> ids) {
-		return project.getDependencies()
+		return project
+				.getDependencies()
 				.createArtifactResolutionQuery()
 				.forComponents(ids)
 				.withArtifacts(JvmLibrary.class, List.of(SourcesArtifact.class))
@@ -140,7 +128,7 @@ public class AmalgIO {
 				.filter(ResolvedArtifactResult.class::isInstance)
 				.map(ResolvedArtifactResult.class::cast);
 	}
-
+	
 	public static <T> T[] toArray(Iterable<T> iterable, IntFunction<T[]> creator) {
 		if(iterable instanceof Collection<T> c) {
 			return c.toArray(creator);
@@ -154,8 +142,9 @@ public class AmalgIO {
 			return buf;
 		}
 	}
-
-	public static void resolveDeps(Project project, Set<Dependency> dependencies, Set<ResolvedDependency> resolved, List<Dependency> everythingElse) {
+	
+	public static void resolveDeps(Project project, Set<Dependency> dependencies, Set<ResolvedDependency> resolved,
+	                               List<Dependency> everythingElse) {
 		Configuration configuration = project.getConfigurations().detachedConfiguration(Iterables.toArray(dependencies, Dependency.class));
 		Set<Dependency> unvisited = dependencies.stream().map(Dependency::copy).collect(Collectors.toCollection(HashSet::new));
 		var deps = new HashSet<>(configuration.getResolvedConfiguration().getFirstLevelModuleDependencies(s -> {
@@ -175,7 +164,7 @@ public class AmalgIO {
 		}
 		resolved.addAll(deps);
 	}
-
+	
 	public static List<File> resolve(Project project, Iterable<Dependency> dependencies) {
 		Configuration configuration = null;
 		List<File> resolved = new ArrayList<>();
@@ -189,64 +178,64 @@ public class AmalgIO {
 				configuration.getDependencies().add(dependency);
 			}
 		}
-
+		
 		if(configuration != null) {
 			resolved.addAll(configuration.getResolvedConfiguration().getFiles());
 		}
 		return resolved;
 	}
-
+	
 	public static File resolveFile(Project project, Object notation) {
 		Dependency dependency = project.getDependencies().create(notation);
 		return Iterables.getOnlyElement(resolve(project, List.of(dependency)));
 	}
-
+	
 	public static String b64(byte[] data) {
 		return Base64.getUrlEncoder().encodeToString(data);
 	}
-
-	public static void createFile(Path resolve) throws IOException {
-		if(!Files.exists(resolve)) {
-			Files.createFile(resolve);
+	
+	public static void createParent(Path file) throws IOException {
+		Path parent = file.getParent();
+		if(!Files.exists(parent)) {
+			Files.createDirectories(parent);
 		}
 	}
 	
-	public static VirtualFile getFile(Path path) {
-		return DISK_SOURCE.getFile(path(path));
-	}
-	
-	public static File from(VirtualPath path) {
-		return new File("/" + path.relativePath());
-	}
-	
-	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {
-		return function;
-	}
-
-	interface UnsafeFunction<A, B> extends Function<A, B> {
-		@Override
-		default B apply(A a) {
-			try {
-				return this.runUnsafe(a);
-			} catch(Throwable e) {
-				throw FPInternal.rethrow(e);
-			}
+	public static ByteBuffer readAll(Path path) {
+		try {
+			SeekableByteChannel channel = Files.newByteChannel(path);
+			ByteBuffer buf = ByteBuffer.allocate(Math.toIntExact(channel.size()));
+			channel.position(0);
+			buf.limit(channel.read(buf));
+			return buf;
+		} catch(IOException e) {
+			throw Err.rethrow(e);
 		}
-
-		B runUnsafe(A a) throws Throwable;
 	}
-
-
-	public static VirtualFile changeExtension(VirtualFile path, String ext) {
-		String name = path.fileName();
+	
+	public static void write(Path path, ByteBuffer contents) throws IOException {
+		SeekableByteChannel channel = Files.newByteChannel(path, OPTIONS);
+		channel.write(contents);
+		channel.truncate(contents.limit());
+	}
+	
+	public static void deleteDirectory(Path path) throws IOException {
+		Files.walk(path).sorted(Comparator.reverseOrder()).forEach(UCons.of(Files::delete));
+	}
+	
+	public static Path changeExtension(Path path, String ext) {
+		String name = path.toString();
 		int index = name.lastIndexOf('.');
 		if(index == -1) {
-			return path.getParent().getFile(name + "." + ext);
+			return path.getParent().resolve(name + "." + ext);
 		} else {
-			return path.getParent().getFile(name.substring(0, index+1) + ext);
+			return path.getParent().resolve(name.substring(0, index + 1) + ext);
 		}
 	}
 	
+	/**
+	 * @return an uncached zip file system
+	 */
 	public static FileSystem createZip(Path path) {
 		if(path == null) {
 			return null;
@@ -257,9 +246,26 @@ public class AmalgIO {
 				Files.createDirectories(parent);
 			}
 			Files.deleteIfExists(path);
-			return FileSystems.newFileSystem(path, NIO_CREATE);
+			return FileSystems.newFileSystem(path, Map.of("create", "true"));
 		} catch(IOException e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
+	}
+	
+	static <A, B> Function<A, B> apply(UnsafeFunction<A, B> function) {
+		return function;
+	}
+	
+	interface UnsafeFunction<A, B> extends Function<A, B> {
+		@Override
+		default B apply(A a) {
+			try {
+				return this.runUnsafe(a);
+			} catch(Throwable e) {
+				throw Err.rethrow(e);
+			}
+		}
+		
+		B runUnsafe(A a) throws Throwable;
 	}
 }

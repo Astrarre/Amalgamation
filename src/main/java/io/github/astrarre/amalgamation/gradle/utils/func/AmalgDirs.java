@@ -1,11 +1,12 @@
 package io.github.astrarre.amalgamation.gradle.utils.func;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LazyFunction;
-import net.devtech.filepipeline.api.VirtualDirectory;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.Project;
 
 public enum AmalgDirs {
@@ -16,38 +17,46 @@ public enum AmalgDirs {
 	ROOT_PROJECT(p -> p.getRootProject().getBuildDir().toPath().resolve("amalgamation"), true), // ?
 	GLOBAL(p -> p.getGradle().getGradleUserHomeDir().toPath().resolve("caches").resolve("amalgamation"), true);
 
-	final Function<Project, VirtualDirectory> rootDirectory;
+	final Function<Project, Path> rootDirectory;
 
 	AmalgDirs(Function<Project, Path> directory, boolean cache) {
-		Function<Project, VirtualDirectory> function = p -> AmalgIO.createDir(directory.apply(p)).asDir();
+		Function<Project, Path> function = p -> {
+			Path path = directory.apply(p);
+			try {
+				Files.createDirectories(path);
+			} catch(IOException e) {
+				throw Err.rethrow(e);
+			}
+			return path;
+		};
 		if(cache) {
 			function = new LazyFunction<>(function);
 		}
 		this.rootDirectory = function;
 	}
 
-	public VirtualDirectory root(Project project) {
+	public Path root(Project project) {
 		return this.rootDirectory.apply(project);
 	}
 
-	public VirtualDirectory aws(Project project) {
-		return AmalgIO.DISK_OUT.outputDir(this.root(project), "accessWideners");
+	public Path aws(Project project) {
+		return this.root(project);
 	}
 
-	public VirtualDirectory remaps(Project project) {
-		return AmalgIO.DISK_OUT.outputDir(this.root(project), "remaps");
+	public Path remaps(Project project) {
+		return this.root(project);
 	}
 
-	public VirtualDirectory decomps(Project project) {
-		return AmalgIO.DISK_OUT.outputDir(this.root(project), "decompiles");
+	public Path decomps(Project project) {
+		return this.root(project);
 	}
 
-	public VirtualDirectory unpack(Project project) {
-		return AmalgIO.DISK_OUT.outputDir(this.root(project), "unpack");
+	public Path unpack(Project project) {
+		return this.root(project);
 	}
 
-	public VirtualDirectory downloads(Project project) {
-		return AmalgIO.DISK_OUT.outputDir(this.root(project), "downloads");
+	public Path downloads(Project project) {
+		return this.root(project);
 	}
 
 	public static AmalgDirs of(boolean global) {

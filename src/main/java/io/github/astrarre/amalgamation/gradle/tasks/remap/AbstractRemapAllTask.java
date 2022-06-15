@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.TaskAction;
@@ -61,7 +61,7 @@ public abstract class AbstractRemapAllTask<T extends AbstractRemapJarTask<? exte
 			for(IOException exception : exceptions) {
 				exception.printStackTrace();
 			}
-			throw FPInternal.rethrow(t);
+			throw Err.rethrow(t);
 		}
 	}
 

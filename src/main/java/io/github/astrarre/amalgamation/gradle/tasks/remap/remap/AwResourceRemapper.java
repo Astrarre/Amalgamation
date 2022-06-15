@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 
 import net.fabricmc.accesswidener.AccessWidenerReader;
 import net.fabricmc.accesswidener.AccessWidenerRemapper;
@@ -36,7 +36,7 @@ public class AwResourceRemapper implements OutputConsumerPath.ResourceRemapper {
 			try {
 				return relativePath.toRealPath().equals(this.awResolved);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		} else {
 			String path = relativePath.toString();

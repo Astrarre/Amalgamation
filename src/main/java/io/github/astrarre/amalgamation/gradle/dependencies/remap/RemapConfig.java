@@ -4,17 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import com.google.common.hash.Hasher;
 import groovy.lang.Closure;
 import io.github.astrarre.amalgamation.gradle.dependencies.AmalgamationDependency;
-
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.AmalgamationRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.binary.TinyRemapperImpl;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.AccessWidenerRemapperImpl;
-import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.MetaInfFixerImpl;
+import io.github.astrarre.amalgamation.gradle.dependencies.remap.misc.ResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.source.TrieHarderRemapperImpl;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.unpick.UnpickExtension;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
@@ -33,8 +30,8 @@ public class RemapConfig {
 	final List<AmalgamationRemapper> remappers = new ArrayList<>(List.of(
 			new TinyRemapperImpl(t -> {}),
 			new TrieHarderRemapperImpl(),
-			new AccessWidenerRemapperImpl(),
-			new MetaInfFixerImpl()));
+			ResourceRemapper.accessWidener(),
+			ResourceRemapper.metaInfFixer()));
 	final AmalgamationRemapper combined = new AmalgamationRemapper.Combined(this.remappers);
 
 	public RemapConfig(Project project) {this.project = project;}
@@ -87,10 +84,22 @@ public class RemapConfig {
 		avoidSecond(TinyRemapper.class);
 		this.remappers.add(new TinyRemapperImpl(t -> t.extension(new UnpickExtension(this.mappings))));
 	}
+	
+	public void resourceRemapper(ResourceRemapper remap) {
+		for(AmalgamationRemapper remapper : this.remappers) {
+			if(remapper instanceof ResourceRemapper r && r.uniqueString.equals(remap.uniqueString)) {
+				throw new IllegalStateException("Cannot have 2 " + r.uniqueString + " resource remappers");
+			}
+		}
+		this.remappers.add(remap);
+	}
 
 	public void metaInfFixer() {
-		avoidSecond(MetaInfFixerImpl.class);
-		this.remappers.add(new MetaInfFixerImpl());
+		this.resourceRemapper(ResourceRemapper.metaInfFixer());
+	}
+	
+	public void accessWidener() {
+		this.resourceRemapper(ResourceRemapper.accessWidener());
 	}
 
 	public void removeRemapper(int index) {

@@ -3,6 +3,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,10 +21,10 @@ import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
 import io.github.astrarre.amalgamation.gradle.utils.javaparser.BasicResolvedClassDeclaration;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.api.source.VirtualSink;
-import net.devtech.filepipeline.api.source.VirtualSource;
+import java.nio.file.Path;
+
+import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
+import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
 import org.gradle.api.Project;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -60,27 +61,27 @@ public class AccessWidenerDependency extends CachedDependency {
 	}
 
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
-		return AmalgIO.DISK_OUT.outputDir(this.dirs.aws(this.project), AmalgIO.b64(hash));
+	protected Path evaluatePath(byte[] hash) throws IOException {
+		return this.dirs.aws(this.project).resolve(AmalgIO.b64(hash));
 	}
 
-	public record FsPair(VirtualSource input, VirtualSink output) {}
+	public record FsPair(FSRef input, FSRef output) {}
 
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws Exception {
 		Set<Artifact> artifacts = new HashSet<>();
 		List<FsPair> systems = new ArrayList<>();
-		for(Artifact artifact : this.artifacts(this.widen)) {
-			Artifact out = artifact.deriveMaven(this.dirs.aws(this.project), this.getCurrentHash());
+		for(Artifact in : this.artifacts(this.widen)) {
+			Artifact out = in.deriveMaven(this.dirs.aws(this.project), this.getCurrentHash());
 			artifacts.add(out);
-			if(out.equals(artifact)) {
+			if(out.equals(in)) {
 				continue;
 			}
-			if(isOutdated) { // todo sources not appearing?
-				AmalgIO.DISK_OUT.delete(out.file);
-				AmalgIO.DISK_OUT.createIfAbsent(out.file.getParent());
-				AmalgIO.DISK_OUT.copy(artifact.file, out.file);
-				systems.add(new FsPair(artifact.file.openOrThrow(), AmalgIO.DISK_OUT.subsink(out.file)));
+			if(isOutdated) {
+				Files.deleteIfExists(out.file);
+				AmalgIO.createParent(out.file);
+				Files.copy(in.file, out.file);
+				systems.add(new FsPair(ZipIO.readZip(in.file), ZipIO.createZip(out.file)));
 			}
 		}
 
@@ -89,7 +90,7 @@ public class AccessWidenerDependency extends CachedDependency {
 			AccessWidenerReader aw = new AccessWidenerReader(widener);
 			for(Object accessWidener : this.accessWideners) {
 				for(Artifact artifact : this.artifacts(accessWidener)) {
-					try(var reader = artifact.file.asFile().newReader(StandardCharsets.UTF_8)) {
+					try(var reader = Files.newBufferedReader(artifact.file)) {
 						aw.read(reader);
 					} catch(IOException e) {
 						e.printStackTrace();
@@ -111,19 +112,19 @@ public class AccessWidenerDependency extends CachedDependency {
 			for(String target : widener.getTargets()) {
 				String path = target.replace('.', '/');
 				for(FsPair pair : systems) {
-					VirtualPath cls = pair.input.find(path + ".class");
-					VirtualPath java = pair.input.find(path + ".java");
-					if(cls != null) {
-						byte[] buf = cls.asFile().allBytes();
-						ClassReader reader = new ClassReader(buf);
+					Path cls = pair.input.getPath(path + ".class");
+					Path java = pair.input.getPath(path + ".java");
+					if(Files.exists(cls)) {
+						ByteBuffer buf = AmalgIO.readAll(cls);
+						ClassReader reader = new ClassReader(buf.array(), buf.arrayOffset(), buf.limit());
 						ClassWriter writer = new ClassWriter(0);
 						ClassVisitor visitor = AccessWidenerClassVisitor.createClassVisitor(Opcodes.ASM9, writer, widener);
 						reader.accept(visitor, 0);
-						VirtualFile outCls = pair.output.outputFile(path + ".class");
-						AmalgIO.DISK_OUT.write(outCls, ByteBuffer.wrap(writer.toByteArray()));
+						Path outCls = pair.output.getPath(path + ".class");
+						AmalgIO.write(outCls, ByteBuffer.wrap(writer.toByteArray()));
 					}
-					if(java != null) {
-						ParseResult<CompilationUnit> parse = parser.parse(java.asFile().asString(StandardCharsets.UTF_8));
+					if(Files.exists(java)) {
+						ParseResult<CompilationUnit> parse = parser.parse(Files.readString(java));
 						if(!parse.isSuccessful()) {
 							for(Problem problem : parse.getProblems()) {
 								System.err.println(problem.getVerboseMessage());
@@ -132,8 +133,8 @@ public class AccessWidenerDependency extends CachedDependency {
 							CompilationUnit unit = parse.getResult().orElseThrow();
 							CompilationUnit lpp = LexicalPreservingPrinter.setup(unit);
 							transformer.transform(lpp);
-							VirtualFile outJav = pair.output.outputFile(path + ".java");
-							AmalgIO.DISK_OUT.writeString(outJav, LexicalPreservingPrinter.print(lpp), StandardCharsets.UTF_8);
+							Path outJava = pair.output.getPath(path + ".java");
+							Files.writeString(outJava, LexicalPreservingPrinter.print(lpp), StandardCharsets.UTF_8);
 						}
 					}
 				}
@@ -141,8 +142,7 @@ public class AccessWidenerDependency extends CachedDependency {
 		}
 
 		for(FsPair system : systems) {
-			system.input.close();
-			system.output.close();
+			system.output.flush();
 		}
 		return artifacts;
 	}

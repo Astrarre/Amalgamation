@@ -10,18 +10,21 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.hash.Hasher;
+import com.google.common.jimfs.Jimfs;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import java.nio.file.Path;
+import java.nio.file.Path;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -38,7 +41,7 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 	public boolean isOptional = false;
 	public boolean silent = false;
 	public boolean isUnique = false;
-	public VirtualFile output;
+	public Path output;
 	String etag;
 	long lastModifyDate = -1;
 	DownloadUtil.Result result;
@@ -57,12 +60,12 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 			this.name = strip(ur.getPath());
 			this.version = "NaN";
 		} catch(MalformedURLException e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
 	}
 
 	@Override
-	public VirtualPath getPath() {
+	public Path getPath() {
 		return this.output != null ? this.output : super.getPath();
 	}
 
@@ -78,11 +81,11 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 	}
 
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws MalformedURLException {
+	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
 		if(this.output == null) {
 			URL url = new URL(this.url);
 			String host = url.getHost();
-			return AmalgIO.DISK_OUT.outputDir(AmalgDirs.GLOBAL.downloads(this.project), host+"/"+url.toString().replaceFirst(host, "$"));
+			return AmalgDirs.GLOBAL.downloads(this.project).resolve(host+"/"+url.toString().replaceFirst(host, "$"));
 		} else {
 			return this.output;
 		}
@@ -114,14 +117,14 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 	}
 
 	public BufferedReader getOutdatedReader() throws IOException {
-		if(!this.getPath().exists()) {
+		if(!Files.exists(this.getPath())) {
 			this.getArtifacts();
 		}
-		return this.getPath().asFile().newReader(StandardCharsets.UTF_8);
+		return Files.newBufferedReader(this.getPath());
 	}
 
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
 			DownloadUtil.Result result = this.getResult();
 			if(result.error != null) {
@@ -133,7 +136,9 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 			}
 
 			try(result) {
-				AmalgIO.DISK_OUT.copy(result.stream, resolvedPath.asFile());
+				// todo in memory file system in the cache, prolly with Jimfs
+				AmalgIO.createParent(resolvedPath);
+				Files.copy(result.stream, resolvedPath);
 			}
 		}
 
@@ -145,7 +150,7 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 		return end == -1 ? s.substring(start) : s.substring(start, end);
 	}
 
-	Artifact createArtifact(VirtualPath path) throws MalformedURLException {
+	Artifact createArtifact(Path path) throws MalformedURLException {
 		return new Artifact.File(
 				this.project, this,
 				path,
@@ -192,7 +197,7 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 		return this.getArtifacts()
 				       .stream()
 				       .map(a -> a.file)
-				       .map(a -> new File("/" + a.fileName()))
+				       .map(Path::toFile)
 				       .collect(Collectors.toSet());
 	}
 

@@ -9,7 +9,7 @@ import java.util.Map;
 
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.func.UnsafeIterable;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.mercury.Mercury;
 
@@ -47,7 +47,7 @@ public abstract class RemapSourcesJar extends AbstractRemapJarTask<RemapAllSourc
 				}
 			}
 		} catch(Exception e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
 	}
 

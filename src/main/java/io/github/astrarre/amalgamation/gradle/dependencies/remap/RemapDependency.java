@@ -1,6 +1,7 @@
 package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,8 +20,11 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.util.BasicRemap
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
+import io.github.astrarre.amalgamation.gradle.utils.func.UCons;
+import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
+import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
 import it.unimi.dsi.fastutil.Pair;
-import net.devtech.filepipeline.api.VirtualPath;
+import java.nio.file.Path;
 import org.gradle.api.Project;
 
 public class RemapDependency extends CachedDependency {
@@ -36,13 +40,14 @@ public class RemapDependency extends CachedDependency {
 	}
 	
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
-		return this.getDir().remaps(this.project).getDir(AmalgIO.b64(hash));
+	protected Path evaluatePath(byte[] hash) throws IOException {
+		return this.getDir().remaps(this.project).resolve(AmalgIO.b64(hash));
 	}
 	
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception {
-		AmalgamationRemapper remapper = null;
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws Exception {
+		AmalgamationRemapper remapper = this.config.getRemapper();
+		List<AmalgamationRemapper> remappers = this.config.remappers;
 		Set<Artifact> classpath = new HashSet<>();
 		if(remapper.requiresClasspath()) {
 			for(Object o : this.config.getClasspath()) {
@@ -58,7 +63,7 @@ public class RemapDependency extends CachedDependency {
 			for(Artifact artifact : this.artifacts(local.dependency)) {
 				if(!cache.containsKey(artifact)) {
 					Artifact output = this.transform(artifact, local.dirs);
-					if(output.file.exists()) {
+					if(Files.exists(output.file)) {
 						if(remapper.requiresClasspath()) {
 							classpath.add(artifact);
 						}
@@ -80,9 +85,37 @@ public class RemapDependency extends CachedDependency {
 				mappings.add(mapping.read());
 			}
 			remapper.acceptMappings(mappings, new BasicRemapper(mappings));
-			remapper.acceptClasspath(classpath);
-			remapper.acceptRemaps(remaps);
+			
+			if(remapper.requiresClasspath()) {
+				remapper.acceptClasspath(classpath);
+				for(Artifact artifact : classpath) {
+					FSRef src = ZipIO.readZip(artifact.file);
+					AmalgamationRemapper.RemapTask task = remapper.classpathTask(artifact, src);
+					src.walk().filter(Files::isRegularFile).forEach(UCons.of(path -> task.acceptFile(src, path, null, false)));
+				}
+			}
+			
+			List<AmalgamationRemapper> otherRemappers = List.copyOf(remappers);
+			remapper.acceptRemap(otherRemappers, remaps);
+			List<FSRef> writes = new ArrayList<>();
+			for(Pair<Artifact, Artifact> remap : remaps) {
+				Artifact from = remap.first(), to = remap.second();
+				FSRef src = ZipIO.readZip(from.file), dst = ZipIO.createZip(to.file);
+				AmalgamationRemapper.RemapTarget target = new AmalgamationRemapper.RemapTarget(from, src, to, dst);
+				AmalgamationRemapper.RemapTask task = remapper.createTask(target);
+				src.walk().filter(Files::isRegularFile).forEach(UCons.of(path -> {
+					if(!task.acceptFile(src, path, dst, false)) {
+						Path out = dst.getPath(path.toString());
+						AmalgIO.createParent(out);
+						Files.copy(path, out);
+					}
+				}));
+				writes.add(dst);
+			}
 			remapper.write();
+			for(FSRef write : writes) {
+				write.flush();
+			}
 		}
 		
 		return Set.copyOf(cache.values());

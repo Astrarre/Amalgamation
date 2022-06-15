@@ -2,6 +2,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies.mojmerge;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -15,10 +16,12 @@ import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgama
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.api.source.VirtualSink;
-import net.devtech.filepipeline.api.source.VirtualSource;
+import java.nio.file.Path;
+import java.nio.file.Path;
+
+import io.github.astrarre.amalgamation.gradle.utils.func.UCons;
+import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
+import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
 import org.gradle.api.Project;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -59,14 +62,14 @@ public class MojMergedDependency extends CachedDependency {
 	}
 	
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) {
+	protected Path evaluatePath(byte[] hash) {
 		//String dir = AmalgIO.b64(hash);
 		//String name = client.getName() + "-" + server.getName() + "@" + client.getVersion() + "_" + server.getVersion();
-		return AmalgIO.cache(this.project, true).getDir(this.version).getFile("merged-" + this.version + ".jar");
+		return AmalgIO.cache(this.project, true).resolve(this.version).resolve("merged-" + this.version + ".jar");
 	}
 	
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws Exception {
 		Artifact.File file = new Artifact.File(this.project,
 				"net.minecraft",
 				"merged",
@@ -79,17 +82,21 @@ public class MojMergedDependency extends CachedDependency {
 		if(isOutdated) {
 			// todo remove client mappings since now we have a less shit API, todo consider global cache instead of per-directory cache for speed
 			Mappings.Namespaced server = this.serverMappings.read(), client = this.clientMappings.read();
-			VirtualSink sink = AmalgIO.DISK_OUT.subsink(resolvedPath);
+			FSRef out = ZipIO.createZip(resolvedPath);
 			for(Artifact artifact : this.artifacts(this.client)) {
-				VirtualSource source = artifact.file.openAsSource();
-				source.depthStream().filter(VirtualFile.class::isInstance).filter(p -> p.relativePath().endsWith(".class")).forEach(v -> {
-					ByteBuffer buf = ((VirtualFile) v).getContents();
-					ClassReader clientReader = new ClassReader(buf.array(), buf.arrayOffset(), buf.limit());
-					ClassWriter writer = new ClassWriter(0);
-					MojMerger merger = new MojMerger(Opcodes.ASM9, writer, this.handler, client, server);
-					clientReader.accept(merger, 0);
-					sink.write(sink.outputFile(v.relativePath()), ByteBuffer.wrap(writer.toByteArray()));
-				});
+				ZipIO.readZip(artifact.file).directorizingStream(out).forEach(UCons.of(src -> {
+					Path dst = out.getPath(src.toString());
+					if(src.toString().endsWith(".class")) {
+						ByteBuffer buf = AmalgIO.readAll(src);
+						ClassReader clientReader = new ClassReader(buf.array(), buf.arrayOffset(), buf.limit());
+						ClassWriter writer = new ClassWriter(0);
+						MojMerger merger = new MojMerger(Opcodes.ASM9, writer, this.handler, client, server);
+						clientReader.accept(merger, 0);
+						AmalgIO.write(dst, ByteBuffer.wrap(writer.toByteArray()));
+					} else {
+						Files.copy(src, dst);
+					}
+				}));
 			}
 		}
 		
@@ -97,7 +104,7 @@ public class MojMergedDependency extends CachedDependency {
 	}
 	
 	public static MappingTarget mojmap(Project project, String version, boolean isClient) {
-		VirtualFile path = AmalgIO.globalCache(project).getDir(version).getFile((isClient ? "client" : "server") + "_mappings.txt");
+		Path path = AmalgIO.globalCache(project).resolve(version).resolve((isClient ? "client" : "server") + "_mappings.txt");
 		var url = forVers(project, version, isClient);
 		HashedURLDependency dependency = new HashedURLDependency(project, url);
 		dependency.output = path;

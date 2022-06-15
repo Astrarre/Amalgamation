@@ -19,22 +19,17 @@
 
 package io.github.astrarre.amalgamation.gradle.plugin.base;
 
-import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import io.github.astrarre.amalgamation.gradle.ide.eclipse.ConfigureEclipse;
 import io.github.astrarre.amalgamation.gradle.ide.idea.ConfigIdea;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.filepipeline.api.VirtualDirectory;
+import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
 import org.gradle.StartParameter;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginContainer;
 import org.jetbrains.annotations.NotNull;
@@ -46,71 +41,46 @@ public class BaseAmalgamationGradlePlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(@NotNull Project target) {
-		gradle = target.getGradle();
 		for(AmalgDirs dirs : List.of(AmalgDirs.ROOT_PROJECT, AmalgDirs.GLOBAL)) {
-			for(VirtualDirectory dir : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target), dirs.unpack(target))) {
+			for(Path dir : List.of(dirs.aws(target), dirs.remaps(target), dirs.decomps(target), dirs.unpack(target))) {
 				target.getRepositories().maven(repository -> {
 					repository.setName("Amalgamation " + dirs.name() + " cache");
-					repository.setUrl(Path.of("/"+dir.relativePath()).toUri());
+					repository.setUrl(dir.toUri());
 				});
 			}
 		}
 
-		this.registerProvider(target);
-
-		StartParameter parameter = target.getGradle().getStartParameter();
-		refreshDependencies = parameter.isRefreshDependencies();
-		if(refreshDependencies) {
-			refreshAmalgamationCaches = true;
-		} else {
-			refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
-		}
-
-		if(refreshAmalgamationCaches) {
-			target.getLogger().warn("Refresh Amalgamation Caches Enabled: Build times may suffer.");
-		}
-		offlineMode = parameter.isOffline();
-
-		// todo detect if amalg really is applied on root
-		Project gcd = target;
-		Project root = target.getRootProject();
-		if(this.containsAmalg(root)) {
-			gcd = root;
-		} else {
-			// check if parents contains amalg
-			Project project = target, last = null;
-			while((project = project.getParent()) != null) {
-				if(this.containsAmalg(project)) {
-					last = project;
-				}
+		if(gradle == null) {
+			Gradle gradle = BaseAmalgamationGradlePlugin.gradle = target.getGradle();
+			target.getLogger().lifecycle("Initializing Amalgamation Global Gradle State");
+			
+			StartParameter parameter = target.getGradle().getStartParameter();
+			refreshDependencies = parameter.isRefreshDependencies();
+			if(refreshDependencies) {
+				refreshAmalgamationCaches = true;
+			} else {
+				refreshAmalgamationCaches = Boolean.getBoolean("refreshAmalgamationCaches");
 			}
-			if(last != null) {
-				gcd = last;
+			
+			if(refreshAmalgamationCaches) {
+				target.getLogger().warn("Refresh Amalgamation Caches Enabled: Build times may suffer.");
 			}
-		}
-
-		if(gcd == target) {
+			offlineMode = parameter.isOffline();
+			
 			var temp = new Object() {
 				Plugin<Project> plugin;
 			};
-
+			
 			listenFor(target, "idea", idea -> {
 				ConfigIdea.configure(target, idea);
 				temp.plugin = idea;
 			});
 			listenFor(target, "eclipse", eclipse -> ConfigureEclipse.configure(target));
+			
+			gradle.buildFinished(result -> ZipIO.nuclearOption());
 		}
-	}
-
-	private boolean containsAmalg(Project root) {
-		boolean contains = false;
-		for(Plugin plugin : root.getPlugins()) {
-			if(plugin instanceof BaseAmalgamationGradlePlugin) {
-				contains = true;
-				break;
-			}
-		}
-		return contains;
+		
+		this.registerProvider(target);
 	}
 
 	public static void listenFor(Project target, String id, Consumer<Plugin<Project>> onFound) {

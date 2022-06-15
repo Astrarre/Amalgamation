@@ -3,6 +3,8 @@ package io.github.astrarre.amalgamation.gradle.dependencies.decomp;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +22,8 @@ import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
 import io.github.astrarre.amalgamation.gradle.dependencies.CachedDependency;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import java.nio.file.Path;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.ModuleDependency;
 import org.gradle.api.tasks.TaskContainer;
@@ -29,6 +31,7 @@ import org.gradle.api.tasks.TaskContainer;
 /**
  * Decompiles given dependencies with a configurable decompiler
  */
+@SuppressWarnings("UnstableApiUsage")
 public class DecompileDependency extends CachedDependency {
 	private static int TASK_NAME_C = 0;
 	private final Map<Artifact, DecompileOutput> artifactMap = new HashMap<>();
@@ -164,12 +167,12 @@ public class DecompileDependency extends CachedDependency {
 	}
 
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
-		return this.amalgDirs.decomps(this.project).getFile(AmalgIO.b64(hash) + "g");
+	protected Path evaluatePath(byte[] hash) throws IOException {
+		return this.amalgDirs.decomps(this.project).resolve(AmalgIO.b64(hash) + "g");
 	}
 
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		Objects.requireNonNull(this.decompiler, "no decompiler was set!");
 		BiConsumer<AmalgDirs, List<SingleDecompileDependency>> populate = (dirs, dependencies) -> {
 			for(SingleDecompileDependency dependency : dependencies) {
@@ -198,13 +201,13 @@ public class DecompileDependency extends CachedDependency {
 			task.getJavadocs().set(this.javadocs);
 			List<GenerateSourcesTask.DecompileEntry> entries = new ArrayList<>();
 			this.artifactMap.forEach((input, output) -> {
-				if(output.sources.file.exists()) { // if already decompiled, just add to classpath
-					task.getClasspath().from(AmalgIO.from(input.file));
+				if(Files.exists(output.sources.file)) { // if already decompiled, just add to classpath
+					task.getClasspath().from(input.file.toFile());
 				} else {
 					GenerateSourcesTask.DecompileEntry entry = new GenerateSourcesTask.DecompileEntry();
-					entry.linemappedFile = AmalgIO.from(output.linemapped.file);
-					entry.outputFile = AmalgIO.from(output.sources.file);
-					entry.inputFile = AmalgIO.from(input.file);
+					entry.linemappedFile = output.linemapped.file.toFile();
+					entry.outputFile = output.sources.file.toFile();
+					entry.inputFile = input.file.toFile();
 					entries.add(entry);
 				}
 			});
@@ -214,7 +217,7 @@ public class DecompileDependency extends CachedDependency {
 						.stream()
 						.filter(a -> a.type != Artifact.Type.SOURCES)
 						.map(a -> a.file)
-						.map(AmalgIO::from)
+						.map((Object path) -> ((Path) path).toFile())
 						.toArray());
 			}
 
@@ -223,7 +226,7 @@ public class DecompileDependency extends CachedDependency {
 						.stream()
 						.filter(a -> a.type != Artifact.Type.SOURCES)
 						.map(a -> a.file)
-						.map(AmalgIO::from)
+						.map((Object path) -> ((Path) path).toFile())
 						.toArray());
 			}
 
@@ -235,7 +238,7 @@ public class DecompileDependency extends CachedDependency {
 					try {
 						this.writeHash();
 					} catch(IOException e) {
-						throw FPInternal.rethrow(e);
+						throw Err.rethrow(e);
 					}
 				});
 				throw new Uncached(this.artifactMap.keySet());
@@ -263,7 +266,7 @@ public class DecompileDependency extends CachedDependency {
 			}
 			hasher.putString(this.decompiler.name, StandardCharsets.UTF_8);
 			for(Object o : this.decompilerClasspath) {
-				hashDep(hasher, o);
+				this.hashDep(hasher, o);
 			}
 			this.inputHash = hasher.hash().asBytes();
 		}

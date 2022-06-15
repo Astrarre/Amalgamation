@@ -2,7 +2,7 @@ package io.github.astrarre.amalgamation.gradle.utils.func;
 
 import java.util.function.Consumer;
 
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 
 public interface UCons<T> extends Consumer<T> {
 	static <T> UCons<T> of(UCons<T> t) {
@@ -14,7 +14,7 @@ public interface UCons<T> extends Consumer<T> {
 		try {
 			this.acceptFailException(t);
 		} catch (Throwable tr) {
-			throw FPInternal.rethrow(tr);
+			throw Err.rethrow(tr);
 		}
 	}
 

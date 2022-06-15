@@ -12,9 +12,9 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.plugin.base.BaseAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import java.nio.file.Path;
+import java.nio.file.Path;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +33,8 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	 * 0 == unevaluated 1 == false 2 == true
 	 */
 	protected byte isOutdated;
-	private VirtualPath realPath;
-	private VirtualFile cachePath;
+	private Path realPath;
+	private Path cachePath;
 	public CachedDependency(Project project) {
 		super(project);
 	}
@@ -44,7 +44,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			try {
 				c.hashInputs(hasher);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		} else if(notation instanceof Dependency d) {
 			AmalgIO.hashDep(hasher, this.project, d);
@@ -82,27 +82,27 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	/**
 	 * This path does not have to actually contain any files, filename.extension.data stores the information on this notation
 	 */
-	protected abstract VirtualPath evaluatePath(byte[] hash) throws IOException;
+	protected abstract Path evaluatePath(byte[] hash) throws IOException;
 
 	protected void readInputs(@Nullable InputStream stream) throws IOException {}
 
 	protected void writeOutputs(OutputStream stream) throws IOException {}
 
-	public VirtualPath getPath() {
+	public Path getPath() {
 		if(this.realPath == null) {
 			try {
 				this.realPath = this.evaluatePath(this.getCurrentHash());
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		}
 		return this.realPath;
 	}
 
-	protected VirtualFile getCachePath() {
+	protected Path getCachePath() {
 		if(this.cachePath == null) {
-			VirtualPath record = this.getPath();
-			this.cachePath = record.getParent().getFile(record.fileName()+ ".data");
+			Path record = this.getPath();
+			this.cachePath = record.getParent().resolve(record + ".data");
 		}
 		return this.cachePath;
 	}
@@ -113,11 +113,11 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		}
 		this.initOldHash = true;
 
-		VirtualPath realPath = this.getPath();
-		VirtualFile path = this.getCachePath();
+		Path realPath = this.getPath();
+		Path path = this.getCachePath();
 
-		if(path.exists()) {
-			try(InputStream stream = path.newInputStream()) {
+		if(Files.exists(path)) {
+			try(InputStream stream = Files.newInputStream(path)) {
 				byte[] hash = new byte[BYTES];
 				if(stream.read(hash) != BYTES) {
 					throw new IOException("Unexpected EOF when reading hash from file!");
@@ -128,7 +128,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			} catch(IOException e) {
 				e.printStackTrace();
 				this.logger.lifecycle("Cache hash resolved with error, uncaching file!");
-				AmalgIO.DISK_OUT.delete(path);
+				Files.delete(path);
 			}
 		}
 		this.oldHash = null;
@@ -142,7 +142,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			try {
 				this.hashInputs(hasher);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 			byte[] hash = hasher.hash().asBytes();
 			if(hash.length != BYTES) {
@@ -154,11 +154,11 @@ public abstract class CachedDependency extends AmalgamationDependency {
 		return current;
 	}
 
-	protected abstract Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws Exception;
+	protected abstract Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws Exception;
 
 	public void writeHash() throws IOException {
 		byte[] hash = this.getCurrentHash();
-		try(OutputStream stream = AmalgIO.DISK_OUT.newOutputStream(this.getCachePath())) {
+		try(OutputStream stream = Files.newOutputStream(this.getCachePath())) {
 			stream.write(hash, 0, BYTES);
 			this.writeOutputs(stream);
 		}
@@ -169,7 +169,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 	@Override
 	protected Set<Artifact> resolveArtifacts() throws IOException {
 		boolean isOutdated = this.isOutdated();
-		VirtualPath path = this.getPath();
+		Path path = this.getPath();
 		Set<Artifact> paths;
 		try {
 			paths = this.resolve0(path, isOutdated);
@@ -177,7 +177,7 @@ public abstract class CachedDependency extends AmalgamationDependency {
 			paths = u.paths;
 			isOutdated = false;
 		} catch(Exception e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
 		if(isOutdated) {
 			this.writeHash();

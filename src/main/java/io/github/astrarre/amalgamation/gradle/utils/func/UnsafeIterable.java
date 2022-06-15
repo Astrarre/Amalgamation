@@ -8,7 +8,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 import com.google.common.collect.Streams;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.jetbrains.annotations.NotNull;
 
 public interface UnsafeIterable<T> extends Iterable<T> {
@@ -31,7 +31,7 @@ public interface UnsafeIterable<T> extends Iterable<T> {
 			try {
 				return Files.walk(p);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		}).filter(Files::isRegularFile).iterator();
 	}

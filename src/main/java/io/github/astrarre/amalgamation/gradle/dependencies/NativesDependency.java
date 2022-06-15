@@ -17,13 +17,13 @@ import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgama
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.DownloadUtil;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import net.devtech.filepipeline.api.VirtualDirectory;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
+import java.nio.file.Path;
+import java.nio.file.Path;
+import java.nio.file.Path;
 import org.gradle.api.Project;
 
 public class NativesDependency extends CachedDependency {
-	public final VirtualDirectory nativesDir;
+	public final Path nativesDir;
 	final String version;
 	final List<LauncherMeta.HashedURL> dependencies;
 	
@@ -36,7 +36,7 @@ public class NativesDependency extends CachedDependency {
 		for(LauncherMeta.Library library : vers.getLibraries()) {
 			this.dependencies.addAll(library.evaluateAllDependencies(LauncherMeta.NativesRule.NATIVES_ONLY));
 		}
-		this.nativesDir = AmalgIO.cache(project, true).getDir(version).getDir("natives");
+		this.nativesDir = AmalgIO.cache(project, true).resolve(version).resolve("natives");
 	}
 	
 	public String getNativesDirectory() {
@@ -52,17 +52,17 @@ public class NativesDependency extends CachedDependency {
 	}
 	
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws MalformedURLException {
+	protected Path evaluatePath(byte[] hash) throws MalformedURLException {
 		return this.nativesDir;
 	}
 	
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
-			VirtualDirectory directory = resolvedPath.asDir();
-			if(resolvedPath.exists()) {
-				AmalgIO.DISK_OUT.deleteContents(directory);
+			if(Files.exists(resolvedPath)) {
+				AmalgIO.deleteDirectory(resolvedPath);
 			}
+			Files.createDirectories(resolvedPath);
 			
 			// natives take very little time and rarely change, but it may be worth considering pulling natives from older versions?
 			for(LauncherMeta.HashedURL dependency : this.dependencies) {
@@ -82,15 +82,15 @@ public class NativesDependency extends CachedDependency {
 						if(entry.isDirectory()) {
 							continue;
 						}
-						VirtualFile toFile = directory.getFile(entry.getName()); // todo apparently this should be flattened linux?
-						if(toFile.exists()) {
+						Path toFile = resolvedPath.resolve(entry.getName()); // todo apparently this should be flattened linux?
+						if(Files.exists(toFile)) {
 							if(!toFile.toString().contains("META-INF")) {
 								this.logger.warn(toFile + " already exists!");
 							}
 							continue;
 						}
 						
-						AmalgIO.DISK_OUT.copy(input, toFile);
+						Files.copy(input, toFile);
 						input.closeEntry();
 					}
 				}

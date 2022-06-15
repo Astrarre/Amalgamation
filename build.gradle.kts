@@ -81,8 +81,14 @@ dependencies {
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
     implementation("net.fabricmc:access-widener-javaparser:3.0.0")
-    //implementation("net.devtech:zip-io:3.2.6")
-    implementation("net.devtech:file-pipeline:1.1.1")
+
+    // started with just nio
+    // rewrote it to use ZipInputStream (slower)
+    // rewrote it back to nio
+    //implementation("net.devtech:zip-io:3.2.6") then rewrote it to this
+    //implementation("net.devtech:file-pipeline:1.1.1") then to this
+    implementation("net.devtech:betterZipFS:1.0.7") // and now im back to nio (but with a custom FileSystem)
+
     implementation("com.google.jimfs:jimfs:1.2")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
     implementation("net.fabricmc.unpick:unpick:2.2.0")

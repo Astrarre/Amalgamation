@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.AmalgDecompiler;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.DecompilationMetadata;
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.fernflower.fabric.FabricFlowerJavadoc;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -98,13 +98,13 @@ public final class FernFlowerDecompiler implements AmalgDecompiler {
 						try {
 							return FileSystems.newFileSystem(Paths.get(s));
 						} catch(IOException e) {
-							throw FPInternal.rethrow(e);
+							throw Err.rethrow(e);
 						}
 					}).getPath(internalPath);
 					return Files.readAllBytes(path);
 				} catch(Throwable t) {
 					t.printStackTrace();
-					throw FPInternal.rethrow(t);
+					throw Err.rethrow(t);
 				}
 			}
 		};

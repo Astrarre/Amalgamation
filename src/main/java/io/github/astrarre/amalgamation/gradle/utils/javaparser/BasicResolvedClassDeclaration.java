@@ -159,7 +159,7 @@ public class BasicResolvedClassDeclaration implements ResolvedClassDeclaration {
 
 		boolean contains(String name) {
 			for(AccessWidenerDependency.FsPair type : this.types) {
-				if(type.input().find(name + ".class") != null || type.input().find(name + ".java") != null) {
+				if(Files.exists(type.input().getPath(name + ".class")) || Files.exists(type.input().getPath(name + ".java"))) {
 					return true;
 				}
 			}

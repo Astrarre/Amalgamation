@@ -16,6 +16,7 @@ import java.util.jar.Manifest;
 
 import io.github.astrarre.amalgamation.gradle.dependencies.decomp.AmalgDecompiler;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
+import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;

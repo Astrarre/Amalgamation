@@ -11,8 +11,8 @@ import java.util.Set;
 import io.github.astrarre.amalgamation.gradle.plugin.minecraft.MinecraftAmalgamationGradlePlugin;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.LauncherMeta;
-import net.devtech.filepipeline.api.VirtualDirectory;
-import net.devtech.filepipeline.api.VirtualFile;
+import java.nio.file.Path;
+import java.nio.file.Path;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ResolveException;
@@ -43,7 +43,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 	@Override
 	protected Set<Artifact> resolveArtifacts() throws IOException {
 		LauncherMeta meta = MinecraftAmalgamationGradlePlugin.getLauncherMeta(this.project);
-		final VirtualDirectory dir = AmalgIO.getDir(Paths.get(this.librariesDirectory));
+		final Path dir = Paths.get(this.librariesDirectory);
 		List<LauncherMeta.Library> libraries = meta.getVersion(this.version).getLibraries();
 		Set<Artifact> files = new HashSet<>();
 
@@ -55,7 +55,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 
 			boolean failedDirectDownload = false; // use maven as fallback incase using the URL does not work (maybe mojang servers down?)
 			for(LauncherMeta.HashedURL dependency : library.evaluateAllDependencies(this.rule)) {
-				VirtualFile jar = dir.getFile(dependency.path);
+				Path jar = dir.resolve(dependency.path);
 				HashedURLDependency dep = new HashedURLDependency(this.project, dependency);
 				dep.output = jar;
 				dep.isOptional = true;
@@ -85,8 +85,7 @@ public class LibrariesDependency extends AmalgamationDependency {
 							this.project,
 							sources.getGroup(),
 							sources.getName(),
-							sources.getVersion(),
-							AmalgIO.getFile(file),
+							sources.getVersion(), file,
 							library.name.getBytes(StandardCharsets.UTF_8),
 							Artifact.Type.MIXED
 					));

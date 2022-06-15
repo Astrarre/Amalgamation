@@ -23,7 +23,7 @@ import daomephsta.unpick.impl.representations.ReplacementInstructionGenerator;
 import daomephsta.unpick.impl.representations.TargetMethods;
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.MappingTarget;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -42,7 +42,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 			METHODS.setAccessible(true);
 			CLASS.setAccessible(true);
 		} catch(ReflectiveOperationException e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
 	}
 
@@ -165,7 +165,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 							Object o1 = CLASS.get(o);
 							classMap.put(s, new Method(o, (String) o1));
 						} catch(IllegalAccessException e) {
-							throw FPInternal.rethrow(e);
+							throw Err.rethrow(e);
 						}
 					});
 					this.constantGroups = mapper.generatorMap();
@@ -174,7 +174,7 @@ public class UnpickExtension implements TinyRemapper.Extension {
 			}
 			return methods;
 		} catch(IOException | IllegalAccessException e) {
-			throw FPInternal.rethrow(e);
+			throw Err.rethrow(e);
 		}
 	}
 

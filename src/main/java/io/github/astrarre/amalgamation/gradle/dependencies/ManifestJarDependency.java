@@ -2,17 +2,21 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import net.devtech.filepipeline.api.VirtualFile;
-import net.devtech.filepipeline.api.VirtualPath;
-import net.devtech.filepipeline.api.source.VirtualSink;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import java.nio.file.Path;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
+import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
+import net.devtech.betterzipfs.impl.ZipFS;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.JavaExec;
 
@@ -37,19 +41,18 @@ public class ManifestJarDependency extends CachedDependency {
 	}
 
 	@Override
-	protected VirtualPath evaluatePath(byte[] hash) throws IOException {
-		return AmalgDirs.PROJECT.root(this.project).getDir("classpath_manifests").getFile(this.path + ".jar");
+	protected Path evaluatePath(byte[] hash) throws IOException {
+		return AmalgDirs.PROJECT.root(this.project).resolve("classpath_manifests").resolve(this.path + ".jar");
 	}
 
 	@Override
-	protected Set<Artifact> resolve0(VirtualPath resolvedPath, boolean isOutdated) throws IOException {
+	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws IOException {
 		if(isOutdated) {
-			try(VirtualSink sink = AmalgIO.DISK_OUT.subsink(resolvedPath)) {
-				VirtualFile path = sink.outputFile("META-INF/MANIFEST.MF");
-				String cp = String.join(" ", this.files);
-				sink.writeString(path, String.format("Class-Path: %s", String.join(" ", cp)), StandardCharsets.UTF_8);
-			} catch(Exception e) {
-				throw FPInternal.rethrow(e);
+			try(FileSystem system = AmalgIO.createZip(resolvedPath)) {
+				String classpath = String.join(" ", this.files);
+				Path path = system.getPath("META-INF/MANIFEST.MF");
+				AmalgIO.createParent(path);
+				Files.writeString(path, String.format("Class-Path: %s", String.join(" ", classpath)));
 			}
 		}
 		return Set.of(new Artifact.File(

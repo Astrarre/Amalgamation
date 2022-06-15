@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.cadixdev.lorenz.MappingSet;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Dependency;
@@ -45,13 +45,13 @@ public class Mappings {
 				try(FileSystem fileSystem = FileSystems.newFileSystem(f, (ClassLoader) null)) {
 					MappingReader.read(fileSystem.getPath("/mappings/mappings.tiny"), tree);
 				} catch(IOException e) {
-					throw FPInternal.rethrow(e);
+					throw Err.rethrow(e);
 				}
 			} else {
 				try {
 					MappingReader.read(f, tree);
 				} catch(IOException e) {
-					throw FPInternal.rethrow(e);
+					throw Err.rethrow(e);
 				}
 			}
 			return tree;

@@ -37,7 +37,7 @@ public class MinecraftAmalgamationGradlePlugin extends BaseAmalgamationGradlePlu
 	private static LauncherMeta instance;
 	public static LauncherMeta getLauncherMeta(Project project) {
 		if(instance == null) {
-			instance = new LauncherMeta(AmalgIO.from(AmalgIO.globalCache(project)).toPath(), project);
+			instance = new LauncherMeta(AmalgIO.globalCache(project).toFile().toPath(), project);
 		}
 		return instance;
 	}

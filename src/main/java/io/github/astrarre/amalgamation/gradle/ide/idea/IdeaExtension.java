@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
-import net.devtech.filepipeline.impl.util.FPInternal;
+import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.JavaExec;
@@ -36,7 +36,7 @@ public class IdeaExtension {
 			try {
 				value.emit(isImmediate);
 			} catch(IOException e) {
-				throw FPInternal.rethrow(e);
+				throw Err.rethrow(e);
 			}
 		}
 	}
