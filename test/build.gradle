@@ -59,7 +59,7 @@ dependencies {
             mappings(ag.intermediary(mc_vers))
             inputLocal(ag.mojmerged(mc_vers))
         })
-        fapi = "net.fabricmc.fabric-api:fabric-api:0.45.2+1.18"
+        //fapi = inputLocal("net.fabricmc.fabric-api:fabric-api:0.45.2+1.18")
         //reiApi = inputLocal("me.shedaniel:RoughlyEnoughItems-api-fabric:6.2.347")
         //reiImpl = inputLocal("me.shedaniel:RoughlyEnoughItems-fabric:6.2.347")
     }
@@ -71,7 +71,7 @@ dependencies {
         inputLocal mc
         javadocs('net.fabricmc:yarn:1.18.1+build.17:v2', 'named')
     }
-    aaaaa fapi
+    //aaaaa fapi
     //aaaaa reiApi
 
     implementation libs

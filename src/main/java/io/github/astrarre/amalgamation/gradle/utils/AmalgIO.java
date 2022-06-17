@@ -196,9 +196,7 @@ public class AmalgIO {
 	
 	public static void createParent(Path file) throws IOException {
 		Path parent = file.getParent();
-		if(!Files.exists(parent)) {
-			Files.createDirectories(parent);
-		}
+		Files.createDirectories(parent);
 	}
 	
 	public static ByteBuffer readAll(Path path) {
@@ -214,9 +212,10 @@ public class AmalgIO {
 	}
 	
 	public static void write(Path path, ByteBuffer contents) throws IOException {
-		SeekableByteChannel channel = Files.newByteChannel(path, OPTIONS);
-		channel.write(contents);
-		channel.truncate(contents.limit());
+		try(SeekableByteChannel channel = Files.newByteChannel(path, OPTIONS)) {
+			channel.write(contents);
+			channel.truncate(contents.limit());
+		}
 	}
 	
 	public static void deleteDirectory(Path path) throws IOException {

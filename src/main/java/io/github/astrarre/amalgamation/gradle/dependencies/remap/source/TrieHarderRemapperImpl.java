@@ -19,7 +19,7 @@ public class TrieHarderRemapperImpl implements AmalgamationRemapper {
 	public RemapTask createTask(RemapTarget target) {
 		return (srcFs, srcPath, dstFs, handled) -> {
 			String path = srcPath.toString();
-			if(path.endsWith(".class")) {
+			if(path.endsWith(".java")) {
 				String contents = Files.readString(srcPath);
 				String remappedContents = this.sourceRemapper.remapString(contents);
 				String internalName = path.substring(0, path.length() - 5);

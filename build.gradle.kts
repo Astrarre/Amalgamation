@@ -66,9 +66,6 @@ repositories {
     }*/
 }
 
-var dir = buildDir.toPath()
-println(dir.getRoot().relativize(dir))
-
 dependencies {
     compileOnly("org.jetbrains", "annotations", "20.1.0")
     implementation(gradleApi())
@@ -76,7 +73,7 @@ dependencies {
     implementation("com.google.code.gson", "gson", "2.8.6")
     implementation("org.ow2.asm", "asm-tree", "9.1")
     implementation("net.fabricmc:mercury:0.2.4")
-    implementation("io.github.astrarre", "tiny-remapper", "1.0.3")
+    implementation("net.fabricmc:tiny-remapper:333.0.8.6")
     implementation("it.unimi.dsi:fastutil:8.5.6")
     implementation("org.ow2.asm:asm-commons:9.1")
     implementation("net.fabricmc:mapping-io:0.2.1")
@@ -87,7 +84,7 @@ dependencies {
     // rewrote it back to nio
     //implementation("net.devtech:zip-io:3.2.6") then rewrote it to this
     //implementation("net.devtech:file-pipeline:1.1.1") then to this
-    implementation("net.devtech:betterZipFS:1.0.7") // and now im back to nio (but with a custom FileSystem)
+    implementation("net.devtech:betterZipFS:1.1.8") // and now im back to nio (but with a custom FileSystem)
 
     implementation("com.google.jimfs:jimfs:1.2")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")

@@ -90,6 +90,7 @@ public class NativesDependency extends CachedDependency {
 							continue;
 						}
 						
+						AmalgIO.createParent(toFile);
 						Files.copy(input, toFile);
 						input.closeEntry();
 					}

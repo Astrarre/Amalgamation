@@ -2,6 +2,7 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,8 +25,8 @@ import io.github.astrarre.amalgamation.gradle.utils.func.UCons;
 import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
 import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
 import it.unimi.dsi.fastutil.Pair;
-import java.nio.file.Path;
 import org.gradle.api.Project;
+import sleep.Sleep;
 
 public class RemapDependency extends CachedDependency {
 	public final RemapDependencyConfig config = new RemapDependencyConfig(this);
@@ -46,6 +47,9 @@ public class RemapDependency extends CachedDependency {
 	
 	@Override
 	protected Set<Artifact> resolve0(Path resolvedPath, boolean isOutdated) throws Exception {
+		logger.lifecycle("remember to remove the Thread.sleep u used to attach this debugger");
+		logger.lifecycle("good luck!");
+		
 		AmalgamationRemapper remapper = this.config.getRemapper();
 		List<AmalgamationRemapper> remappers = this.config.remappers;
 		Set<Artifact> classpath = new HashSet<>();
@@ -77,7 +81,7 @@ public class RemapDependency extends CachedDependency {
 		}
 		
 		if(isOutdated || outdatedOverwrite) {
-			if(outdatedOverwrite) {
+			if(!isOutdated) {
 				System.err.println("[Warning] Some remapped files were deleted, forcing remap to restore them!");
 			}
 			List<Mappings.Namespaced> mappings = new ArrayList<>();
@@ -91,6 +95,7 @@ public class RemapDependency extends CachedDependency {
 				for(Artifact artifact : classpath) {
 					FSRef src = ZipIO.readZip(artifact.file);
 					AmalgamationRemapper.RemapTask task = remapper.classpathTask(artifact, src);
+					// todo improve RemapTask can state whether it needs to walk through every file or not
 					src.walk().filter(Files::isRegularFile).forEach(UCons.of(path -> task.acceptFile(src, path, null, false)));
 				}
 			}
@@ -103,6 +108,21 @@ public class RemapDependency extends CachedDependency {
 				FSRef src = ZipIO.readZip(from.file), dst = ZipIO.createZip(to.file);
 				AmalgamationRemapper.RemapTarget target = new AmalgamationRemapper.RemapTarget(from, src, to, dst);
 				AmalgamationRemapper.RemapTask task = remapper.createTask(target);
+				long readStage = System.currentTimeMillis();
+				
+				//Remap Load Stage Took 4620ms
+				//Remap Write Stage Took 4740ms
+				//Unable to locate fabric.mod.json, defaulting to extension detection (.aw, .accesswidener, .accessWidener)
+				//Remap Load Stage Took 5185ms
+				//Remap Write Stage Took 490ms
+				//src.walk(ForkJoinPool.commonPool(), UCons.of(path -> {
+				//	if(!task.acceptFile(src, path, dst, false)) {
+				//		Path out = dst.getPath(path.toString());
+				//		AmalgIO.createParent(out);
+				//		Files.copy(path, out);
+				//	}
+				//}));
+				
 				src.walk().filter(Files::isRegularFile).forEach(UCons.of(path -> {
 					if(!task.acceptFile(src, path, dst, false)) {
 						Path out = dst.getPath(path.toString());
@@ -110,12 +130,15 @@ public class RemapDependency extends CachedDependency {
 						Files.copy(path, out);
 					}
 				}));
+				logger.lifecycle("Remap Load Stage Took " + (System.currentTimeMillis() - readStage) + "ms");
 				writes.add(dst);
 			}
+			long writeStage = System.currentTimeMillis();
 			remapper.write();
 			for(FSRef write : writes) {
 				write.flush();
 			}
+			logger.lifecycle("Remap Write Stage Took " + (System.currentTimeMillis() - writeStage) + "ms");
 		}
 		
 		return Set.copyOf(cache.values());

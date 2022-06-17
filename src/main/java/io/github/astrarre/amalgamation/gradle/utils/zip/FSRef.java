@@ -2,16 +2,26 @@ package io.github.astrarre.amalgamation.gradle.utils.zip;
 
 import java.io.IOException;
 import java.lang.ref.Cleaner;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import net.devtech.betterzipfs.ZipFS;
+import net.devtech.betterzipfs.impl.ZipFSProvider;
 
 public final class FSRef implements AutoCloseable {
 	private final FileSystem value;
@@ -24,32 +34,22 @@ public final class FSRef implements AutoCloseable {
 	// todo nested walk to optimize for createDirectories
 	
 	public Stream<Path> directorizingStream(FSRef output) throws IOException {
-		return this.walk().peek(p -> {
+		return ZipFSProvider.walk(this.fs()).filter(p -> {
 			if(Files.isDirectory(p)) {
 				try {
 					Files.createDirectories(output.getPath(p.toString()));
+					return false;
 				} catch(IOException e) {
 					throw Err.rethrow(e);
 				}
+			} else {
+				return true;
 			}
-		}).filter(Files::isRegularFile);
+		});
 	}
 	
 	public Stream<Path> walk() throws IOException { // binary merge
-		List<Stream<Path>> streams = new ArrayList<>();
-		for(Path directory : this.value.getRootDirectories()) {
-			streams.add(Files.walk(directory));
-		}
-		
-		while(streams.size() > 1) {
-			for(int i = streams.size() - 1; i > 0; i -= 2) {
-				Stream<Path> a = streams.remove(i);
-				Stream<Path> b = streams.remove(i - 1);
-				streams.add(Stream.concat(a, b));
-			}
-		}
-		
-		return streams.get(0);
+		return ZipFS.unorderedFastStream(this.value);
 	}
 	
 	public void flush() {

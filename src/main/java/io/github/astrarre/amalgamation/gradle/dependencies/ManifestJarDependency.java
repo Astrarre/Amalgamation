@@ -3,20 +3,15 @@ package io.github.astrarre.amalgamation.gradle.dependencies;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.ide.TaskConverter;
 import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.func.AmalgDirs;
-import java.nio.file.Path;
-import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
-import io.github.astrarre.amalgamation.gradle.utils.zip.ZipIO;
-import net.devtech.betterzipfs.impl.ZipFS;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.JavaExec;
 

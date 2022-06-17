@@ -18,14 +18,11 @@
 
 package io.github.astrarre.amalgamation.gradle.dependencies.remap.misc;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
@@ -33,7 +30,6 @@ import io.github.astrarre.amalgamation.gradle.dependencies.remap.api.Amalgamatio
 import io.github.astrarre.amalgamation.gradle.dependencies.remap.binary.TinyRemapperImpl;
 import io.github.astrarre.amalgamation.gradle.tasks.remap.remap.AwResourceRemapper;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
-import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import it.unimi.dsi.fastutil.Pair;
 import org.objectweb.asm.commons.Remapper;
 
@@ -97,7 +93,7 @@ public class ResourceRemapper implements AmalgamationRemapper {
 	public RemapTask createTask(RemapTarget target) {
 		OutputConsumerPath.ResourceRemapper remapper = this.rssRemapper.createRemapper();
 		return (srcFs, srcPath, dstFs, handled) -> {
-			if(remapper.canTransform(this.remapper, srcPath)) {
+			if(remapper.canTransform(this.remapper, srcPath)) { // todo maybe optimize this a bit
 				try(InputStream is = Files.newInputStream(srcPath)) {
 					remapper.transform(dstFs.getPath("/"), srcPath, is, this.remapper);
 				}

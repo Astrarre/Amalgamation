@@ -3,10 +3,15 @@ package io.github.astrarre.amalgamation.gradle.dependencies.remap.binary;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.google.common.hash.Hasher;
 import io.github.astrarre.amalgamation.gradle.dependencies.Artifact;
@@ -15,7 +20,7 @@ import io.github.astrarre.amalgamation.gradle.utils.AmalgIO;
 import io.github.astrarre.amalgamation.gradle.utils.Mappings;
 import io.github.astrarre.amalgamation.gradle.utils.emptyfs.Err;
 import io.github.astrarre.amalgamation.gradle.utils.zip.FSRef;
-import it.unimi.dsi.fastutil.Pair;
+import net.devtech.betterzipfs.ZipFS;
 import org.objectweb.asm.commons.Remapper;
 
 import net.fabricmc.tinyremapper.IMappingProvider;
@@ -29,7 +34,8 @@ public class TinyRemapperImpl implements AmalgamationRemapper {
 	private static final Pattern NEW_MINECRAFT_LOCAL_PATTERN = Pattern.compile("\\$\\$\\d+");
 	
 	final Consumer<TinyRemapper.Builder> configurator;
-	final List<Pair<FSRef, InputTag>> outputs = new ArrayList<>();
+	record Outputs(FSRef left, InputTag right) {}
+	final List<Outputs> outputs = new ArrayList<>(); // todo concurrent list for nested
 	public TinyRemapper remapper;
 	
 	public TinyRemapperImpl(Consumer<TinyRemapper.Builder> configurator) {
@@ -52,10 +58,10 @@ public class TinyRemapperImpl implements AmalgamationRemapper {
 	@Override
 	public RemapTask createTask(RemapTarget target) {
 		InputTag tag = this.remapper.createInputTag();
-		this.outputs.add(Pair.of(target.toFs(), tag));
+		this.outputs.add(new Outputs(target.toFs(), tag));
 		return (srcFs, srcPath, dstFs, handled) -> {
-			if(srcPath.toString().endsWith(".class")) {
-				TinyRemapperImpl.this.remapper.readFileToInput(tag, srcPath);
+			if(srcPath.toString().endsWith(".class")) { // todo handle nested jars
+				TinyRemapperImpl.this.remapper.readInputFile(tag, srcPath);
 				return true;
 			} else {
 				return false;
@@ -67,22 +73,32 @@ public class TinyRemapperImpl implements AmalgamationRemapper {
 	public RemapTask classpathTask(Artifact from, FSRef fromFs) {
 		InputTag tag = this.remapper.createInputTag();
 		return (srcFs, srcPath, dstFs, handled) -> {
-			TinyRemapperImpl.this.remapper.readFileToClassPath(tag, srcPath);
+			if(srcPath.toString().endsWith(".class")) {
+				TinyRemapperImpl.this.remapper.readClasspathFile(tag, srcPath);
+			}
 			return false;
 		};
 	}
 	
 	@Override
 	public void write() {
-		for(Pair<FSRef, InputTag> output : this.outputs) {
-			TinyRemapperImpl.this.remapper.apply((s, b) -> {
-				try {
-					AmalgIO.write(output.first().getPath(s), ByteBuffer.wrap(b));
-				} catch(IOException e) {
-					throw Err.rethrow(e);
+		Map<InputTag, FSRef> map = this.outputs.stream().collect(Collectors.toMap(Outputs::right, Outputs::left));
+		TinyRemapperImpl.this.remapper.apply((tags, internalName, bytecode) -> {
+			try {
+				Path first = map.get(tags[0]).getPath(internalName + ".class");
+				AmalgIO.createParent(first);
+				AmalgIO.write(first, ByteBuffer.wrap(bytecode));
+				ZipFS.flush(first);
+				for(int i = 1; i < tags.length; i++) {
+					Path path = map.get(tags[i]).getPath(internalName + ".class");
+					AmalgIO.createParent(first);
+					Files.copy(first, path);
 				}
-			}, output.right());
-		}
+			} catch(IOException e) {
+				throw Err.rethrow(e);
+			}
+		});
+		TinyRemapperImpl.this.remapper.finish();
 		this.outputs.clear();
 	}
 	
@@ -95,7 +111,8 @@ public class TinyRemapperImpl implements AmalgamationRemapper {
 				.keepInputData(true)
 				.rebuildSourceFilenames(true)
 				.renameInvalidLocals(true)
-				.invalidLvNamePattern(NEW_MINECRAFT_LOCAL_PATTERN);
+				.invalidLvNamePattern(NEW_MINECRAFT_LOCAL_PATTERN)
+				.useForkJoinPool();
 		if(this.configurator != null) {
 			this.configurator.accept(builder);
 		}
