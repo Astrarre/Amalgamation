@@ -84,7 +84,7 @@ dependencies {
     // rewrote it back to nio
     //implementation("net.devtech:zip-io:3.2.6") then rewrote it to this
     //implementation("net.devtech:file-pipeline:1.1.1") then to this
-    implementation("net.devtech:betterZipFS:1.1.8") // and now im back to nio (but with a custom FileSystem)
+    implementation("net.devtech:betterZipFS:1.1.9") // and now im back to nio (but with a custom FileSystem)
 
     implementation("com.google.jimfs:jimfs:1.2")
     compileOnly("net.fabricmc:fabric-fernflower:1.4.1")
