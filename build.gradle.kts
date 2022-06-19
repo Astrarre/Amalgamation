@@ -26,7 +26,7 @@ plugins {
 }
 
 group = "io.github.astrarre.amalgamation"
-version = "1.0.1.1"
+version = "1.0.1.2"
 
 extensions.getByType<JavaPluginExtension>().apply {
     sourceCompatibility = JavaVersion.VERSION_16
@@ -128,10 +128,6 @@ extensions.getByType<PublishingExtension>().apply {
                 }
             }
         }
-        create<MavenPublication>("mavenTrolling") {
-
-
-        }
     }
 
     repositories {
@@ -145,6 +141,7 @@ extensions.getByType<PublishingExtension>().apply {
         }*/
         maven {
             val mavenUrl = if(project.hasProperty("maven_url")) project.property("maven_url") else ""
+            println(" aaaaaaaaaaaaaaa " + mavenUrl)
             url = URI(mavenUrl as String)
             if (mavenUrl.startsWith("http")) {
                 credentials {
