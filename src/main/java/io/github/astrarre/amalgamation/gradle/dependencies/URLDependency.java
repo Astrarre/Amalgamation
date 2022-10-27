@@ -117,7 +117,7 @@ public class URLDependency extends CachedDependency implements SelfResolvingDepe
 	}
 
 	public BufferedReader getOutdatedReader() throws IOException {
-		if(!Files.exists(this.getPath())) {
+		if(!Files.exists(this.getCachePath())) {
 			this.getArtifacts();
 		}
 		return Files.newBufferedReader(this.getPath());

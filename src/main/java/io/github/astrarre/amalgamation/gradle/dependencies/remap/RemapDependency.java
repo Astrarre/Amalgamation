@@ -67,6 +67,7 @@ public class RemapDependency extends CachedDependency {
 			for(Artifact artifact : this.artifacts(local.dependency)) {
 				if(!cache.containsKey(artifact)) {
 					Artifact output = this.transform(artifact, local.dirs);
+					local.artifacts.add(output);
 					if(Files.exists(output.file)) {
 						if(remapper.requiresClasspath()) {
 							classpath.add(artifact);

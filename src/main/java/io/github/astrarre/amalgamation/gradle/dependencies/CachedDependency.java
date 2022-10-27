@@ -168,18 +168,19 @@ public abstract class CachedDependency extends AmalgamationDependency {
 
 	@Override
 	protected Set<Artifact> resolveArtifacts() throws IOException {
-		boolean isOutdated = this.isOutdated();
+		boolean isOutdated = this.isOutdated(), writeHash = isOutdated;
 		Path path = this.getPath();
 		Set<Artifact> paths;
 		try {
 			paths = this.resolve0(path, isOutdated);
 		} catch(Uncached u) {
 			paths = u.paths;
-			isOutdated = false;
+			writeHash = false;
 		} catch(Exception e) {
 			throw Err.rethrow(e);
 		}
-		if(isOutdated) {
+
+		if(writeHash) {
 			this.writeHash();
 		}
 		return paths;
