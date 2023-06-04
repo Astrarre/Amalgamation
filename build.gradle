@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'java-gradle-plugin'
+
+}
+
+group 'net.devtech'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    withSourcesJar()
+    jar {
+        from "$rootDir/LICENSE"
+    }
+}
+
+dependencies {
+    compileOnly gradleApi()
+}
+
+gradlePlugin {
+    plugins {
+        create("minecraft") {
+            id = "amalgamation"
+            implementationClass = "net.devtech.amalgamation.MinecraftAmalgamationGradlePlugin"
+        }
+    }
+}
